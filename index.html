@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 2026 — Suivi de Saison</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <div class="f1-logo">F1</div>
+        <div class="season-title">Saison 2026</div>
+    </div>
+    <div class="header-right">
+        <div class="stats-bar">
+            <span>🏁 <strong id="stat-completed">0</strong> Disputées</span>
+            <span>📅 <strong id="stat-upcoming">0</strong> À venir</span>
+            <span>🔢 <strong id="stat-total">0</strong> Total</span>
+        </div>
+    </div>
+</header>
+
+<nav>
+    <button class="nav-tab active" data-view="races">🏎️ Courses</button>
+    <button class="nav-tab" data-view="standings">🏆 Classements</button>
+    <button class="nav-tab" data-view="timeline">📆 Calendrier</button>
+    <button class="nav-tab" data-view="sprint">⚡ Sprint</button>
+</nav>
+
+<main>
+    <div id="view-races" class="view active">
+        <div class="section-header">
+            <h2>Calendrier des Courses</h2>
+            <p>Saison F1 2026 — 24 Grands Prix</p>
+        </div>
+        <div class="races-grid" id="races-grid"></div>
+    </div>
+
+    <div id="view-standings" class="view">
+        <div class="section-header">
+            <h2>Classements</h2>
+            <p>Championnat du Monde F1 2026</p>
+        </div>
+        <div class="standings-container">
+            <div class="standings-block">
+                <h3>🧑‍🚀 Pilotes</h3>
+                <table id="drivers-standings" class="standings-table"></table>
+            </div>
+            <div class="standings-block">
+                <h3>🏭 Constructeurs</h3>
+                <table id="constructors-standings" class="standings-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-timeline" class="view">
+        <div class="section-header">
+            <h2>Calendrier Complet</h2>
+            <p>Vue chronologique de la saison 2026</p>
+        </div>
+        <div id="timeline-content"></div>
+    </div>
+
+    <div id="view-sprint" class="view">
+        <div class="section-header">
+            <h2>⚡ Weekends Sprint</h2>
+            <p><span id="sprint-done-count">0</span> / <span id="sprint-total-count">0</span> Sprints disputés</p>
+        </div>
+        <div class="races-grid" id="sprint-grid"></div>
+    </div>
+</main>
+
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+<a href="admin.html" style="position:fixed;bottom:20px;right:20px;background:#111;border:1px solid #333;color:#555;padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;text-decoration:none;z-index:9999;">Admin</a>
+
+
+</body>
+</html>

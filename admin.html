@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - F1 2025</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <div class="f1-logo">F1</div>
+            <h2>Panneau Administration</h2>
+            <p class="login-sub">Accès restreint</p>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" id="password-input" placeholder="••••••••" />
+            </div>
+            <button class="btn-red" onclick="checkPassword()">Connexion</button>
+            <p id="login-error" class="error-msg"></p>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="admin-panel hidden">
+
+        <header class="admin-header">
+            <div class="header-left">
+                <div class="f1-logo">F1</div>
+                <span class="admin-title">Administration 2025</span>
+            </div>
+            <div class="header-right">
+                <a href="index.html" class="btn-outline">← Voir le site</a>
+                <button class="btn-ghost" onclick="logout()">Déconnexion</button>
+            </div>
+        </header>
+
+        <main class="admin-main">
+
+            <div class="admin-sidebar">
+                <p class="sidebar-title">Courses</p>
+                <div id="race-list" class="race-list"></div>
+            </div>
+
+            <div class="admin-content">
+                <div id="no-selection" class="no-selection">
+                    <span style="font-size:3rem">🏁</span>
+                    <p>Sélectionne une course pour modifier ses résultats</p>
+                </div>
+
+                <div id="race-editor" class="race-editor hidden">
+
+                    <div class="editor-header">
+                        <div>
+                            <div id="editor-flag" style="font-size:2rem"></div>
+                            <h2 id="editor-name"></h2>
+                            <p id="editor-date" class="editor-date"></p>
+                        </div>
+                        <div class="editor-status-box">
+                            <label>Statut de la course</label>
+                            <select id="race-status" onchange="updateStatus()">
+                                <option value="upcoming">À venir</option>
+                                <option value="next">Prochaine</option>
+                                <option value="completed">Terminée</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="sprint-section" class="hidden">
+                        <div class="section-title">
+                            <span class="sprint-badge">SPRINT</span>
+                            Résultats Sprint
+                        </div>
+                        <div class="results-table-editor" id="sprint-rows"></div>
+                        <button class="btn-add" onclick="addSprintRow()">+ Ajouter une ligne</button>
+                    </div>
+
+                    <div class="section-title">🏆 Résultats Course</div>
+                    <div class="results-table-editor" id="race-rows"></div>
+                    <button class="btn-add" onclick="addRaceRow()">+ Ajouter une ligne</button>
+
+                    <div class="editor-actions">
+                        <button class="btn-red" onclick="saveResults()">💾 Sauvegarder</button>
+                        <button class="btn-ghost" onclick="clearResults()">🗑️ Effacer les résultats</button>
+                    </div>
+
+                    <div id="save-msg" class="save-msg hidden">✅ Résultats sauvegardés !</div>
+
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <script src="data.js"></script>
+    <script src="admin.js"></script>
+
+</body>
+</html>

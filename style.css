@@ -1,0 +1,773 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --red: #e10600;
+    --dark: #0a0a0a;
+    --darker: #050505;
+    --card: #111111;
+    --card2: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --muted: #888888;
+    --gold: #ffd700;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --sprint: #7c3aed;
+    --sprint-light: #a78bfa;
+    --green: #22c55e;
+    --blue: #3b82f6;
+}
+
+body {
+    background: var(--darker);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+}
+
+header {
+    background: linear-gradient(135deg, var(--dark) 0%, #1a0000 100%);
+    border-bottom: 3px solid var(--red);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.f1-logo {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: -1px;
+    font-style: italic;
+}
+
+.season-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.stats-bar strong {
+    color: var(--text);
+    font-size: 1rem;
+}
+
+nav {
+    background: var(--dark);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0;
+    padding: 0 2rem;
+    overflow-x: auto;
+}
+
+.nav-tab {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.nav-tab:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-tab.active {
+    color: var(--red);
+    border-bottom-color: var(--red);
+}
+
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+.section-header p {
+    color: var(--muted);
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.races-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.race-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+}
+
+.race-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--red);
+    box-shadow: 0 8px 30px rgba(225, 6, 0, 0.15);
+}
+
+.race-card.completed {
+    border-left: 4px solid var(--green);
+}
+
+.race-card.next {
+    border-left: 4px solid var(--red);
+    box-shadow: 0 0 20px rgba(225, 6, 0, 0.1);
+}
+
+.race-card.sprint-card {
+    border-left: 4px solid var(--sprint);
+}
+
+.race-card-header {
+    background: var(--card2);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+
+.race-round {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.sprint-round {
+    color: var(--sprint-light);
+}
+
+.race-badges {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.race-card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.race-flag-name {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.race-flag {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.race-name {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.race-country {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+}
+
+.race-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-done {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--green);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-next {
+    background: rgba(225, 6, 0, 0.15);
+    color: var(--red);
+    border: 1px solid rgba(225, 6, 0, 0.3);
+}
+
+.badge-upcoming {
+    background: rgba(136, 136, 136, 0.1);
+    color: var(--muted);
+    border: 1px solid var(--border);
+}
+
+.sprint-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--sprint-light);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.new-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.race-result {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+}
+
+.podium {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.podium-item {
+    flex: 1;
+    background: var(--card2);
+    border-radius: 8px;
+    padding: 0.6rem 0.4rem;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.podium-pos {
+    font-size: 1.2rem;
+    margin-bottom: 0.3rem;
+}
+
+.podium-pos.gold { color: var(--gold); }
+.podium-pos.silver { color: var(--silver); }
+.podium-pos.bronze { color: var(--bronze); }
+
+.podium-driver {
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.podium-team {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+}
+
+.no-result {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 0.75rem;
+    background: var(--card2);
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+}
+
+.standings-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .standings-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.standings-block h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--red);
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.standings-table thead {
+    background: var(--card2);
+}
+
+.standings-table th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.standings-table td {
+    padding: 0.85rem 1rem;
+    font-size: 0.88rem;
+    border-bottom: 1px solid rgba(42, 42, 42, 0.5);
+    vertical-align: middle;
+}
+
+.standings-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.standings-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.points-cell {
+    font-weight: 800;
+    color: var(--red);
+    white-space: nowrap;
+}
+
+.timeline-month {
+    margin-bottom: 2rem;
+}
+
+.timeline-month-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.timeline-race-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 1rem;
+}
+
+.timeline-race-item:hover {
+    border-color: var(--red);
+    transform: translateX(4px);
+}
+
+.timeline-race-item.completed {
+    border-left: 4px solid var(--green);
+}
+
+.timeline-race-item.next {
+    border-left: 4px solid var(--red);
+}
+
+.timeline-race-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.timeline-flag {
+    font-size: 1.8rem;
+}
+
+.timeline-race-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.timeline-race-date {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+}
+
+.timeline-race-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.25s;
+}
+
+.modal-overlay.open .modal {
+    transform: translateY(0);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--dark), #1a0000);
+    border-bottom: 2px solid var(--red);
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-title-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.modal-flag {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.modal-race-name {
+    font-size: 1.3rem;
+    font-weight: 900;
+    line-height: 1.3;
+}
+
+.modal-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--red);
+    border-color: var(--red);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.modal-section-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.schedule-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.65rem 1rem;
+    background: var(--card2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.schedule-item.highlight {
+    background: rgba(225, 6, 0, 0.08);
+    border-color: rgba(225, 6, 0, 0.3);
+}
+
+.schedule-item.sprint-session {
+    background: rgba(124, 58, 237, 0.08);
+    border-color: rgba(124, 58, 237, 0.3);
+}
+
+.schedule-day {
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 80px;
+    font-size: 0.78rem;
+}
+
+.schedule-name {
+    flex: 1;
+    font-weight: 600;
+}
+
+.schedule-time {
+    font-weight: 800;
+    color: var(--red);
+    font-size: 0.9rem;
+}
+
+.full-results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.full-results-table thead tr {
+    background: var(--card2);
+    border-bottom: 1px solid var(--border);
+}
+
+.full-results-table th {
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.full-results-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid rgba(42, 42, 42, 0.5);
+    vertical-align: middle;
+}
+
+.full-results-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.full-results-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.pos-medal {
+    font-weight: 900;
+}
+
+.pos-medal.gold { color: var(--gold); }
+.pos-medal.silver { color: var(--silver); }
+.pos-medal.bronze { color: var(--bronze); }
+
+.fastest-lap {
+    font-size: 0.75rem;
+    color: var(--sprint-light);
+    margin-left: 0.3rem;
+}
+
+.no-data-box {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    background: var(--card2);
+    border-radius: 12px;
+    border: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal::-webkit-scrollbar-track {
+    background: var(--card);
+}
+
+.modal::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+    background: var(--red);
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 0 1rem;
+        height: auto;
+        flex-wrap: wrap;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .stats-bar {
+        gap: 0.75rem;
+        font-size: 0.78rem;
+    }
+
+    nav {
+        padding: 0 0.5rem;
+    }
+
+    .nav-tab {
+        padding: 0.85rem 0.85rem;
+        font-size: 0.82rem;
+    }
+
+    main {
+        padding: 1rem;
+    }
+
+    .races-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-flag {
+        font-size: 2rem;
+    }
+
+    .modal-race-name {
+        font-size: 1.1rem;
+    }
+
+    .timeline-race-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .timeline-race-right {
+        justify-content: flex-start;
+    }
+}
