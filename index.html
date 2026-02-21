@@ -27,6 +27,7 @@
     <button class="nav-tab" data-view="standings">🏆 Classements</button>
     <button class="nav-tab" data-view="timeline">📆 Calendrier</button>
     <button class="nav-tab" data-view="sprint">⚡ Sprint</button>
+    <button class="nav-tab" data-view="admin" id="admin-tab" style="display: none;">⚙️ Administration</button>
 </nav>
 
 <main>
@@ -70,6 +71,62 @@
         </div>
         <div class="races-grid" id="sprint-grid"></div>
     </div>
+
+    <div id="view-admin" class="view">
+        <div class="section-header">
+            <h2>Administration</h2>
+            <p>Gestion des résultats de la saison</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: minmax(250px, 300px) 1fr; gap: 2rem; align-items: start;">
+            <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; max-height: 700px; overflow-y: auto;">
+                <p style="color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Sélectionnez une course</p>
+                <div id="admin-race-list" style="display: flex; flex-direction: column; gap: 0.25rem;"></div>
+            </div>
+
+            <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem;">
+                <div id="admin-no-selection" style="text-align: center; color: var(--muted); padding: 4rem 0;">
+                    <span style="font-size: 3rem;">🏁</span>
+                    <p style="margin-top: 1rem;">Cliquez sur une course à gauche pour l'éditer.</p>
+                </div>
+
+                <div id="admin-editor" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                        <div>
+                            <div id="edit-flag" style="font-size: 2.5rem; line-height: 1;"></div>
+                            <h2 id="edit-name" style="margin: 0.5rem 0 0.25rem; font-size: 1.5rem;"></h2>
+                            <p id="edit-date" style="color: var(--muted); font-size: 0.85rem;"></p>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; font-weight: bold;">Statut de la course</label>
+                            <select id="edit-status" style="background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: 8px; width: 100%; outline: none;">
+                                <option value="upcoming">À venir</option>
+                                <option value="next">Prochaine</option>
+                                <option value="completed">Terminée</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="edit-sprint-section" style="display: none; margin-bottom: 2.5rem;">
+                        <h3 style="color: var(--sprint-light); margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">⚡ Résultats Sprint</h3>
+                        <div id="edit-sprint-rows"></div>
+                        <button onclick="addAdminRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne au Sprint</button>
+                    </div>
+
+                    <div>
+                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">🏆 Résultats de la Course</h3>
+                        <div id="edit-race-rows"></div>
+                        <button onclick="addAdminRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne à la Course</button>
+                    </div>
+
+                    <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 1rem;">
+                        <button onclick="saveAdminResults()" style="background: var(--red); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: bold; cursor: pointer;">💾 Sauvegarder</button>
+                        <button onclick="clearAdminResults()" style="background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">🗑️ Tout effacer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <div id="modal-overlay" class="modal-overlay">
@@ -78,11 +135,21 @@
     </div>
 </div>
 
+<div id="admin-login-overlay" class="modal-overlay">
+    <div class="modal" style="max-width: 350px; padding: 2.5rem; text-align: center; border-top: 3px solid var(--red);">
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Administration</h2>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Accès réservé</p>
+        <input type="password" id="admin-pwd" placeholder="Mot de passe" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 1rem; outline: none;">
+        <button onclick="loginAdmin()" style="width: 100%; background: var(--red); color: white; border: none; padding: 0.85rem; border-radius: 8px; font-weight: bold; cursor: pointer;">Connexion</button>
+        <p id="admin-error" style="color: var(--red); font-size: 0.85rem; margin-top: 1rem; display: none;">Mot de passe incorrect</p>
+    </div>
+</div>
+
+
 <script src="data.js"></script>
 <script src="app.js"></script>
 
-<a href="admin.html" style="position:fixed;bottom:20px;right:20px;background:#111;border:1px solid #333;color:#555;padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;text-decoration:none;z-index:9999;">Admin</a>
-
+<button id="btn-toggle-admin" onclick="showAdminLogin()" style="position:fixed;bottom:20px;right:20px;background:#111;border:1px solid #333;color:#555;padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;cursor:pointer;z-index:9999;">Admin</button>
 
 </body>
 </html>
