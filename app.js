@@ -11,6 +11,7 @@ try {
                 const found = savedData.find(r => r.round === race.round);
                 if (found) {
                     race.status = found.status || "upcoming";
+                    race.sprintStatus = found.sprintStatus || "upcoming"; 
                     race.result = found.result || null;
                     race.sprintResult = found.sprintResult || null;
                 }
@@ -63,7 +64,7 @@ function renderAllRaces() {
     let html = "";
 
     races.forEach((race, index) => {
-        const statusClass = getStatusClass(race.status);
+        const statusClass = getStatusClass(race.status); 
         const badgeClass = getBadgeClass(race.status);
         const badgeLabel = getBadgeLabel(race.status);
 
@@ -122,19 +123,17 @@ function renderStandings() {
     constructors.forEach(c => { constructorsMap[c.team] = { team: c.team, flag: c.flag, points: 0 }; });
 
     races.forEach(race => {
-        if (race.status === "completed") {
-            if (race.result && race.result.fullResults) {
-                race.result.fullResults.forEach(entry => {
-                    if (driversMap[entry.driver]) driversMap[entry.driver].points += entry.points || 0;
-                    if (constructorsMap[entry.team]) constructorsMap[entry.team].points += entry.points || 0;
-                });
-            }
-            if (race.sprintResult && race.sprintResult.fullResults) {
-                race.sprintResult.fullResults.forEach(entry => {
-                    if (driversMap[entry.driver]) driversMap[entry.driver].points += entry.points || 0;
-                    if (constructorsMap[entry.team]) constructorsMap[entry.team].points += entry.points || 0;
-                });
-            }
+        if (race.status === "completed" && race.result && race.result.fullResults) {
+            race.result.fullResults.forEach(entry => {
+                if (driversMap[entry.driver]) driversMap[entry.driver].points += entry.points || 0;
+                if (constructorsMap[entry.team]) constructorsMap[entry.team].points += entry.points || 0;
+            });
+        }
+        if (race.sprintStatus === "completed" && race.sprintResult && race.sprintResult.fullResults) {
+            race.sprintResult.fullResults.forEach(entry => {
+                if (driversMap[entry.driver]) driversMap[entry.driver].points += entry.points || 0;
+                if (constructorsMap[entry.team]) constructorsMap[entry.team].points += entry.points || 0;
+            });
         }
     });
 
@@ -171,50 +170,58 @@ function renderTimeline() {
     const months = {};
 
     races.forEach(race => {
-        let key = "Décembre 2026";
-        for (const m of monthKeys) {
-            if (race.dates && race.dates.full && race.dates.full.includes(m)) { key = m + " 2026"; break; }
+        let key = "Décembre";
+        for (let i = 0; i < monthKeys.length; i++) {
+            let m = monthKeys[i];
+            if (race.dates && race.dates.race && race.dates.race.indexOf(m) !== -1) { 
+                key = m; 
+                break; 
+            }
         }
         if (!months[key]) months[key] = [];
         months[key].push(race);
     });
 
     let html = "";
-    for (const [month, monthRaces] of Object.entries(months)) {
-        html += `<div class="timeline-month"><div class="timeline-month-label">📆 ${month}</div>`;
-        monthRaces.forEach(race => {
-            const dateRace = (race.dates && race.dates.race) ? race.dates.race : "";
-            html += `
-                <div class="timeline-race-item ${getStatusClass(race.status)}" onclick="openModal(${race.round - 1})">
-                    <div class="timeline-race-left">
-                        <span class="timeline-flag">${race.flag}</span>
-                        <div>
-                            <div class="timeline-race-name">${race.name}</div>
-                            <div class="timeline-race-date">Round ${race.round} — ${dateRace}</div>
+    monthKeys.forEach(m => {
+        if (months[m]) {
+            html += `<div class="timeline-month"><div class="timeline-month-label">📆 ${m} 2026</div>`;
+            months[m].forEach(race => {
+                const dateRace = (race.dates && race.dates.race) ? race.dates.race : "";
+                html += `
+                    <div class="timeline-race-item ${getStatusClass(race.status)}" onclick="openModal(${race.round - 1})">
+                        <div class="timeline-race-left">
+                            <span class="timeline-flag">${race.flag}</span>
+                            <div>
+                                <div class="timeline-race-name">${race.name}</div>
+                                <div class="timeline-race-date">Round ${race.round} — ${dateRace}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeline-race-right">
-                        ${race.sprint ? '<span class="sprint-tag">⚡ Sprint</span>' : ""}
-                        ${race.isNew ? '<span class="new-tag">🆕</span>' : ""}
-                        <span class="badge ${getBadgeClass(race.status)}">${getBadgeLabel(race.status)}</span>
-                    </div>
-                </div>`;
-        });
-        html += `</div>`;
-    }
+                        <div class="timeline-race-right">
+                            ${race.sprint ? '<span class="sprint-tag">⚡ Sprint</span>' : ""}
+                            ${race.isNew ? '<span class="new-tag">🆕</span>' : ""}
+                            <span class="badge ${getBadgeClass(race.status)}">${getBadgeLabel(race.status)}</span>
+                        </div>
+                    </div>`;
+            });
+            html += `</div>`;
+        }
+    });
     document.getElementById("timeline-content").innerHTML = html;
 }
 
 function renderSprintView() {
     const sprintRaces = races.filter(r => r.sprint);
-    const doneSprints = sprintRaces.filter(r => r.status === "completed");
+    const doneSprints = sprintRaces.filter(r => r.sprintStatus === "completed");
 
     document.getElementById("sprint-done-count").textContent = doneSprints.length;
     document.getElementById("sprint-total-count").textContent = sprintRaces.length;
 
     let html = "";
     sprintRaces.forEach(race => {
-        const hasResult = race.status === "completed" && race.sprintResult && race.sprintResult.podium;
+        const actualStatus = race.sprintStatus || "upcoming";
+        const hasResult = actualStatus === "completed" && race.sprintResult && race.sprintResult.podium;
+        
         let podiumHTML = hasResult ? `
             <div class="race-result">
                 <div class="podium">
@@ -231,10 +238,10 @@ function renderSprintView() {
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
         html += `
-            <div class="race-card sprint-card" onclick="openModal(${race.round - 1})">
+            <div class="race-card sprint-card ${getStatusClass(actualStatus)}" onclick="openModal(${race.round - 1})">
                 <div class="race-card-header">
                     <span class="race-round sprint-round">R${race.round} ⚡</span>
-                    <span class="badge ${getBadgeClass(race.status)}">${getBadgeLabel(race.status)}</span>
+                    <span class="badge ${getBadgeClass(actualStatus)}">${getBadgeLabel(actualStatus)}</span>
                 </div>
                 <div class="race-card-body">
                     <div class="race-flag-name">
@@ -274,49 +281,51 @@ function openModal(index) {
     }).join("") : "";
 
     let resultsHTML = "";
-    if (race.status === "completed") {
-        if (race.result && race.result.fullResults) {
-            resultsHTML += `
-                <div class="modal-section">
-                    <div class="modal-section-title">🏁 Résultats Course</div>
-                    <table class="full-results-table">
-                        <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
-                        <tbody>
-                            ${race.result.fullResults.map((entry, idx) => `
-                                <tr>
-                                    <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
-                                    <td>${entry.driver}</td>
-                                    <td style="color:var(--muted)">${entry.team}</td>
-                                    <td style="color:var(--muted)">${entry.time || '-'}</td>
-                                    <td class="points-cell">${entry.points}</td>
-                                </tr>`).join("")}
-                        </tbody>
-                    </table>
-                </div>`;
-        }
-        if (race.sprintResult && race.sprintResult.fullResults) {
-            resultsHTML += `
-                <div class="modal-section">
-                    <div class="modal-section-title">⚡ Résultats Sprint</div>
-                    <table class="full-results-table">
-                        <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
-                        <tbody>
-                            ${race.sprintResult.fullResults.map((entry, idx) => `
-                                <tr>
-                                    <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
-                                    <td>${entry.driver}</td>
-                                    <td style="color:var(--muted)">${entry.team}</td>
-                                    <td style="color:var(--muted)">${entry.time || '-'}</td>
-                                    <td class="points-cell">${entry.points}</td>
-                                </tr>`).join("")}
-                        </tbody>
-                    </table>
-                </div>`;
-        }
-    } 
+    
+    // Résultats Sprint (Si terminé)
+    if (race.sprint && race.sprintStatus === "completed" && race.sprintResult && race.sprintResult.fullResults) {
+        resultsHTML += `
+            <div class="modal-section">
+                <div class="modal-section-title">⚡ Résultats Sprint</div>
+                <table class="full-results-table">
+                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+                    <tbody>
+                        ${race.sprintResult.fullResults.map((entry, idx) => `
+                            <tr>
+                                <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
+                                <td>${entry.driver}</td>
+                                <td style="color:var(--muted)">${entry.team}</td>
+                                <td style="color:var(--muted)">${entry.time || '-'}</td>
+                                <td class="points-cell">${entry.points}</td>
+                            </tr>`).join("")}
+                    </tbody>
+                </table>
+            </div>`;
+    }
+
+    // Résultats Course (Si terminée)
+    if (race.status === "completed" && race.result && race.result.fullResults) {
+        resultsHTML += `
+            <div class="modal-section">
+                <div class="modal-section-title">🏁 Résultats Course</div>
+                <table class="full-results-table">
+                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+                    <tbody>
+                        ${race.result.fullResults.map((entry, idx) => `
+                            <tr>
+                                <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
+                                <td>${entry.driver}</td>
+                                <td style="color:var(--muted)">${entry.team}</td>
+                                <td style="color:var(--muted)">${entry.time || '-'}</td>
+                                <td class="points-cell">${entry.points}</td>
+                            </tr>`).join("")}
+                    </tbody>
+                </table>
+            </div>`;
+    }
     
     if (resultsHTML === "") {
-        resultsHTML = `<div class="modal-section"><div class="no-data-box"><div style="font-size:3rem">🏎️</div><p>Les résultats seront disponibles après la course.</p></div></div>`;
+        resultsHTML = `<div class="modal-section"><div class="no-data-box"><div style="font-size:3rem">🏎️</div><p>Les résultats seront disponibles une fois l'événement terminé.</p></div></div>`;
     }
 
     const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
@@ -434,12 +443,37 @@ function selectAdminRace(index) {
     document.getElementById("edit-date").textContent = dateFull + " — " + race.circuit;
     document.getElementById("edit-status").value = race.status;
 
+    // Gestion de l'affichage du statut Sprint (Injection dynamique)
+    const sprintSection = document.getElementById("edit-sprint-section");
     if (race.sprint) {
-        document.getElementById("edit-sprint-section").style.display = "block";
+        sprintSection.style.display = "block";
+        
+        let sprintHeader = document.getElementById("edit-sprint-header");
+        if (!sprintHeader) {
+            const h3 = sprintSection.querySelector("h3");
+            if (h3) {
+                h3.outerHTML = `
+                    <div id="edit-sprint-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                        <h3 style="color:var(--sprint-light); margin:0; font-size:1rem; display:flex; align-items:center; gap:0.5rem;">⚡ Résultats Sprint</h3>
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <label style="font-size:0.8rem; color:var(--muted); font-weight:bold;">Statut Sprint</label>
+                            <select id="edit-sprint-status" style="background:var(--card2); color:var(--text); border:1px solid var(--border); padding:0.4rem 0.6rem; border-radius:6px; outline:none;">
+                                <option value="upcoming">À venir</option>
+                                <option value="next">Prochain</option>
+                                <option value="completed">Terminé</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        document.getElementById("edit-sprint-status").value = race.sprintStatus || "upcoming";
+
         const sResults = (race.sprintResult && race.sprintResult.fullResults) ? race.sprintResult.fullResults : [];
         renderAdminRows(sResults, "edit-sprint-rows", "sprint");
     } else {
-        document.getElementById("edit-sprint-section").style.display = "none";
+        sprintSection.style.display = "none";
     }
 
     const rResults = (race.result && race.result.fullResults) ? race.result.fullResults : [];
@@ -456,7 +490,7 @@ function renderAdminRows(data, containerId, type) {
     data.forEach(row => container.appendChild(createAdminRow(row, type)));
 }
 
-// Calcule automatiquement les points en fonction de la position
+// L'attribution des points automatique (avec blocage au delà de la position 10 ou 8)
 function updateAdminPoints(input, type) {
     const pos = parseInt(input.value);
     const row = input.parentElement;
@@ -467,8 +501,11 @@ function updateAdminPoints(input, type) {
         return;
     }
     
-    const ptsSystem = (type === "sprint") ? sprintPoints : pointsSystem;
-    ptsInput.value = ptsSystem[pos - 1] || 0; // Si au delà de la 10ème ou 8ème place, 0 point.
+    const racePoints = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+    const sprintPoints = [8, 7, 6, 5, 4, 3, 2, 1];
+    const ptsSystem = (type === "sprint") ? sprintPoints : racePoints;
+    
+    ptsInput.value = ptsSystem[pos - 1] || 0; // 0 point si on est au delà des places payantes
 }
 
 function createAdminRow(data = {}, type = "race") {
@@ -478,15 +515,15 @@ function createAdminRow(data = {}, type = "race") {
     
     const maxPts = (type === "sprint") ? 8 : 25;
 
-    // Création du menu déroulant pour les pilotes (basé sur le fichier data.js)
     let driverOptions = `<option value="">Pilote...</option>`;
     drivers.forEach(d => {
         const selected = (data.driver === d.driver) ? "selected" : "";
         driverOptions += `<option value="${d.driver}" data-team="${d.team}" ${selected}>${d.driver}</option>`;
     });
 
+    // Écurie remise en "readonly" avec curseur interdit
     div.innerHTML = `
-        <input type="number" class="pos-input" placeholder="#" value="${data.pos || ''}" oninput="updateAdminPoints(this, '${type}')" style="width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;">
+        <input type="number" class="pos-input" placeholder="#" value="${data.pos || ''}" oninput="updateAdminPoints(this, '${type}')" min="1" max="22" style="width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;">
         <select class="driver-select" onchange="this.parentElement.querySelector('.team-input').value = this.options[this.selectedIndex].getAttribute('data-team') || ''" style="width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;">
             ${driverOptions}
         </select>
@@ -501,7 +538,15 @@ function createAdminRow(data = {}, type = "race") {
 function addAdminRow(type) {
     const containerId = type === 'sprint' ? 'edit-sprint-rows' : 'edit-race-rows';
     const container = document.getElementById(containerId);
-    const nextPos = container.querySelectorAll('.admin-row').length + 1;
+    const currentRowsCount = container.querySelectorAll('.admin-row').length;
+    
+    // Blocage à 22 pilotes maximum
+    if (currentRowsCount >= 22) {
+        alert("Vous avez atteint la limite de 22 pilotes.");
+        return;
+    }
+    
+    const nextPos = currentRowsCount + 1;
     container.appendChild(createAdminRow({pos: nextPos}, type));
 }
 
@@ -509,6 +554,11 @@ function saveAdminResults() {
     if (adminCurrentRace === null) return;
     const race = races[adminCurrentRace];
     race.status = document.getElementById("edit-status").value;
+
+    if (race.sprint) {
+        const sprintStatusEl = document.getElementById("edit-sprint-status");
+        if (sprintStatusEl) race.sprintStatus = sprintStatusEl.value;
+    }
 
     const extractData = (containerId) => {
         const rows = [];
@@ -540,6 +590,7 @@ function saveAdminResults() {
     const toSave = races.map(r => ({
         round: r.round,
         status: r.status,
+        sprintStatus: r.sprintStatus,
         result: r.result,
         sprintResult: r.sprintResult
     }));
@@ -552,7 +603,7 @@ function saveAdminResults() {
     updateStats();
     renderAdminRaceList();
 
-    alert("✅ Résultats sauvegardés !");
+    alert("✅ Résultats sauvegardés et mis à jour !");
 }
 
 function clearAdminResults() {
@@ -560,6 +611,7 @@ function clearAdminResults() {
     if (!confirm("Attention : Voulez-vous vraiment effacer tous les résultats de cette course ?")) return;
     const race = races[adminCurrentRace];
     race.status = "upcoming";
+    race.sprintStatus = "upcoming";
     race.result = null;
     race.sprintResult = null;
     saveAdminResults();
