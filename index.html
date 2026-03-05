@@ -91,19 +91,31 @@
                 </div>
 
                 <div id="admin-editor" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
                         <div>
                             <div id="edit-flag" style="font-size: 2.5rem; line-height: 1;"></div>
                             <h2 id="edit-name" style="margin: 0.5rem 0 0.25rem; font-size: 1.5rem;"></h2>
                             <p id="edit-date" style="color: var(--muted); font-size: 0.85rem;"></p>
                         </div>
-                        <div>
-                            <label style="display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; font-weight: bold;">Statut de la course</label>
-                            <select id="edit-status" style="background: var(--card2); color: var(--text); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: 8px; width: 100%; outline: none;">
-                                <option value="upcoming">À venir</option>
-                                <option value="next">Prochaine</option>
-                                <option value="completed">Terminée</option>
-                            </select>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
+                            <!-- Statut Sprint (caché si pas de sprint) -->
+                            <div id="edit-sprint-status-header" style="display: none; min-width: 160px;">
+                                <label style="display: block; font-size: 0.8rem; color: var(--sprint-light); margin-bottom: 0.5rem; font-weight: bold;">⚡ Statut Sprint</label>
+                                <select id="edit-sprint-status" style="background: var(--card2); color: var(--text); border: 1px solid rgba(124,58,237,0.5); padding: 0.6rem 1rem; border-radius: 8px; width: 100%; outline: none;">
+                                    <option value="upcoming">À venir</option>
+                                    <option value="next">Prochain</option>
+                                    <option value="completed">✓ Terminé</option>
+                                </select>
+                            </div>
+                            <!-- Statut Course Dimanche -->
+                            <div style="min-width: 160px;">
+                                <label style="display: block; font-size: 0.8rem; color: var(--red); margin-bottom: 0.5rem; font-weight: bold;">🏁 Statut Course</label>
+                                <select id="edit-status" style="background: var(--card2); color: var(--text); border: 1px solid rgba(225,6,0,0.5); padding: 0.6rem 1rem; border-radius: 8px; width: 100%; outline: none;">
+                                    <option value="upcoming">À venir</option>
+                                    <option value="next">Prochaine</option>
+                                    <option value="completed">✓ Terminée</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -145,7 +157,8 @@
     </div>
 </div>
 
-
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 
