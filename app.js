@@ -211,6 +211,7 @@ db.ref('f1_results_2026').on('value', snapshot => {
     renderStandings();
     renderTimeline();
     renderSprintView();
+    renderPalmares();
     updateStats();
     updateCountdown();
     if (isAdmin) renderAdminRaceList();
@@ -499,6 +500,171 @@ function renderTimeline() {
         }
     });
     document.getElementById("timeline-content").innerHTML = html;
+}
+
+function renderPalmares() {
+    const container = document.getElementById("palmares-content");
+    if (!container) return;
+
+    // Calculer les stats par équipe
+    const teamStats = {};
+    constructors.forEach(c => {
+        teamStats[c.team] = { team: c.team, flag: c.flag, wins: 0, podiums: 0, poles: 0, winRaces: [] };
+    });
+
+    // Calculer les stats par pilote
+    const driverStats = {};
+    drivers.forEach(d => {
+        driverStats[d.driver] = { driver: d.driver, team: d.team, flag: d.flag, wins: 0, podiums: 0, poles: 0, winRaces: [] };
+    });
+
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs !== "completed" || !race.result || !race.result.fullResults) return;
+
+        race.result.fullResults.forEach(r => {
+            if (r.pos <= 3) {
+                if (teamStats[r.team]) teamStats[r.team].podiums++;
+                if (driverStats[r.driver]) driverStats[r.driver].podiums++;
+            }
+            if (r.pos === 1) {
+                if (teamStats[r.team]) { teamStats[r.team].wins++; teamStats[r.team].winRaces.push(race.name); }
+                if (driverStats[r.driver]) { driverStats[r.driver].wins++; driverStats[r.driver].winRaces.push(race.name); }
+            }
+        });
+
+        // Poles
+        if (race.qualiResults && race.qualiResults.length > 0) {
+            const pole = race.qualiResults[0];
+            if (teamStats[pole.team]) teamStats[pole.team].poles++;
+            if (driverStats[pole.driver]) driverStats[pole.driver].poles++;
+        }
+    });
+
+    // Trier par victoires puis podiums
+    const sortedTeams = Object.values(teamStats).filter(t => t.wins > 0 || t.podiums > 0).sort((a, b) => b.wins - a.wins || b.podiums - a.podiums);
+    const sortedDrivers = Object.values(driverStats).filter(d => d.wins > 0 || d.podiums > 0).sort((a, b) => b.wins - a.wins || b.podiums - a.podiums);
+
+    // Podium des 3 meilleures équipes
+    let teamPodiumHTML = "";
+    if (sortedTeams.length >= 1) {
+        const top3 = sortedTeams.slice(0, 3);
+        // Remplir jusqu'à 3
+        while (top3.length < 3) top3.push({ team: "-", flag: "", wins: 0, podiums: 0, poles: 0, winRaces: [] });
+
+        teamPodiumHTML = `
+        <div class="palmares-section">
+            <h3 class="palmares-title">🏭 Meilleures Écuries</h3>
+            <div class="podium-stage">
+                ${top3.map((t, i) => {
+                    const pos = i + 1;
+                    const color = teamColors[t.team] || "#666";
+                    const logo = teamLogos[t.team] || "";
+                    const posLabel = pos === 1 ? "1ST" : pos === 2 ? "2ND" : "3RD";
+                    return `
+                    <div class="podium-card podium-p${pos}" style="--team-color:${color}">
+                        <div class="podium-crown">${pos === 1 ? '👑' : ''}</div>
+                        <div class="podium-position">${posLabel}</div>
+                        ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${t.team}" onerror="this.style.display='none'">` : ''}
+                        <div class="podium-team-bar"></div>
+                        <div class="podium-driver-name">${t.team || '-'}</div>
+                        <div class="podium-team-name">${t.wins} victoire${t.wins > 1 ? 's' : ''} — ${t.podiums} podium${t.podiums > 1 ? 's' : ''}</div>
+                        <div class="podium-pillar">
+                            <span class="podium-pillar-num">${t.wins}</span>
+                        </div>
+                    </div>`;
+                }).join("")}
+            </div>
+        </div>`;
+    }
+
+    // Podium des 3 meilleurs pilotes
+    let driverPodiumHTML = "";
+    if (sortedDrivers.length >= 1) {
+        const top3d = sortedDrivers.slice(0, 3);
+        while (top3d.length < 3) top3d.push({ driver: "-", team: "", flag: "", wins: 0, podiums: 0, poles: 0, winRaces: [] });
+
+        driverPodiumHTML = `
+        <div class="palmares-section">
+            <h3 class="palmares-title">🧑‍🚀 Meilleurs Pilotes</h3>
+            <div class="podium-stage">
+                ${top3d.map((d, i) => {
+                    const pos = i + 1;
+                    const color = teamColors[d.team] || "#666";
+                    const logo = teamLogos[d.team] || "";
+                    const posLabel = pos === 1 ? "1ST" : pos === 2 ? "2ND" : "3RD";
+                    return `
+                    <div class="podium-card podium-p${pos}" style="--team-color:${color}">
+                        <div class="podium-crown">${pos === 1 ? '👑' : ''}</div>
+                        <div class="podium-position">${posLabel}</div>
+                        ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${d.team}" onerror="this.style.display='none'">` : ''}
+                        <div class="podium-team-bar"></div>
+                        <div class="podium-driver-name">${d.flag} ${d.driver || '-'}</div>
+                        <div class="podium-team-name">${d.wins} victoire${d.wins > 1 ? 's' : ''} — ${d.podiums} podium${d.podiums > 1 ? 's' : ''}</div>
+                        <div class="podium-pillar">
+                            <span class="podium-pillar-num">${d.wins}</span>
+                        </div>
+                    </div>`;
+                }).join("")}
+            </div>
+        </div>`;
+    }
+
+    // Tableaux détaillés
+    let teamTableHTML = "";
+    if (sortedTeams.length > 0) {
+        teamTableHTML = `
+        <div class="palmares-section">
+            <h3 class="palmares-title">📊 Détail par Écurie</h3>
+            <table class="standings-table palmares-table">
+                <thead><tr><th>#</th><th>Écurie</th><th>🏆 Victoires</th><th>🥇 Podiums</th><th>⚡ Poles</th></tr></thead>
+                <tbody>
+                    ${sortedTeams.map((t, i) => {
+                        const color = teamColors[t.team] || "#666";
+                        return `<tr>
+                            <td style="font-weight:800;color:var(--muted)">${i + 1}</td>
+                            <td><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:8px;vertical-align:middle"></span>${t.flag} ${t.team}</td>
+                            <td style="font-weight:800;color:var(--gold)">${t.wins}</td>
+                            <td style="font-weight:700;color:var(--silver)">${t.podiums}</td>
+                            <td style="color:var(--muted)">${t.poles}</td>
+                        </tr>`;
+                    }).join("")}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    let driverTableHTML = "";
+    if (sortedDrivers.length > 0) {
+        driverTableHTML = `
+        <div class="palmares-section">
+            <h3 class="palmares-title">📊 Détail par Pilote</h3>
+            <table class="standings-table palmares-table">
+                <thead><tr><th>#</th><th>Pilote</th><th>Écurie</th><th>🏆 Vict.</th><th>🥇 Pod.</th><th>⚡ Poles</th></tr></thead>
+                <tbody>
+                    ${sortedDrivers.map((d, i) => {
+                        const color = teamColors[d.team] || "#666";
+                        return `<tr>
+                            <td style="font-weight:800;color:var(--muted)">${i + 1}</td>
+                            <td style="font-weight:700">${d.flag} ${d.driver}</td>
+                            <td><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:6px;vertical-align:middle"></span><span style="color:var(--muted);font-size:0.82rem">${d.team}</span></td>
+                            <td style="font-weight:800;color:var(--gold)">${d.wins}</td>
+                            <td style="font-weight:700;color:var(--silver)">${d.podiums}</td>
+                            <td style="color:var(--muted)">${d.poles}</td>
+                        </tr>`;
+                    }).join("")}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    // Si aucune course terminée
+    if (sortedTeams.length === 0 && sortedDrivers.length === 0) {
+        container.innerHTML = `<div class="no-data-box"><div style="font-size:3rem">🏁</div><p>Aucune course terminée pour le moment.</p><p style="color:var(--muted);font-size:0.85rem">Les statistiques apparaîtront après la première course.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = teamPodiumHTML + driverPodiumHTML + teamTableHTML + driverTableHTML;
 }
 
 function renderSprintView() {
@@ -1370,6 +1536,7 @@ function saveAdminResults() {
     renderStandings();
     renderTimeline();
     renderSprintView();
+    renderPalmares();
     updateStats();
     renderAdminRaceList();
     alert("✅ Résultats sauvegardés sur Firebase !");

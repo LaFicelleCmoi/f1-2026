@@ -43,6 +43,7 @@
     <button class="nav-tab" data-view="standings">🏆 Classements</button>
     <button class="nav-tab" data-view="timeline">📆 Calendrier</button>
     <button class="nav-tab" data-view="sprint">⚡ Sprint</button>
+    <button class="nav-tab" data-view="palmares">🏅 Palmarès</button>
     <button class="nav-tab" data-view="admin" id="admin-tab" style="display: none;">⚙️ Administration</button>
 </nav>
 
@@ -127,6 +128,14 @@
             <p><span id="sprint-done-count">0</span> / <span id="sprint-total-count">0</span> Sprints disputés</p>
         </div>
         <div class="races-grid" id="sprint-grid"></div>
+    </div>
+
+    <div id="view-palmares" class="view">
+        <div class="section-header">
+            <h2>🏅 Palmarès Saison 2026</h2>
+            <p>Victoires par équipe et pilotes</p>
+        </div>
+        <div id="palmares-content"></div>
     </div>
 
     <div id="view-admin" class="view">
