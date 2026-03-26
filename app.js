@@ -129,6 +129,12 @@ function renderAllRaces() {
         if (race.isNew) badgesHTML += `<span class="new-tag">🆕</span>`;
         badgesHTML += `<span class="badge ${getBadgeClass(rs)}">🏁 Course ${getBadgeLabel(rs)}</span>`;
 
+        // Extraire vainqueur et pole man automatiquement
+        const winner  = (rs === "completed" && race.result && race.result.fullResults)
+            ? race.result.fullResults.find(r => r.pos === 1) : null;
+        const poleMan = (race.qualiResults && race.qualiResults.length > 0)
+            ? race.qualiResults[0] : null;
+
         let podiumHTML = "";
         if (rs === "completed" && race.result && race.result.podium) {
             podiumHTML = `
@@ -145,6 +151,21 @@ function renderAllRaces() {
                 </div>`;
         } else {
             podiumHTML = `<div class="no-result">Résultats course à venir</div>`;
+        }
+
+        // Badges vainqueur / pole
+        let statsHTML = "";
+        if (winner || poleMan) {
+            statsHTML = `<div class="race-stats-row">`;
+            if (winner) {
+                const wTeamColor = teamColors[winner.team] || "#666";
+                statsHTML += `<div class="race-stat-chip"><span class="stat-color-dot" style="background:${wTeamColor}"></span><span class="stat-label">🏆</span><span class="stat-value">${winner.driver.split(' ').pop()}</span></div>`;
+            }
+            if (poleMan) {
+                const pTeamColor = teamColors[poleMan.team] || "#666";
+                statsHTML += `<div class="race-stat-chip"><span class="stat-color-dot" style="background:${pTeamColor}"></span><span class="stat-label">⏱️</span><span class="stat-value">${poleMan.driver.split(' ').pop()}</span></div>`;
+            }
+            statsHTML += `</div>`;
         }
 
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
@@ -165,6 +186,7 @@ function renderAllRaces() {
                     </div>
                     <div class="race-info-row"><span>📅</span><span>${dateFull}</span></div>
                     <div class="race-info-row"><span>🏟️</span><span>${race.circuit}</span></div>
+                    ${statsHTML}
                     ${podiumHTML}
                 </div>
             </div>`;
@@ -932,6 +954,154 @@ function addAdminQualiRow(type) {
     const container   = document.getElementById(containerId);
     const nextPos     = container.querySelectorAll('.admin-row').length + 1;
     container.appendChild(createAdminQualiRow({ pos: nextPos }));
+}
+
+// ============================================================
+// 🤖 IMPORT AUTOMATIQUE DEPUIS API F1 (Jolpica / Ergast)
+// ============================================================
+const API_BASE = "https://api.jolpi.ca/ergast/f1/2026";
+
+function resolveTeam(apiName) {
+    return teamAliases[apiName] || apiName;
+}
+
+function resolveDriver(givenName, familyName) {
+    const fullApi = `${givenName} ${familyName}`;
+    // Correspondance exacte
+    const exact = drivers.find(d => d.driver === fullApi);
+    if (exact) return exact;
+    // Correspondance par nom de famille
+    const byLast = drivers.find(d => d.driver.includes(familyName));
+    if (byLast) return byLast;
+    // Retour brut
+    return { driver: fullApi, team: "", flag: "" };
+}
+
+async function fetchRaceResults(round) {
+    const res = await fetch(`${API_BASE}/${round}/results.json?limit=30`);
+    const json = await res.json();
+    const results = json?.MRData?.RaceTable?.Races?.[0]?.Results || [];
+    return results.map(r => {
+        const d = resolveDriver(r.Driver.givenName, r.Driver.familyName);
+        return {
+            pos: parseInt(r.position),
+            driver: d.driver,
+            team: resolveTeam(r.Constructor.name),
+            time: r.Time ? r.Time.time : (r.status || "-"),
+            points: parseInt(r.points) || 0
+        };
+    });
+}
+
+async function fetchQualifying(round) {
+    const res = await fetch(`${API_BASE}/${round}/qualifying.json?limit=30`);
+    const json = await res.json();
+    const results = json?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults || [];
+    return results.map(r => {
+        const d = resolveDriver(r.Driver.givenName, r.Driver.familyName);
+        const bestTime = r.Q3 || r.Q2 || r.Q1 || "-";
+        return {
+            pos: parseInt(r.position),
+            driver: d.driver,
+            team: resolveTeam(r.Constructor.name),
+            time: bestTime
+        };
+    });
+}
+
+async function fetchSprintResults(round) {
+    const res = await fetch(`${API_BASE}/${round}/sprint.json?limit=30`);
+    const json = await res.json();
+    const results = json?.MRData?.RaceTable?.Races?.[0]?.SprintResults || [];
+    return results.map(r => {
+        const d = resolveDriver(r.Driver.givenName, r.Driver.familyName);
+        return {
+            pos: parseInt(r.position),
+            driver: d.driver,
+            team: resolveTeam(r.Constructor.name),
+            time: r.Time ? r.Time.time : (r.status || "-"),
+            points: parseInt(r.points) || 0
+        };
+    });
+}
+
+// Bouton import : remplit le formulaire admin avec les données API
+async function autoImportResults() {
+    if (adminCurrentRace === null) return;
+    const race  = races[adminCurrentRace];
+    const round = race.round;
+    const btn   = document.getElementById("btn-auto-import");
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Import en cours..."; }
+
+    let importedAny = false;
+    const errors = [];
+
+    try {
+        // 1. Résultats Course
+        try {
+            const raceData = await fetchRaceResults(round);
+            if (raceData.length > 0) {
+                renderAdminRows(raceData, "edit-race-rows", "race");
+                document.getElementById("edit-status").value = "completed";
+                importedAny = true;
+            }
+        } catch (e) { errors.push("Course: " + e.message); }
+
+        // 2. Qualifications Course
+        try {
+            const qualiData = await fetchQualifying(round);
+            if (qualiData.length > 0) {
+                renderAdminQualiRows(qualiData, "edit-race-quali-rows");
+                importedAny = true;
+            }
+        } catch (e) { errors.push("Qualifications: " + e.message); }
+
+        // 3. Sprint (si weekend sprint)
+        if (race.sprint) {
+            try {
+                const sprintData = await fetchSprintResults(round);
+                if (sprintData.length > 0) {
+                    renderAdminRows(sprintData, "edit-sprint-rows", "sprint");
+                    document.getElementById("edit-sprint-status").value = "completed";
+                    importedAny = true;
+                }
+            } catch (e) { errors.push("Sprint: " + e.message); }
+        }
+
+    } catch (e) {
+        errors.push("Erreur générale: " + e.message);
+    }
+
+    if (btn) {
+        btn.disabled = false;
+        if (importedAny) {
+            btn.textContent = "✅ Importé !";
+            btn.style.background = "var(--green)";
+            btn.style.borderColor = "var(--green)";
+            setTimeout(() => {
+                btn.textContent = "🤖 Import auto (API)";
+                btn.style.background = "";
+                btn.style.borderColor = "";
+            }, 3000);
+        } else {
+            btn.textContent = "❌ Aucune donnée trouvée";
+            btn.style.background = "#ef4444";
+            btn.style.borderColor = "#ef4444";
+            setTimeout(() => {
+                btn.textContent = "🤖 Import auto (API)";
+                btn.style.background = "";
+                btn.style.borderColor = "";
+            }, 3000);
+        }
+    }
+
+    if (errors.length > 0) {
+        console.warn("Import API — erreurs:", errors);
+    }
+
+    if (importedAny) {
+        alert(`✅ Import réussi !\n\nN'oubliez pas de cliquer "💾 Sauvegarder" pour enregistrer.${errors.length ? '\n\n⚠️ Certaines données n\'ont pas pu être importées:\n' + errors.join('\n') : ''}`);
+    }
 }
 
 function saveAdminResults() {

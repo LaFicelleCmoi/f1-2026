@@ -40,6 +40,31 @@ const teamColors = {
     "Cadillac":         "#1d1d1b"
 };
 
+// Mapping API constructor names → local names
+const teamAliases = {
+    "McLaren":           "McLaren",
+    "Mercedes":          "Mercedes",
+    "Red Bull":          "Red Bull Racing",
+    "red_bull":          "Red Bull Racing",
+    "Ferrari":           "Ferrari",
+    "Williams":          "Williams",
+    "RB F1 Team":        "Racing Bulls",
+    "Racing Bulls":      "Racing Bulls",
+    "rb":                "Racing Bulls",
+    "AlphaTauri":        "Racing Bulls",
+    "Aston Martin":      "Aston Martin",
+    "Haas F1 Team":      "Haas",
+    "Haas":              "Haas",
+    "Sauber":            "Audi",
+    "Kick Sauber":       "Audi",
+    "Audi":              "Audi",
+    "Alpine F1 Team":    "Alpine",
+    "Alpine":            "Alpine",
+    "Cadillac F1 Team":  "Cadillac",
+    "Cadillac":          "Cadillac",
+    "Andretti":          "Cadillac"
+};
+
 const constructors = [
     { team: "McLaren", flag: "🇬🇧" },
     { team: "Mercedes", flag: "🇩🇪" },

@@ -105,6 +105,7 @@
                                     <option value="upcoming">À venir</option>
                                     <option value="next">Prochain</option>
                                     <option value="completed">✓ Terminé</option>
+                                    <option value="cancelled">✕ Annulé</option>
                                 </select>
                             </div>
                             <!-- Statut Course Dimanche -->
@@ -114,6 +115,7 @@
                                     <option value="upcoming">À venir</option>
                                     <option value="next">Prochaine</option>
                                     <option value="completed">✓ Terminée</option>
+                                    <option value="cancelled">✕ Annulée</option>
                                 </select>
                             </div>
                         </div>
@@ -125,14 +127,31 @@
                         <button onclick="addAdminRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne au Sprint</button>
                     </div>
 
+                    <!-- Qualifications Sprint (uniquement si sprint weekend) -->
+                    <div id="edit-sprint-quali-section" style="display: none; margin-bottom: 2.5rem;">
+                        <h3 style="color: var(--sprint-light); margin-bottom: 0.3rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; opacity:0.8;">⚡ Qualifications Sprint <span style="font-size:0.7rem; color:var(--muted); font-weight:400;">(anti-spoil)</span></h3>
+                        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1rem;">Les résultats seront cachés derrière un bouton anti-spoil dans la modal publique.</p>
+                        <div id="edit-sprint-quali-rows"></div>
+                        <button onclick="addAdminQualiRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed rgba(124,58,237,0.4); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne (Quali Sprint)</button>
+                    </div>
+
+                    <!-- Qualifications Course -->
+                    <div style="margin-bottom: 2.5rem;">
+                        <h3 style="color: var(--muted); margin-bottom: 0.3rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">🔵 Qualifications Course <span style="font-size:0.7rem; color:var(--muted); font-weight:400;">(anti-spoil)</span></h3>
+                        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1rem;">Les résultats seront cachés derrière un bouton anti-spoil dans la modal publique.</p>
+                        <div id="edit-race-quali-rows"></div>
+                        <button onclick="addAdminQualiRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed rgba(59,130,246,0.4); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne (Quali Course)</button>
+                    </div>
+
                     <div>
                         <h3 style="margin-bottom: 1rem; font-size: 1rem;">🏆 Résultats de la Course</h3>
                         <div id="edit-race-rows"></div>
                         <button onclick="addAdminRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne à la Course</button>
                     </div>
 
-                    <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 1rem;">
+                    <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; flex-wrap: wrap;">
                         <button onclick="saveAdminResults()" style="background: var(--red); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: bold; cursor: pointer;">💾 Sauvegarder</button>
+                        <button id="btn-auto-import" onclick="autoImportResults()" style="background: transparent; color: var(--sprint-light); border: 1px solid rgba(124,58,237,0.5); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🤖 Import auto (API)</button>
                         <button onclick="clearAdminResults()" style="background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">🗑️ Tout effacer</button>
                     </div>
                 </div>
