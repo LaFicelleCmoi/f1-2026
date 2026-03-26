@@ -610,12 +610,27 @@ function openModal(index) {
             </div>`;
     }
 
+    // ── Helper : section déroulante (accordion) ──
+    function buildDropdownSection(title, icon, tableHTML, dropdownId) {
+        const wasOpen = sessionStorage.getItem(dropdownId) === "true";
+        return `
+            <div class="modal-section">
+                <div class="dropdown-header ${wasOpen ? 'open' : ''}" onclick="toggleDropdown('${dropdownId}')">
+                    <span>${icon} ${title}</span>
+                    <span class="dropdown-chevron">${wasOpen ? '▲' : '▼'}</span>
+                </div>
+                <div class="dropdown-content" id="${dropdownId}" style="${wasOpen ? '' : 'display:none;'}">
+                    ${tableHTML}
+                </div>
+            </div>`;
+    }
+
     let resultsHTML = "";
 
-    // ── Qualifications Sprint (anti-spoil) ──
+    // ── Qualifications Sprint (menu déroulant) ──
     if (race.sprint && race.sprintQualiResults && race.sprintQualiResults.length > 0) {
         const sqTable = buildQualiTable(race.sprintQualiResults);
-        resultsHTML += buildSpoilSection("Qualifications Sprint", "⚡", sqTable, `spoil-sq-${index}`);
+        resultsHTML += buildDropdownSection("Qualifications Sprint", "⚡", sqTable, `dropdown-sq-${index}`);
     }
 
     // ── Résultats Sprint (anti-spoil) ──
@@ -635,10 +650,10 @@ function openModal(index) {
         resultsHTML += buildSpoilSection("Résultats Sprint", "⚡", sprintTable, `spoil-sr-${index}`);
     }
 
-    // ── Qualifications Course (anti-spoil) ──
+    // ── Qualifications Course (menu déroulant) ──
     if (race.qualiResults && race.qualiResults.length > 0) {
         const rqTable = buildQualiTable(race.qualiResults);
-        resultsHTML += buildSpoilSection("Qualifications Course", "🔵", rqTable, `spoil-rq-${index}`);
+        resultsHTML += buildDropdownSection("Qualifications Course", "🏁", rqTable, `dropdown-rq-${index}`);
     }
 
     // ── Résultats Course (anti-spoil) ──
@@ -740,6 +755,22 @@ function hideSpoil(spoilId) {
     if (!wrapper) return;
     wrapper.classList.remove("revealed");
     sessionStorage.removeItem(spoilId);
+}
+
+function toggleDropdown(dropdownId) {
+    const content = document.getElementById(dropdownId);
+    if (!content) return;
+    const header = content.previousElementSibling;
+    const chevron = header.querySelector(".dropdown-chevron");
+    const isOpen = content.style.display !== "none";
+    content.style.display = isOpen ? "none" : "block";
+    header.classList.toggle("open", !isOpen);
+    if (chevron) chevron.textContent = isOpen ? "▼" : "▲";
+    if (isOpen) {
+        sessionStorage.removeItem(dropdownId);
+    } else {
+        sessionStorage.setItem(dropdownId, "true");
+    }
 }
 
 function switchView(view) {

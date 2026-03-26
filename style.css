@@ -872,6 +872,57 @@ main {
     border-bottom: 1px solid var(--border);
 }
 
+/* ── Dropdown accordion pour qualifs ── */
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.dropdown-header:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.dropdown-header.open {
+    border-radius: 10px 10px 0 0;
+    border-bottom-color: transparent;
+    color: white;
+    background: rgba(255,255,255,0.04);
+}
+
+.dropdown-chevron {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-content {
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 0.5rem;
+    background: rgba(0,0,0,0.15);
+    animation: dropdownSlide 0.25s ease-out;
+}
+
+@keyframes dropdownSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .schedule-grid {
     display: flex;
     flex-direction: column;
