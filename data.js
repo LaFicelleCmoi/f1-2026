@@ -26,6 +26,20 @@ const drivers = [
     { driver: "Valtteri Bottas", team: "Cadillac", flag: "🇫🇮" }
 ];
 
+const teamColors = {
+    "McLaren":          "#ff8000",
+    "Mercedes":         "#27f4d2",
+    "Red Bull Racing":  "#3671c6",
+    "Ferrari":          "#e8002d",
+    "Williams":         "#64c4ff",
+    "Racing Bulls":     "#6692ff",
+    "Aston Martin":     "#229971",
+    "Haas":             "#b6babd",
+    "Audi":             "#00e701",
+    "Alpine":           "#ff87bc",
+    "Cadillac":         "#1d1d1b"
+};
+
 const constructors = [
     { team: "McLaren", flag: "🇬🇧" },
     { team: "Mercedes", flag: "🇩🇪" },

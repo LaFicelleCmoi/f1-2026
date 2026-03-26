@@ -181,19 +181,22 @@ function renderStandings() {
 
     races.forEach(race => {
         const rs = race.raceStatus || race.status || "upcoming";
-        if (rs === "completed") {
-            if (race.result && race.result.fullResults) {
-                race.result.fullResults.forEach(entry => {
-                    if (driversMap[entry.driver])      driversMap[entry.driver].points      += entry.points || 0;
-                    if (constructorsMap[entry.team])   constructorsMap[entry.team].points   += entry.points || 0;
-                });
-            }
-            if (race.sprintResult && race.sprintResult.fullResults) {
-                race.sprintResult.fullResults.forEach(entry => {
-                    if (driversMap[entry.driver])      driversMap[entry.driver].points      += entry.points || 0;
-                    if (constructorsMap[entry.team])   constructorsMap[entry.team].points   += entry.points || 0;
-                });
-            }
+        const ss = race.sprintStatus || "upcoming";
+
+        // Points course : uniquement si course terminée
+        if (rs === "completed" && race.result && race.result.fullResults) {
+            race.result.fullResults.forEach(entry => {
+                if (driversMap[entry.driver])      driversMap[entry.driver].points      += entry.points || 0;
+                if (constructorsMap[entry.team])   constructorsMap[entry.team].points   += entry.points || 0;
+            });
+        }
+
+        // Points sprint : indépendant du statut course
+        if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
+            race.sprintResult.fullResults.forEach(entry => {
+                if (driversMap[entry.driver])      driversMap[entry.driver].points      += entry.points || 0;
+                if (constructorsMap[entry.team])   constructorsMap[entry.team].points   += entry.points || 0;
+            });
         }
     });
 
@@ -691,6 +694,109 @@ function updateAdminPoints(posInput, type) {
     ptsInput.value  = ptsSystem[pos - 1] !== undefined ? ptsSystem[pos - 1] : 0;
 }
 
+// ── F1 Driver Picker (custom dropdown groupé par équipe) ──
+function createF1Picker(selectedDriver, onSelect) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "f1-picker";
+
+    // Bouton principal
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "f1-picker-btn";
+
+    function updateBtn(driverName) {
+        const d = drivers.find(x => x.driver === driverName);
+        if (d) {
+            const color = teamColors[d.team] || "#666";
+            btn.innerHTML = `
+                <span class="f1-color-bar" style="background:${color}"></span>
+                <span class="f1-picker-flag">${d.flag}</span>
+                <span class="f1-picker-label">${d.driver}</span>
+                <span class="f1-picker-team">${d.team}</span>
+                <span class="f1-picker-chevron">▼</span>`;
+        } else {
+            btn.innerHTML = `
+                <span class="f1-color-bar" style="background:#444"></span>
+                <span class="f1-picker-label" style="color:var(--muted)">Sélectionner un pilote...</span>
+                <span class="f1-picker-chevron">▼</span>`;
+        }
+    }
+    updateBtn(selectedDriver);
+
+    // Dropdown
+    const dropdown = document.createElement("div");
+    dropdown.className = "f1-picker-dropdown";
+
+    // Option vide
+    const emptyOpt = document.createElement("div");
+    emptyOpt.className = "f1-picker-option";
+    emptyOpt.innerHTML = `<span class="f1-opt-name" style="color:var(--muted)">— Aucun —</span>`;
+    emptyOpt.addEventListener("click", () => {
+        wrapper.classList.remove("open");
+        updateBtn("");
+        onSelect("", "");
+    });
+    dropdown.appendChild(emptyOpt);
+
+    // Grouper pilotes par équipe
+    const teams = {};
+    drivers.forEach(d => {
+        if (!teams[d.team]) teams[d.team] = [];
+        teams[d.team].push(d);
+    });
+
+    Object.keys(teams).forEach(team => {
+        const color = teamColors[team] || "#666";
+
+        // Label du groupe
+        const groupLabel = document.createElement("div");
+        groupLabel.className = "f1-picker-group-label";
+        groupLabel.innerHTML = `<span class="f1-picker-group-bar" style="background:${color}"></span>${team}`;
+        dropdown.appendChild(groupLabel);
+
+        // Pilotes du groupe
+        teams[team].forEach(d => {
+            const opt = document.createElement("div");
+            opt.className = "f1-picker-option" + (d.driver === selectedDriver ? " selected" : "");
+            opt.style.borderLeftColor = color;
+            opt.innerHTML = `<span class="f1-opt-flag">${d.flag}</span><span class="f1-opt-name">${d.driver}</span>`;
+            opt.addEventListener("click", () => {
+                wrapper.classList.remove("open");
+                dropdown.querySelectorAll(".f1-picker-option").forEach(o => o.classList.remove("selected"));
+                opt.classList.add("selected");
+                updateBtn(d.driver);
+                onSelect(d.driver, d.team);
+            });
+            dropdown.appendChild(opt);
+        });
+    });
+
+    // Toggle
+    btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Fermer les autres pickers ouverts
+        document.querySelectorAll(".f1-picker.open").forEach(p => { if (p !== wrapper) p.classList.remove("open"); });
+        wrapper.classList.toggle("open");
+    });
+
+    wrapper.appendChild(btn);
+    wrapper.appendChild(dropdown);
+
+    // Hidden input pour compatibilité avec extractData
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.className = "driver-select";
+    hidden.value = selectedDriver || "";
+    wrapper.appendChild(hidden);
+
+    return wrapper;
+}
+
+// Fermer tous les pickers si on clique ailleurs
+document.addEventListener("click", () => {
+    document.querySelectorAll(".f1-picker.open").forEach(p => p.classList.remove("open"));
+});
+
 function createAdminRow(data = {}, type = "race") {
     const div = document.createElement("div");
     div.className = "admin-row";
@@ -705,17 +811,6 @@ function createAdminRow(data = {}, type = "race") {
     posInput.value       = data.pos || "";
     posInput.style       = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
 
-    // PILOTE
-    const driverSelect = document.createElement("select");
-    driverSelect.className = "driver-select";
-    driverSelect.style     = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
-    let driverOptions = `<option value="">Pilote...</option>`;
-    drivers.forEach(d => {
-        const selected = data.driver === d.driver ? "selected" : "";
-        driverOptions += `<option value="${d.driver}" data-team="${d.team}" ${selected}>${d.driver}</option>`;
-    });
-    driverSelect.innerHTML = driverOptions;
-
     // ÉCURIE (readonly, auto-remplie)
     const teamInput = document.createElement("input");
     teamInput.type        = "text";
@@ -724,6 +819,13 @@ function createAdminRow(data = {}, type = "race") {
     teamInput.value       = data.team || "";
     teamInput.readOnly    = true;
     teamInput.style       = "width:100%; padding:0.5rem; background:var(--dark); border:1px solid var(--border); color:var(--muted); border-radius:6px; outline:none; cursor:not-allowed;";
+
+    // PILOTE (F1 Picker)
+    const picker = createF1Picker(data.driver || "", (driverName, teamName) => {
+        teamInput.value = teamName;
+        // Mettre à jour le hidden input
+        picker.querySelector(".driver-select").value = driverName;
+    });
 
     // TEMPS
     const timeInput = document.createElement("input");
@@ -749,20 +851,11 @@ function createAdminRow(data = {}, type = "race") {
     delBtn.style       = "background:transparent; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0.2rem;";
 
     // === EVENT LISTENERS ===
-    // Auto-points dès que la position change
     posInput.addEventListener("input", () => updateAdminPoints(posInput, type));
-
-    // Auto-écurie dès que le pilote change
-    driverSelect.addEventListener("change", () => {
-        const opt = driverSelect.options[driverSelect.selectedIndex];
-        teamInput.value = opt.getAttribute("data-team") || "";
-    });
-
-    // Supprimer la ligne
     delBtn.addEventListener("click", () => div.remove());
 
     div.appendChild(posInput);
-    div.appendChild(driverSelect);
+    div.appendChild(picker);
     div.appendChild(teamInput);
     div.appendChild(timeInput);
     div.appendChild(ptsInput);
@@ -804,19 +897,16 @@ function createAdminQualiRow(data = {}) {
     posInput.value = data.pos || "";
     posInput.style = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
 
-    const driverSelect = document.createElement("select");
-    driverSelect.className = "driver-select";
-    driverSelect.style = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
-    let opts = `<option value="">Pilote...</option>`;
-    drivers.forEach(d => {
-        opts += `<option value="${d.driver}" data-team="${d.team}" ${data.driver === d.driver ? 'selected' : ''}>${d.driver}</option>`;
-    });
-    driverSelect.innerHTML = opts;
-
     const teamInput = document.createElement("input");
     teamInput.type = "text"; teamInput.className = "team-input"; teamInput.placeholder = "Écurie";
     teamInput.value = data.team || ""; teamInput.readOnly = true;
     teamInput.style = "width:100%; padding:0.5rem; background:var(--dark); border:1px solid var(--border); color:var(--muted); border-radius:6px; outline:none; cursor:not-allowed;";
+
+    // F1 Picker
+    const picker = createF1Picker(data.driver || "", (driverName, teamName) => {
+        teamInput.value = teamName;
+        picker.querySelector(".driver-select").value = driverName;
+    });
 
     const timeInput = document.createElement("input");
     timeInput.type = "text"; timeInput.className = "time-input"; timeInput.placeholder = "1:20.123";
@@ -827,14 +917,10 @@ function createAdminQualiRow(data = {}) {
     delBtn.textContent = "✕";
     delBtn.style = "background:transparent; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0.2rem;";
 
-    driverSelect.addEventListener("change", () => {
-        const opt = driverSelect.options[driverSelect.selectedIndex];
-        teamInput.value = opt.getAttribute("data-team") || "";
-    });
     delBtn.addEventListener("click", () => div.remove());
 
     div.appendChild(posInput);
-    div.appendChild(driverSelect);
+    div.appendChild(picker);
     div.appendChild(teamInput);
     div.appendChild(timeInput);
     div.appendChild(delBtn);
