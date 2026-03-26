@@ -1621,97 +1621,140 @@ main {
     display: block;
 }
 
-/* ═══ Pilote déjà pris — Effet premium ═══ */
+/* ═══ Pilote déjà pris — Effet ULTIME ═══ */
 .f1-picker-disabled {
     pointer-events: none;
     position: relative;
     overflow: hidden;
     border-left-color: transparent !important;
-    padding-right: 90px;
+    padding-right: 95px;
+    height: 32px;
+    display: flex;
+    align-items: center;
     background:
+        repeating-linear-gradient(
+            -45deg,
+            rgba(229,0,0,0.03),
+            rgba(229,0,0,0.03) 3px,
+            transparent 3px,
+            transparent 8px
+        ),
         linear-gradient(105deg,
-            rgba(229,0,0,0.06) 0%,
-            rgba(20,20,20,0.95) 35%,
-            rgba(20,20,20,0.98) 65%,
-            rgba(229,0,0,0.06) 100%);
+            rgba(229,0,0,0.08) 0%,
+            rgba(10,10,10,0.97) 30%,
+            rgba(10,10,10,0.97) 70%,
+            rgba(229,0,0,0.08) 100%);
+    border-top: 1px solid rgba(229,0,0,0.1) !important;
+    border-bottom: 1px solid rgba(229,0,0,0.1) !important;
+    transition: none;
 }
 
-/* Scannage horizontal animé */
+/* Ligne de scan rouge animée */
 .f1-picker-disabled::before {
     content: "";
     position: absolute;
-    top: 0; left: -100%; bottom: 0;
-    width: 100%;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(229,0,0,0.08) 40%,
-        rgba(229,0,0,0.15) 50%,
-        rgba(229,0,0,0.08) 60%,
-        transparent 100%);
-    animation: disabledScan 3s ease-in-out infinite;
-    z-index: 1;
+    top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, transparent, var(--red), transparent);
+    box-shadow: 0 0 8px var(--red), 0 0 15px rgba(229,0,0,0.4);
+    animation: disabledLaserScan 2s ease-in-out infinite;
+    z-index: 2;
     pointer-events: none;
+    border-radius: 2px;
 }
-@keyframes disabledScan {
-    0%   { left: -100%; }
-    50%  { left: 100%; }
-    100% { left: 100%; }
+@keyframes disabledLaserScan {
+    0%   { left: 0; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { left: calc(100% - 3px); opacity: 0; }
 }
 
-/* Nom du pilote */
+/* Nom du pilote — glitch */
 .f1-picker-disabled .f1-opt-name {
-    color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.18);
     position: relative;
+    font-style: italic;
+    animation: disabledGlitch 4s ease-in-out infinite;
 }
+@keyframes disabledGlitch {
+    0%, 92%, 100% { opacity: 1; transform: none; }
+    93% { opacity: 0.5; transform: translateX(2px) skewX(-2deg); color: rgba(229,0,0,0.3); }
+    94% { opacity: 0.8; transform: translateX(-1px); }
+    95% { opacity: 0.5; transform: translateX(1px) skewX(1deg); color: rgba(0,150,255,0.2); }
+    96% { opacity: 1; transform: none; }
+}
+
 /* Double barre rouge sur le nom */
 .f1-picker-disabled .f1-opt-name::before,
 .f1-picker-disabled .f1-opt-name::after {
     content: "";
     position: absolute;
-    left: -2px; right: -2px;
+    left: -4px; right: -4px;
     height: 1.5px;
-    background: linear-gradient(90deg, transparent, var(--red), transparent);
     border-radius: 1px;
 }
-.f1-picker-disabled .f1-opt-name::before { top: 40%; }
-.f1-picker-disabled .f1-opt-name::after  { top: 60%; opacity: 0.5; }
-
-/* Drapeau noir et blanc + petit */
-.f1-picker-disabled .f1-opt-flag {
-    filter: grayscale(1) brightness(0.6);
-    font-size: 0.7em;
-    opacity: 0.4;
+.f1-picker-disabled .f1-opt-name::before {
+    top: 38%;
+    background: linear-gradient(90deg, transparent, var(--red), var(--red), transparent);
+    box-shadow: 0 0 4px rgba(229,0,0,0.5);
+}
+.f1-picker-disabled .f1-opt-name::after {
+    top: 62%;
+    background: linear-gradient(90deg, transparent, rgba(229,0,0,0.4), transparent);
 }
 
-/* Badge INDISPONIBLE */
+/* Drapeau — noir et blanc, réduit, pulsant */
+.f1-picker-disabled .f1-opt-flag {
+    filter: grayscale(1) brightness(0.4) contrast(0.8);
+    font-size: 0.65em;
+    opacity: 0.3;
+    animation: disabledFlagPulse 3s ease-in-out infinite;
+}
+@keyframes disabledFlagPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.15; }
+}
+
+/* Badge INDISPONIBLE — style terminal/militaire */
 .f1-picker-disabled::after {
     content: "⛔ INDISPONIBLE";
     position: absolute;
-    right: 6px;
+    right: 5px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.42rem;
+    font-size: 0.4rem;
     font-weight: 900;
     letter-spacing: 2px;
-    color: #fff;
-    background: linear-gradient(135deg, #b91c1c 0%, var(--red) 40%, #991b1b 100%);
-    padding: 0.2rem 0.55rem;
-    border-radius: 3px;
+    font-family: monospace;
+    color: #ff3333;
+    background:
+        linear-gradient(180deg, rgba(30,0,0,0.95), rgba(50,0,0,0.95));
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
     text-transform: uppercase;
     box-shadow:
-        0 0 10px rgba(229,0,0,0.4),
-        0 0 20px rgba(229,0,0,0.15),
-        inset 0 1px 0 rgba(255,255,255,0.15);
+        0 0 12px rgba(229,0,0,0.35),
+        0 0 25px rgba(229,0,0,0.1),
+        inset 0 0 15px rgba(229,0,0,0.15);
     z-index: 3;
-    border: 1px solid rgba(255,255,255,0.1);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    border: 1px solid rgba(229,0,0,0.5);
+    text-shadow: 0 0 6px rgba(255,0,0,0.6);
+    animation: disabledBadgePulse 2s ease-in-out infinite;
+}
+@keyframes disabledBadgePulse {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(229,0,0,0.35), 0 0 25px rgba(229,0,0,0.1), inset 0 0 15px rgba(229,0,0,0.15);
+        text-shadow: 0 0 6px rgba(255,0,0,0.6);
+    }
+    50% {
+        box-shadow: 0 0 18px rgba(229,0,0,0.5), 0 0 35px rgba(229,0,0,0.2), inset 0 0 20px rgba(229,0,0,0.25);
+        text-shadow: 0 0 10px rgba(255,0,0,0.9);
+    }
 }
 
-/* Barre rouge latérale qui remplace la couleur équipe */
-.f1-picker-disabled {
-    border-left: 3px solid transparent !important;
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+/* Vignette rouge sur les bords */
+.f1-picker-option.f1-picker-disabled {
+    box-shadow: inset 0 0 20px rgba(229,0,0,0.06);
 }
 
 .f1-picker-btn {
