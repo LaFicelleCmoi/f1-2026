@@ -307,15 +307,15 @@ const races = [
     {
         round: 17, name: "Grand Prix d'Azerbaïdjan", country: "Azerbaïdjan", flag: "🇦🇿",
         circuit: "Baku City Circuit", city: "Bakou",
-        dates: { full: "25 – 27 Septembre 2026", race: "27 Septembre 2026" },
+        dates: { full: "24 – 26 Septembre 2026", race: "26 Septembre 2026" },
         sprint: false, status: "upcoming", isNew: false,
         result: null,
         schedule: [
-            { day: "Vendredi", name: "Essais Libres 1", time: "11:30", type: "fp" },
-            { day: "Vendredi", name: "Essais Libres 2", time: "15:00", type: "fp" },
-            { day: "Samedi", name: "Essais Libres 3", time: "10:30", type: "fp" },
-            { day: "Samedi", name: "Qualifications", time: "14:00", type: "quali" },
-            { day: "Dimanche", name: "Course", time: "13:00", type: "race" }
+            { day: "Jeudi", name: "Essais Libres 1", time: "10:30", type: "fp" },
+            { day: "Jeudi", name: "Essais Libres 2", time: "14:00", type: "fp" },
+            { day: "Vendredi", name: "Essais Libres 3", time: "10:30", type: "fp" },
+            { day: "Vendredi", name: "Qualifications", time: "14:00", type: "quali" },
+            { day: "Samedi", name: "Course", time: "13:00", type: "race" }
         ]
     },
     {
