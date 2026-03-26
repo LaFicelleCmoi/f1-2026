@@ -1127,6 +1127,17 @@ function createF1Picker(selectedDriver, onSelect) {
     btn.type = "button";
     btn.className = "f1-picker-btn";
 
+    let locked = false;
+
+    function lockPicker() {
+        locked = true;
+        wrapper.classList.add("f1-picker-locked");
+    }
+    function unlockPicker() {
+        locked = false;
+        wrapper.classList.remove("f1-picker-locked");
+    }
+
     function updateBtn(driverName) {
         const d = drivers.find(x => x.driver === driverName);
         if (d) {
@@ -1135,16 +1146,29 @@ function createF1Picker(selectedDriver, onSelect) {
                 <span class="f1-color-bar" style="background:${color}"></span>
                 <span class="f1-picker-flag">${d.flag}</span>
                 <span class="f1-picker-label">${d.driver}</span>
-                <span class="f1-picker-team">${d.team}</span>
-                <span class="f1-picker-chevron">▼</span>`;
+                <span class="f1-picker-team">${d.team}</span>`;
+            lockPicker();
         } else {
             btn.innerHTML = `
                 <span class="f1-color-bar" style="background:#444"></span>
                 <span class="f1-picker-label" style="color:var(--muted)">Sélectionner un pilote...</span>
                 <span class="f1-picker-chevron">▼</span>`;
+            unlockPicker();
         }
     }
     updateBtn(selectedDriver);
+
+    // Bouton éditer (déverrouiller)
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "f1-picker-edit";
+    editBtn.innerHTML = "✏️";
+    editBtn.title = "Modifier le pilote";
+    editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        unlockPicker();
+        wrapper.classList.add("open");
+    });
 
     // Dropdown
     const dropdown = document.createElement("div");
@@ -1197,12 +1221,13 @@ function createF1Picker(selectedDriver, onSelect) {
     // Toggle
     btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        // Fermer les autres pickers ouverts
+        if (locked) return; // Ne pas ouvrir si verrouillé
         document.querySelectorAll(".f1-picker.open").forEach(p => { if (p !== wrapper) p.classList.remove("open"); });
         wrapper.classList.toggle("open");
     });
 
     wrapper.appendChild(btn);
+    wrapper.appendChild(editBtn);
     wrapper.appendChild(dropdown);
 
     // Hidden input pour compatibilité avec extractData
