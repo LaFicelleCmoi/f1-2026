@@ -12,12 +12,168 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
+
+// ============================================================
+// 🎨 THEME CLAIR / SOMBRE
+// ============================================================
+function initTheme() {
+    const saved = localStorage.getItem("f1-theme");
+    if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+        document.documentElement.setAttribute("data-theme", "light");
+    }
+    updateThemeIcon();
+}
+function toggleTheme() {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("f1-theme", next);
+    updateThemeIcon();
+    // Mettre a jour le meta theme-color
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = next === "light" ? "#e8e8e8" : "#e10600";
+}
+function updateThemeIcon() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    btn.textContent = document.documentElement.getAttribute("data-theme") === "light" ? "☀️" : "🌙";
+}
+initTheme();
+
+// ============================================================
+// ⏱️ COUNTDOWN TIMER
+// ============================================================
+const FRENCH_MONTHS = {
+    "Janvier":0,"Février":1,"Mars":2,"Avril":3,"Mai":4,"Juin":5,
+    "Juillet":6,"Août":7,"Septembre":8,"Octobre":9,"Novembre":10,"Décembre":11
+};
+
+function parseFrenchDate(str) {
+    if (!str) return null;
+    const parts = str.trim().split(/\s+/);
+    if (parts.length < 3) return null;
+    const day = parseInt(parts[0]);
+    const month = FRENCH_MONTHS[parts[1]];
+    const year = parseInt(parts[2]);
+    if (month === undefined || isNaN(day) || isNaN(year)) return null;
+    return new Date(year, month, day);
+}
+
+function getSessionDateTime(race, entry) {
+    const raceDate = parseFrenchDate(race.dates?.race);
+    if (!raceDate) return null;
+
+    const hasDimanche = race.schedule.some(s => s.day === "Dimanche");
+    const offsets = hasDimanche
+        ? { "Mercredi":-4, "Jeudi":-3, "Vendredi":-2, "Samedi":-1, "Dimanche":0 }
+        : { "Mercredi":-3, "Jeudi":-2, "Vendredi":-1, "Samedi":0 };
+
+    const dayOffset = offsets[entry.day] ?? 0;
+    const [h, m] = (entry.time || "0:0").split(":").map(Number);
+    const dt = new Date(raceDate);
+    dt.setDate(dt.getDate() + dayOffset);
+    dt.setHours(h, m, 0, 0);
+    return dt;
+}
+
+function getNextSession() {
+    const now = new Date();
+    let closest = null, closestRace = null, closestEntry = null;
+
+    for (const race of races) {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs === "completed" || rs === "cancelled") continue;
+        if (!race.schedule) continue;
+
+        for (const entry of race.schedule) {
+            const dt = getSessionDateTime(race, entry);
+            if (!dt || dt <= now) continue;
+            if (!closest || dt < closest) {
+                closest = dt;
+                closestRace = race;
+                closestEntry = entry;
+            }
+        }
+    }
+    return { date: closest, race: closestRace, session: closestEntry };
+}
+
+function updateCountdown() {
+    const el = document.getElementById("countdown-text");
+    if (!el) return;
+
+    const next = getNextSession();
+    if (!next.date) {
+        el.innerHTML = "🏁 <strong>Saison 2026 terminée</strong>";
+        return;
+    }
+
+    const now = new Date();
+    const diff = next.date - now;
+
+    if (diff <= 0) {
+        el.innerHTML = `🔴 <strong>EN COURS</strong> — ${next.session.name} ${next.race.flag} ${next.race.country}`;
+        return;
+    }
+
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000) / 60000);
+    const secs  = Math.floor((diff % 60000) / 1000);
+
+    let timeStr = "";
+    if (days > 0) timeStr += `${days}j `;
+    timeStr += `${String(hours).padStart(2,"0")}h ${String(mins).padStart(2,"0")}m ${String(secs).padStart(2,"0")}s`;
+
+    const shortName = next.race.name.replace("Grand Prix ", "GP ");
+    el.innerHTML = `<span style="color:var(--muted)">Prochain :</span> <strong>${next.session.name}</strong> ${next.race.flag} ${shortName} — <span style="color:var(--red);font-weight:800">${timeStr}</span>`;
+}
 
 // ============================================================
 // VARIABLES GLOBALES
 // ============================================================
-let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+let isAdmin = false;
 let adminCurrentRace = null;
+let activeFilters = { status: "all", type: "all", search: "" };
+
+// ============================================================
+// 🔐 FIREBASE AUTH
+// ============================================================
+auth.onAuthStateChanged(user => {
+    isAdmin = !!user;
+    const adminTab = document.getElementById("admin-tab");
+    const btnToggle = document.getElementById("btn-toggle-admin");
+    if (isAdmin) {
+        if (adminTab) adminTab.style.display = "block";
+        if (btnToggle) {
+            btnToggle.textContent = "Déconnexion Admin";
+            btnToggle.style.color = "var(--red)";
+        }
+        renderAdminRaceList();
+    } else {
+        if (adminTab) adminTab.style.display = "none";
+        if (btnToggle) {
+            btnToggle.textContent = "Admin";
+            btnToggle.style.color = "#555";
+        }
+        // Si on est sur l'onglet admin, revenir aux courses
+        const adminView = document.getElementById("view-admin");
+        if (adminView && adminView.classList.contains("active")) {
+            switchView("races");
+        }
+    }
+});
+
+// Skeleton de chargement
+(function showSkeleton() {
+    const grid = document.getElementById("races-grid");
+    if (grid && !grid.innerHTML.trim()) {
+        grid.innerHTML = Array(8).fill('<div class="skeleton"></div>').join('');
+    }
+})();
 
 // ============================================================
 // 🔥 CHARGEMENT FIREBASE (remplace localStorage)
@@ -56,6 +212,7 @@ db.ref('f1_results_2026').on('value', snapshot => {
     renderTimeline();
     renderSprintView();
     updateStats();
+    updateCountdown();
     if (isAdmin) renderAdminRaceList();
 });
 
@@ -121,7 +278,20 @@ function renderAllRaces() {
     if (!grid) return;
     let html = "";
 
-    races.forEach((race, index) => {
+    const filtered = races.filter(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (activeFilters.status !== "all" && rs !== activeFilters.status) return false;
+        if (activeFilters.type === "sprint" && !race.sprint) return false;
+        if (activeFilters.type === "standard" && race.sprint) return false;
+        if (activeFilters.search) {
+            const q = activeFilters.search.toLowerCase();
+            if (!(race.name + race.country + race.circuit + race.city).toLowerCase().includes(q)) return false;
+        }
+        return true;
+    });
+
+    filtered.forEach(race => {
+        const index = races.indexOf(race);
         const rs = race.raceStatus   || race.status || "upcoming";
         const ss = race.sprintStatus || "upcoming";
 
@@ -199,6 +369,10 @@ function renderAllRaces() {
                 </div>
             </div>`;
     });
+
+    if (filtered.length === 0) {
+        html = '<div class="no-data-box" style="grid-column:1/-1"><div style="font-size:3rem">🔍</div><p>Aucune course ne correspond aux filtres.</p></div>';
+    }
     grid.innerHTML = html;
 }
 
@@ -572,7 +746,9 @@ function hideSpoil(spoilId) {
 function switchView(view) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
-    document.getElementById("view-" + view).classList.add("active");
+    const target = document.getElementById("view-" + view);
+    void target.offsetWidth; // Force reflow pour re-trigger l'animation
+    target.classList.add("active");
     const activeTab = document.querySelector("[data-view='" + view + "']");
     if (activeTab) activeTab.classList.add("active");
 }
@@ -581,42 +757,34 @@ function switchView(view) {
 // ADMINISTRATION
 // --------------------------------------------------------
 
-if (isAdmin) {
-    const adminTab = document.getElementById("admin-tab");
-    const btnToggle = document.getElementById("btn-toggle-admin");
-    if (adminTab)   adminTab.style.display = "block";
-    if (btnToggle) {
-        btnToggle.textContent   = "Déconnexion Admin";
-        btnToggle.style.color   = "var(--red)";
-    }
-}
-
 function showAdminLogin() {
     if (isAdmin) {
-        sessionStorage.removeItem("isAdmin");
-        location.reload();
+        auth.signOut();
     } else {
         document.getElementById("admin-login-overlay").classList.add("open");
-        setTimeout(() => document.getElementById("admin-pwd").focus(), 100);
+        document.getElementById("admin-error").style.display = "none";
+        setTimeout(() => document.getElementById("admin-email").focus(), 100);
     }
 }
 
 function loginAdmin() {
-    const pwd = document.getElementById("admin-pwd").value;
-    if (pwd === "f1admin2026") {
-        sessionStorage.setItem("isAdmin", "true");
-        location.reload();
-    } else {
-        document.getElementById("admin-error").style.display = "block";
-    }
+    const email = document.getElementById("admin-email").value;
+    const pwd   = document.getElementById("admin-pwd").value;
+    const errEl = document.getElementById("admin-error");
+    errEl.style.display = "none";
+
+    auth.signInWithEmailAndPassword(email, pwd)
+        .then(() => {
+            document.getElementById("admin-login-overlay").classList.remove("open");
+        })
+        .catch(err => {
+            errEl.textContent = "Email ou mot de passe incorrect";
+            errEl.style.display = "block";
+        });
 }
 
-const pwdInput = document.getElementById("admin-pwd");
-if (pwdInput) {
-    pwdInput.addEventListener("keydown", function(e) {
-        if (e.key === "Enter") loginAdmin();
-    });
-}
+document.getElementById("admin-pwd")?.addEventListener("keydown", e => { if (e.key === "Enter") loginAdmin(); });
+document.getElementById("admin-email")?.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("admin-pwd").focus(); });
 
 function renderAdminRaceList() {
     const container = document.getElementById("admin-race-list");
@@ -1195,4 +1363,35 @@ window.onload = function () {
     document.addEventListener("keydown", e => {
         if (e.key === "Escape") document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
     });
+
+    // Theme toggle
+    document.getElementById("theme-toggle")?.addEventListener("click", toggleTheme);
+
+    // Countdown ticker
+    setInterval(updateCountdown, 1000);
+
+    // Filtres courses
+    document.querySelectorAll("#filter-status .filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("#filter-status .filter-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeFilters.status = btn.dataset.filter;
+            renderAllRaces();
+        });
+    });
+    document.querySelectorAll("#filter-type .filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("#filter-type .filter-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeFilters.type = btn.dataset.filter;
+            renderAllRaces();
+        });
+    });
+    const searchInput = document.getElementById("filter-search");
+    if (searchInput) searchInput.addEventListener("input", e => { activeFilters.search = e.target.value; renderAllRaces(); });
+
+    // PWA Service Worker
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
 };

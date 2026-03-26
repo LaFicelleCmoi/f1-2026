@@ -22,6 +22,29 @@
     --blue: #3b82f6;
 }
 
+/* ── Light theme overrides ── */
+[data-theme="light"] {
+    --dark: #f5f5f5;
+    --darker: #e8e8e8;
+    --card: #ffffff;
+    --card2: #f0f0f0;
+    --border: #d4d4d4;
+    --text: #1a1a1a;
+    --muted: #666666;
+}
+
+[data-theme="light"] header {
+    background: linear-gradient(135deg, #ffffff 0%, #fff0f0 100%);
+}
+
+[data-theme="light"] nav {
+    background: #ffffff;
+}
+
+[data-theme="light"] .modal-header {
+    background: linear-gradient(135deg, #ffffff, #fff5f5);
+}
+
 body {
     background: var(--darker);
     color: var(--text);
@@ -64,6 +87,31 @@ header {
     text-transform: uppercase;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.theme-toggle {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.theme-toggle:hover {
+    border-color: var(--red);
+}
+
 .stats-bar {
     display: flex;
     gap: 1.5rem;
@@ -74,6 +122,20 @@ header {
 .stats-bar strong {
     color: var(--text);
     font-size: 1rem;
+}
+
+.countdown-bar {
+    background: var(--dark);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 2rem;
+    font-size: 0.85rem;
+    text-align: center;
+    color: var(--text);
+    letter-spacing: 0.3px;
+}
+
+[data-theme="light"] .countdown-bar {
+    background: #ffffff;
 }
 
 nav {
@@ -121,6 +183,36 @@ main {
 
 .view.active {
     display: block;
+    animation: viewFadeIn 0.3s ease forwards;
+}
+
+@keyframes viewFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    height: 280px;
+    overflow: hidden;
+    position: relative;
+}
+
+.skeleton::after {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 .section-header {
@@ -137,6 +229,75 @@ main {
     color: var(--muted);
     margin-top: 0.25rem;
     font-size: 0.9rem;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.filter-options {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.filter-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: var(--red);
+    color: var(--text);
+}
+
+.filter-btn.active {
+    background: rgba(225, 6, 0, 0.15);
+    color: var(--red);
+    border-color: rgba(225, 6, 0, 0.3);
+}
+
+.filter-search {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    outline: none;
+    min-width: 180px;
+}
+
+.filter-search:focus {
+    border-color: var(--red);
 }
 
 .races-grid {
@@ -156,7 +317,7 @@ main {
 }
 
 .race-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1.01);
     border-color: var(--red);
     box-shadow: 0 8px 30px rgba(225, 6, 0, 0.15);
 }
@@ -522,12 +683,12 @@ main {
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
-    transform: translateY(20px);
-    transition: transform 0.25s;
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-overlay.open .modal {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .modal-header {

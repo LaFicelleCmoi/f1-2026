@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F1 2026 — Suivi de Saison</title>
+    <meta name="description" content="Suivez la saison F1 2026 en temps réel : résultats, classements, calendrier, sprints.">
+    <meta name="theme-color" content="#e10600">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta property="og:title" content="F1 2026 — Suivi de Saison">
+    <meta property="og:description" content="Résultats, classements et calendrier F1 2026 en temps réel">
+    <meta property="og:image" content="icons/icon.svg">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,6 +25,7 @@
         <div class="season-title">Saison 2026</div>
     </div>
     <div class="header-right">
+        <button class="theme-toggle" id="theme-toggle" title="Basculer thème clair/sombre">🌙</button>
         <div class="stats-bar">
             <span>🏁 <strong id="stat-completed">0</strong> Disputées</span>
             <span>📅 <strong id="stat-upcoming">0</strong> À venir</span>
@@ -21,6 +33,10 @@
         </div>
     </div>
 </header>
+
+<div class="countdown-bar" id="countdown-bar">
+    <span id="countdown-text">Chargement du calendrier...</span>
+</div>
 
 <nav>
     <button class="nav-tab active" data-view="races">🏎️ Courses</button>
@@ -35,6 +51,28 @@
         <div class="section-header">
             <h2>Calendrier des Courses</h2>
             <p>Saison F1 2026 — 24 Grands Prix</p>
+        </div>
+        <div class="filter-bar" id="filter-bar">
+            <div class="filter-group">
+                <label class="filter-label">Statut</label>
+                <div class="filter-options" id="filter-status">
+                    <button class="filter-btn active" data-filter="all">Tous</button>
+                    <button class="filter-btn" data-filter="completed">Terminées</button>
+                    <button class="filter-btn" data-filter="upcoming">À venir</button>
+                    <button class="filter-btn" data-filter="next">Prochaine</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Type</label>
+                <div class="filter-options" id="filter-type">
+                    <button class="filter-btn active" data-filter="all">Toutes</button>
+                    <button class="filter-btn" data-filter="sprint">⚡ Sprint</button>
+                    <button class="filter-btn" data-filter="standard">Standard</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <input type="text" id="filter-search" class="filter-search" placeholder="🔍 Rechercher pays, circuit...">
+            </div>
         </div>
         <div class="races-grid" id="races-grid"></div>
     </div>
@@ -170,13 +208,15 @@
     <div class="modal" style="max-width: 350px; padding: 2.5rem; text-align: center; border-top: 3px solid var(--red);">
         <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Administration</h2>
         <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Accès réservé</p>
-        <input type="password" id="admin-pwd" placeholder="Mot de passe" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 1rem; outline: none;">
+        <input type="email" id="admin-email" placeholder="Email" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 0.75rem; outline: none;">
+        <input type="password" id="admin-pwd" placeholder="Mot de passe" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 1rem; outline: none;">
         <button onclick="loginAdmin()" style="width: 100%; background: var(--red); color: white; border: none; padding: 0.85rem; border-radius: 8px; font-weight: bold; cursor: pointer;">Connexion</button>
-        <p id="admin-error" style="color: var(--red); font-size: 0.85rem; margin-top: 1rem; display: none;">Mot de passe incorrect</p>
+        <p id="admin-error" style="color: var(--red); font-size: 0.85rem; margin-top: 1rem; display: none;"></p>
     </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
