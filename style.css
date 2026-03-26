@@ -490,40 +490,51 @@ main {
     transform: translateY(-4px) scale(1.03);
 }
 
-/* P1 - Gold */
+/* P1 - Gold — centre, surélevé, plus grand */
 .podium-item:nth-child(1) {
-    background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,180,0,0.05) 100%);
-    border: 1px solid rgba(255,215,0,0.4);
-    box-shadow: 0 0 20px rgba(255,215,0,0.15), 0 0 60px rgba(255,215,0,0.05);
+    background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,180,0,0.08) 100%);
+    border: 1px solid rgba(255,215,0,0.5);
+    box-shadow: 0 0 25px rgba(255,215,0,0.2), 0 0 60px rgba(255,215,0,0.08);
     order: 2;
-    min-height: 110px;
+    min-height: 130px;
+    transform: scale(1.08);
+    z-index: 2;
 }
 .podium-item:nth-child(1):hover {
-    box-shadow: 0 0 30px rgba(255,215,0,0.3), 0 0 80px rgba(255,215,0,0.1);
+    box-shadow: 0 0 35px rgba(255,215,0,0.35), 0 0 80px rgba(255,215,0,0.15);
+    transform: scale(1.12);
 }
 
-/* P2 - Silver */
+/* P2 - Silver — gauche, plus petit */
 .podium-item:nth-child(2) {
     background: linear-gradient(135deg, rgba(192,192,192,0.12) 0%, rgba(192,192,192,0.03) 100%);
     border: 1px solid rgba(192,192,192,0.3);
     box-shadow: 0 0 15px rgba(192,192,192,0.1), 0 0 40px rgba(192,192,192,0.03);
     order: 1;
     min-height: 95px;
+    transform: scale(0.95);
+    opacity: 0.9;
 }
 .podium-item:nth-child(2):hover {
     box-shadow: 0 0 25px rgba(192,192,192,0.25), 0 0 60px rgba(192,192,192,0.08);
+    transform: scale(1.0);
+    opacity: 1;
 }
 
-/* P3 - Bronze */
+/* P3 - Bronze — droite, plus petit */
 .podium-item:nth-child(3) {
     background: linear-gradient(135deg, rgba(205,127,50,0.12) 0%, rgba(205,127,50,0.03) 100%);
     border: 1px solid rgba(205,127,50,0.3);
     box-shadow: 0 0 15px rgba(205,127,50,0.1), 0 0 40px rgba(205,127,50,0.03);
     order: 3;
     min-height: 85px;
+    transform: scale(0.92);
+    opacity: 0.85;
 }
 .podium-item:nth-child(3):hover {
     box-shadow: 0 0 25px rgba(205,127,50,0.25), 0 0 60px rgba(205,127,50,0.08);
+    transform: scale(0.97);
+    opacity: 1;
 }
 
 /* Shimmer effect on P1 */
@@ -574,6 +585,11 @@ main {
     line-height: 1.3;
     letter-spacing: 0.3px;
     text-transform: uppercase;
+}
+
+.podium-item:nth-child(1) .podium-driver {
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
 }
 
 .podium-team {
