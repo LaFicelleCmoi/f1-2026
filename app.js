@@ -318,14 +318,22 @@ function renderAllRaces() {
             const sortedPodium = [...race.result.podium].sort((a, b) => a.pos - b.pos);
             podiumHTML = `
                 <div class="race-result">
-                    <div class="podium">
-                        ${sortedPodium.map(p => `
-                            <div class="podium-item">
-                                <div class="podium-pos ${getPodiumColor(p.pos)}">${getPodiumIcon(p.pos)}</div>
-                                <div class="podium-driver">${p.driver || '-'}</div>
-                                <div class="podium-team">${p.team || '-'}</div>
-                            </div>
-                        `).join("")}
+                    <div class="podium-stage">
+                        ${sortedPodium.map(p => {
+                            const color = teamColors[p.team] || "#666";
+                            const posLabel = p.pos === 1 ? "1ST" : p.pos === 2 ? "2ND" : "3RD";
+                            return `
+                            <div class="podium-card podium-p${p.pos}" style="--team-color:${color}">
+                                <div class="podium-crown">${p.pos === 1 ? '👑' : ''}</div>
+                                <div class="podium-position">${posLabel}</div>
+                                <div class="podium-team-bar"></div>
+                                <div class="podium-driver-name">${p.driver || '-'}</div>
+                                <div class="podium-team-name">${p.team || '-'}</div>
+                                <div class="podium-pillar">
+                                    <span class="podium-pillar-num">${p.pos}</span>
+                                </div>
+                            </div>`;
+                        }).join("")}
                     </div>
                 </div>`;
         } else {
@@ -490,14 +498,22 @@ function renderSprintView() {
         const sortedSprintPodium = hasResult ? [...race.sprintResult.podium].sort((a, b) => a.pos - b.pos) : [];
         let podiumHTML = hasResult ? `
             <div class="race-result">
-                <div class="podium">
-                    ${sortedSprintPodium.map(p => `
-                        <div class="podium-item">
-                            <div class="podium-pos ${getPodiumColor(p.pos)}">${getPodiumIcon(p.pos)}</div>
-                            <div class="podium-driver">${p.driver || '-'}</div>
-                            <div class="podium-team">${p.team || '-'}</div>
-                        </div>
-                    `).join("")}
+                <div class="podium-stage">
+                    ${sortedSprintPodium.map(p => {
+                        const color = teamColors[p.team] || "#666";
+                        const posLabel = p.pos === 1 ? "1ST" : p.pos === 2 ? "2ND" : "3RD";
+                        return `
+                        <div class="podium-card podium-p${p.pos}" style="--team-color:${color}">
+                            <div class="podium-crown">${p.pos === 1 ? '👑' : ''}</div>
+                            <div class="podium-position">${posLabel}</div>
+                            <div class="podium-team-bar"></div>
+                            <div class="podium-driver-name">${p.driver || '-'}</div>
+                            <div class="podium-team-name">${p.team || '-'}</div>
+                            <div class="podium-pillar">
+                                <span class="podium-pillar-num">${p.pos}</span>
+                            </div>
+                        </div>`;
+                    }).join("")}
                 </div>
             </div>` : `<div class="no-result">Résultats Sprint à venir</div>`;
 
