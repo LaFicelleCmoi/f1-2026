@@ -435,25 +435,22 @@ function openModal(index) {
         resultsHTML += buildSpoilSection("Qualifications Sprint", "⚡", sqTable, `spoil-sq-${index}`);
     }
 
-    // ── Résultats Sprint ──
+    // ── Résultats Sprint (anti-spoil) ──
     if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
-        resultsHTML += `
-            <div class="modal-section">
-                <div class="modal-section-title">⚡ Résultats Sprint</div>
-                <table class="full-results-table">
-                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
-                    <tbody>
-                        ${race.sprintResult.fullResults.map((entry, idx) => `
-                            <tr>
-                                <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
-                                <td>${entry.driver}</td>
-                                <td style="color:var(--muted)">${entry.team}</td>
-                                <td style="color:var(--muted)">${entry.time || '-'}</td>
-                                <td class="points-cell">${entry.points}</td>
-                            </tr>`).join("")}
-                    </tbody>
-                </table>
-            </div>`;
+        const sprintTable = `<table class="full-results-table">
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+            <tbody>
+                ${race.sprintResult.fullResults.map((entry, idx) => `
+                    <tr>
+                        <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
+                        <td>${entry.driver}</td>
+                        <td style="color:var(--muted)">${entry.team}</td>
+                        <td style="color:var(--muted)">${entry.time || '-'}</td>
+                        <td class="points-cell">${entry.points}</td>
+                    </tr>`).join("")}
+            </tbody>
+        </table>`;
+        resultsHTML += buildSpoilSection("Résultats Sprint", "⚡", sprintTable, `spoil-sr-${index}`);
     }
 
     // ── Qualifications Course (anti-spoil) ──
@@ -462,25 +459,22 @@ function openModal(index) {
         resultsHTML += buildSpoilSection("Qualifications Course", "🔵", rqTable, `spoil-rq-${index}`);
     }
 
-    // ── Résultats Course ──
+    // ── Résultats Course (anti-spoil) ──
     if (rs === "completed" && race.result && race.result.fullResults) {
-        resultsHTML += `
-            <div class="modal-section">
-                <div class="modal-section-title">🏁 Résultats Course</div>
-                <table class="full-results-table">
-                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
-                    <tbody>
-                        ${race.result.fullResults.map((entry, idx) => `
-                            <tr>
-                                <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
-                                <td>${entry.driver}</td>
-                                <td style="color:var(--muted)">${entry.team}</td>
-                                <td style="color:var(--muted)">${entry.time || '-'}</td>
-                                <td class="points-cell">${entry.points}</td>
-                            </tr>`).join("")}
-                    </tbody>
-                </table>
-            </div>`;
+        const raceTable = `<table class="full-results-table">
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+            <tbody>
+                ${race.result.fullResults.map((entry, idx) => `
+                    <tr>
+                        <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
+                        <td>${entry.driver}</td>
+                        <td style="color:var(--muted)">${entry.team}</td>
+                        <td style="color:var(--muted)">${entry.time || '-'}</td>
+                        <td class="points-cell">${entry.points}</td>
+                    </tr>`).join("")}
+            </tbody>
+        </table>`;
+        resultsHTML += buildSpoilSection("Résultats Course", "🏁", raceTable, `spoil-rc-${index}`);
     }
 
     if (resultsHTML === "") {
