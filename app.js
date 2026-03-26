@@ -579,7 +579,7 @@ function openModal(index) {
             <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th></tr></thead>
             <tbody>
                 ${qualiData.map((q, qi) => `
-                    <tr>
+                    <tr class="${qi < 3 ? 'podium-row-' + (qi+1) : ''}">
                         <td class="pos-medal ${getPodiumColor(qi+1)}">${qi < 3 ? getPodiumIcon(qi+1) : qi+1}</td>
                         <td style="font-weight:600">${q.driver}</td>
                         <td style="color:var(--muted);font-size:0.82rem">${q.team}</td>
@@ -622,7 +622,7 @@ function openModal(index) {
             <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
             <tbody>
                 ${race.sprintResult.fullResults.map((entry, idx) => `
-                    <tr>
+                    <tr class="${idx < 3 ? 'podium-row-' + (idx+1) : ''}">
                         <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
                         <td>${entry.driver}</td>
                         <td style="color:var(--muted)">${entry.team}</td>
@@ -645,7 +645,7 @@ function openModal(index) {
             <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
             <tbody>
                 ${race.result.fullResults.map((entry, idx) => `
-                    <tr>
+                    <tr class="${idx < 3 ? 'podium-row-' + (idx+1) : ''}">
                         <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
                         <td>${entry.driver}</td>
                         <td style="color:var(--muted)">${entry.team}</td>
