@@ -1479,8 +1479,24 @@ main {
 }
 
 /* ═══ PALMARÈS ═══ */
+.palmares-podiums-row,
+.palmares-tables-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+.palmares-podiums-row { margin-bottom: 2rem; }
+.palmares-tables-row { margin-bottom: 1rem; }
+
+@media (max-width: 768px) {
+    .palmares-podiums-row,
+    .palmares-tables-row {
+        grid-template-columns: 1fr;
+    }
+}
+
 .palmares-section {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
 }
 .palmares-title {
     font-size: 1.1rem;

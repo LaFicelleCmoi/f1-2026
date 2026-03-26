@@ -664,7 +664,7 @@ function renderPalmares() {
         return;
     }
 
-    container.innerHTML = teamPodiumHTML + driverPodiumHTML + teamTableHTML + driverTableHTML;
+    container.innerHTML = `<div class="palmares-podiums-row">${teamPodiumHTML}${driverPodiumHTML}</div><div class="palmares-tables-row">${teamTableHTML}${driverTableHTML}</div>`;
 }
 
 function renderSprintView() {
