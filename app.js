@@ -304,7 +304,7 @@ function renderAllRaces() {
                 ⚡ Sprint ${ss === 'completed' ? '✓' : ss === 'cancelled' ? '✕' : ss === 'next' ? '▶' : ''}
             </span>`;
         }
-        if (race.isNew) badgesHTML += `<span class="new-tag">🆕</span>`;
+        if (race.isNew) badgesHTML += `<span class="new-tag">✨ NOUVEAU</span>`;
         badgesHTML += `<span class="badge ${getBadgeClass(rs)}">🏁 Course ${getBadgeLabel(rs)}</span>`;
 
         // Extraire vainqueur et pole man automatiquement
@@ -360,7 +360,7 @@ function renderAllRaces() {
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
         html += `
-            <div class="race-card ${statusClass}" onclick="openModal(${index})">
+            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}" onclick="openModal(${index})">
                 <div class="race-card-header">
                     <span class="race-round">R${race.round}</span>
                     <div class="race-badges">${badgesHTML}</div>
@@ -476,7 +476,7 @@ function renderTimeline() {
                     '<div class="timeline-race-date">Round ' + race.round + ' — ' + dateRace + '</div></div></div>' +
                     '<div class="timeline-race-right">' +
                     sprintBadge +
-                    (race.isNew ? '<span class="new-tag">🆕</span>' : "") +
+                    (race.isNew ? '<span class="new-tag">✨ NOUVEAU</span>' : "") +
                     '<span class="badge ' + getBadgeClass(rs) + '">🏁 ' + getBadgeLabel(rs) + '</span>' +
                     '</div></div>';
             });

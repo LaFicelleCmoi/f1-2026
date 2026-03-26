@@ -452,14 +452,70 @@ main {
     border: 1px solid rgba(124, 58, 237, 0.3);
 }
 
+/* ═══ NOUVEAU CIRCUIT — Badge ═══ */
 .new-tag {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.25rem 0.6rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.25rem 0.7rem;
     border-radius: 20px;
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,165,0,0.15));
+    color: #fbbf24;
+    border: 1px solid rgba(255,215,0,0.5);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: 0 0 12px rgba(255,215,0,0.2), 0 0 25px rgba(255,215,0,0.08);
+    animation: newTagPulse 2s ease-in-out infinite;
+    position: relative;
+}
+
+@keyframes newTagPulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(255,215,0,0.2), 0 0 25px rgba(255,215,0,0.08); }
+    50% { box-shadow: 0 0 18px rgba(255,215,0,0.4), 0 0 35px rgba(255,215,0,0.15); }
+}
+
+/* ═══ NOUVEAU CIRCUIT — Carte spéciale ═══ */
+.race-card-new {
+    border: 1px solid rgba(255,215,0,0.35) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.race-card-new::before {
+    content: "★ NOUVEAU CIRCUIT";
+    position: absolute;
+    top: 18px;
+    right: -38px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    font-size: 0.5rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    padding: 0.25rem 2.5rem;
+    transform: rotate(45deg);
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+    text-transform: uppercase;
+}
+
+.race-card-new::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.6), rgba(255,165,0,0.8), rgba(255,215,0,0.6), transparent);
+    animation: newCardShine 3s ease-in-out infinite;
+}
+
+@keyframes newCardShine {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.race-card-new:hover {
+    border-color: rgba(255,215,0,0.6) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(255,215,0,0.15) !important;
 }
 
 .race-result {
