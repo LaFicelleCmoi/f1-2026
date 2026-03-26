@@ -521,11 +521,11 @@ main {
 
 /* ── Barre couleur équipe ── */
 .podium-team-bar {
-    width: 60%;
+    width: 70%;
     height: 3px;
     border-radius: 3px;
     background: var(--team-color);
-    box-shadow: 0 0 10px var(--team-color), 0 0 20px color-mix(in srgb, var(--team-color) 50%, transparent);
+    box-shadow: 0 0 12px var(--team-color), 0 0 25px color-mix(in srgb, var(--team-color) 50%, transparent);
     margin-bottom: 0.5rem;
 }
 
@@ -540,14 +540,24 @@ main {
     text-shadow: 0 1px 4px rgba(0,0,0,0.6);
 }
 
-/* ── Nom équipe ── */
+/* ── Badge équipe ── */
 .podium-team-name {
-    font-size: 0.55rem;
-    color: var(--muted);
+    font-size: 0.6rem;
+    color: var(--team-color);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-top: 0.15rem;
+    letter-spacing: 0.6px;
+    font-weight: 700;
+    margin-top: 0.3rem;
     margin-bottom: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--team-color) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--team-color) 30%, transparent);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--team-color) 40%, transparent);
+    white-space: nowrap;
+    max-width: 95%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ── Pilier / Socle en bas ── */
