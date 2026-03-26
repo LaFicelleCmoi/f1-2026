@@ -28,12 +28,13 @@ db.ref('f1_results_2026').on('value', snapshot => {
         races.forEach(race => {
             const found = savedData.find(r => r.round === race.round);
             if (found) {
-                race.raceStatus   = found.raceStatus   || "upcoming";
-                race.sprintStatus = found.sprintStatus || (race.sprint ? "upcoming" : null);
-                race.status       = found.raceStatus   || found.status || "upcoming";
-                race.result       = found.result       || null;
-                race.sprintResult = found.sprintResult || null;
-                // Horaires modifiés par l'admin
+                race.raceStatus        = found.raceStatus        || "upcoming";
+                race.sprintStatus      = found.sprintStatus      || (race.sprint ? "upcoming" : null);
+                race.status            = found.raceStatus        || found.status || "upcoming";
+                race.result            = found.result            || null;
+                race.sprintResult      = found.sprintResult      || null;
+                race.qualiResults      = found.qualiResults      || null;
+                race.sprintQualiResults = found.sprintQualiResults || null;
                 if (found.schedule) race.schedule = found.schedule;
             } else {
                 race.raceStatus   = "upcoming";
@@ -55,13 +56,15 @@ db.ref('f1_results_2026').on('value', snapshot => {
 // ============================================================
 function saveToFirebase() {
     const toSave = races.map(r => ({
-        round:        r.round,
-        raceStatus:   r.raceStatus   || "upcoming",
-        sprintStatus: r.sprintStatus || (r.sprint ? "upcoming" : null),
-        status:       r.raceStatus   || "upcoming",
-        result:       r.result       || null,
-        sprintResult: r.sprintResult || null,
-        schedule:     r.schedule     || null
+        round:             r.round,
+        raceStatus:        r.raceStatus        || "upcoming",
+        sprintStatus:      r.sprintStatus      || (r.sprint ? "upcoming" : null),
+        status:            r.raceStatus        || "upcoming",
+        result:            r.result            || null,
+        sprintResult:      r.sprintResult      || null,
+        schedule:          r.schedule          || null,
+        qualiResults:      r.qualiResults      || null,
+        sprintQualiResults: r.sprintQualiResults || null
     }));
     db.ref('f1_results_2026').set(toSave);
 }
@@ -85,20 +88,23 @@ function getPodiumColor(pos) {
 }
 
 function getStatusClass(status) {
-    if (status === "completed") return "completed";
-    if (status === "next") return "next";
+    if (status === "completed")  return "completed";
+    if (status === "next")       return "next";
+    if (status === "cancelled")  return "cancelled";
     return "upcoming";
 }
 
 function getBadgeClass(status) {
-    if (status === "completed") return "badge-done";
-    if (status === "next") return "badge-next";
+    if (status === "completed")  return "badge-done";
+    if (status === "next")       return "badge-next";
+    if (status === "cancelled")  return "badge-cancelled";
     return "badge-upcoming";
 }
 
 function getBadgeLabel(status) {
-    if (status === "completed") return "✓ Terminé";
-    if (status === "next") return "▶ Prochain";
+    if (status === "completed")  return "✓ Terminé";
+    if (status === "next")       return "▶ Prochain";
+    if (status === "cancelled")  return "✕ Annulé";
     return "À venir";
 }
 
@@ -116,8 +122,8 @@ function renderAllRaces() {
 
         let badgesHTML = "";
         if (race.sprint) {
-            badgesHTML += `<span class="sprint-tag" style="background:${ss === 'completed' ? 'rgba(34,197,94,0.15)' : ss === 'next' ? 'rgba(124,58,237,0.25)' : 'rgba(124,58,237,0.15)'}; color:${ss === 'completed' ? 'var(--green)' : 'var(--sprint-light)'}; border-color:${ss === 'completed' ? 'rgba(34,197,94,0.3)' : 'rgba(124,58,237,0.3)'}">
-                ⚡ Sprint ${ss === 'completed' ? '✓' : ss === 'next' ? '▶' : ''}
+            badgesHTML += `<span class="sprint-tag" style="background:${ss === 'completed' ? 'rgba(34,197,94,0.15)' : ss === 'cancelled' ? 'rgba(239,68,68,0.1)' : ss === 'next' ? 'rgba(124,58,237,0.25)' : 'rgba(124,58,237,0.15)'}; color:${ss === 'completed' ? 'var(--green)' : ss === 'cancelled' ? '#ef4444' : 'var(--sprint-light)'}; border-color:${ss === 'completed' ? 'rgba(34,197,94,0.3)' : ss === 'cancelled' ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.3)'}">
+                ⚡ Sprint ${ss === 'completed' ? '✓' : ss === 'cancelled' ? '✕' : ss === 'next' ? '▶' : ''}
             </span>`;
         }
         if (race.isNew) badgesHTML += `<span class="new-tag">🆕</span>`;
@@ -244,7 +250,7 @@ function renderTimeline() {
                 var rs = race.raceStatus || race.status || "upcoming";
                 var ss = race.sprintStatus || "upcoming";
                 var sprintBadge = race.sprint
-                    ? '<span class="sprint-tag" style="background:' + (ss === 'completed' ? 'rgba(34,197,94,0.15)' : 'rgba(124,58,237,0.15)') + '; color:' + (ss === 'completed' ? 'var(--green)' : 'var(--sprint-light)') + '; border-color:' + (ss === 'completed' ? 'rgba(34,197,94,0.3)' : 'rgba(124,58,237,0.3)') + '">⚡ Sprint ' + (ss === 'completed' ? '✓' : ss === 'next' ? '▶' : '') + '</span>'
+                    ? '<span class="sprint-tag" style="background:' + (ss === 'completed' ? 'rgba(34,197,94,0.15)' : ss === 'cancelled' ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.15)') + '; color:' + (ss === 'completed' ? 'var(--green)' : ss === 'cancelled' ? '#ef4444' : 'var(--sprint-light)') + '; border-color:' + (ss === 'completed' ? 'rgba(34,197,94,0.3)' : ss === 'cancelled' ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.3)') + '">⚡ Sprint ' + (ss === 'completed' ? '✓' : ss === 'cancelled' ? '✕' : ss === 'next' ? '▶' : '') + '</span>'
                     : "";
                 html += '<div class="timeline-race-item ' + getStatusClass(rs) + '" onclick="openModal(' + (race.round - 1) + ')">' +
                     '<div class="timeline-race-left"><span class="timeline-flag">' + race.flag + '</span>' +
@@ -264,7 +270,7 @@ function renderTimeline() {
 
 function renderSprintView() {
     const sprintRaces  = races.filter(r => r.sprint);
-    const doneSprints  = sprintRaces.filter(r => r.status === "completed");
+    const doneSprints  = sprintRaces.filter(r => (r.sprintStatus || "upcoming") === "completed");
 
     document.getElementById("sprint-done-count").textContent  = doneSprints.length;
     document.getElementById("sprint-total-count").textContent = sprintRaces.length;
@@ -312,8 +318,9 @@ function renderSprintView() {
 }
 
 function updateStats() {
-    const completed = races.filter(r => (r.raceStatus || r.status) === "completed").length;
-    const upcoming  = races.filter(r => {
+    const completed  = races.filter(r => (r.raceStatus || r.status) === "completed").length;
+    const cancelled  = races.filter(r => (r.raceStatus || r.status) === "cancelled").length;
+    const upcoming   = races.filter(r => {
         const rs = r.raceStatus || r.status || "upcoming";
         return rs === "upcoming" || rs === "next";
     }).length;
@@ -333,75 +340,122 @@ function openModal(index) {
         if (s.type === "race")   itemClass += " highlight";
         if (s.type === "sprint") itemClass += " sprint-session";
 
+        // ── Mode admin : heure éditable ──
         if (isAdmin) {
-            return `<div class="${itemClass}" style="gap:0.5rem;">
-                <span class="schedule-day" style="min-width:80px; font-size:0.78rem; color:var(--muted); font-weight:700;">${s.day}</span>
-                <span class="schedule-name" style="flex:1;">${s.name}</span>
-                <input
-                    type="text"
-                    value="${s.time}"
-                    data-schedule-index="${i}"
-                    placeholder="HH:MM"
-                    style="width:80px; padding:0.3rem 0.5rem; background:rgba(0,0,0,0.4);
-                        border:1px solid var(--red); color:var(--red); border-radius:6px;
-                        font-weight:800; font-size:0.9rem; text-align:center; outline:none;"
-                    oninput="updateScheduleTime(${index}, ${i}, this.value)"
-                >
-            </div>`;
-        } else {
-            return `<div class="${itemClass}">
-                <span class="schedule-day">${s.day}</span>
-                <span class="schedule-name">${s.name}</span>
-                <span class="schedule-time">${s.time}</span>
+            return `<div class="${itemClass}" style="flex-direction:column; align-items:stretch; gap:0.25rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span class="schedule-day" style="min-width:80px; font-size:0.78rem; color:var(--muted); font-weight:700;">${s.day}</span>
+                    <span class="schedule-name" style="flex:1;">${s.name}</span>
+                    <input type="text" value="${s.time}" data-schedule-index="${i}" placeholder="HH:MM"
+                        style="width:80px; padding:0.3rem 0.5rem; background:rgba(0,0,0,0.4);
+                            border:1px solid var(--red); color:var(--red); border-radius:6px;
+                            font-weight:800; font-size:0.9rem; text-align:center; outline:none;"
+                        oninput="updateScheduleTime(${index}, ${i}, this.value)">
+                </div>
             </div>`;
         }
+
+        // ── Mode visiteur : lecture seule ──
+        return `<div class="${itemClass}">
+            <span class="schedule-day">${s.day}</span>
+            <span class="schedule-name">${s.name}</span>
+            <span class="schedule-time">${s.time}</span>
+        </div>`;
     }).join("") : "";
 
     const rs = race.raceStatus || race.status || "upcoming";
     const ss = race.sprintStatus || "upcoming";
 
-    let resultsHTML = "";
-    if (rs === "completed") {
-        if (race.result && race.result.fullResults) {
-            resultsHTML += `
-                <div class="modal-section">
-                    <div class="modal-section-title">🏁 Résultats Course</div>
-                    <table class="full-results-table">
-                        <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
-                        <tbody>
-                            ${race.result.fullResults.map((entry, idx) => `
-                                <tr>
-                                    <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
-                                    <td>${entry.driver}</td>
-                                    <td style="color:var(--muted)">${entry.team}</td>
-                                    <td style="color:var(--muted)">${entry.time || '-'}</td>
-                                    <td class="points-cell">${entry.points}</td>
-                                </tr>`).join("")}
-                        </tbody>
-                    </table>
-                </div>`;
-        }
+    // ── Helper : tableau de qualifications (réutilisé) ──
+    function buildQualiTable(qualiData) {
+        return `<table class="full-results-table">
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Meilleur temps</th></tr></thead>
+            <tbody>
+                ${qualiData.map((q, qi) => `
+                    <tr>
+                        <td class="pos-medal ${getPodiumColor(qi+1)}">${qi < 3 ? getPodiumIcon(qi+1) : qi+1}</td>
+                        <td style="font-weight:600">${q.driver}</td>
+                        <td style="color:var(--muted);font-size:0.82rem">${q.team}</td>
+                        <td style="text-align:right;color:var(--red);font-weight:700">${q.time || '-'}</td>
+                    </tr>`).join("")}
+            </tbody>
+        </table>`;
     }
-    if (ss === "completed") {
-        if (race.sprintResult && race.sprintResult.fullResults) {
-            resultsHTML += `
-                <div class="modal-section">
-                    <div class="modal-section-title">⚡ Résultats Sprint</div>
-                    <table class="full-results-table">
-                        <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
-                        <tbody>
-                            ${race.sprintResult.fullResults.map((entry, idx) => `
-                                <tr>
-                                    <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
-                                    <td>${entry.driver}</td>
-                                    <td style="color:var(--muted)">${entry.team}</td>
-                                    <td style="color:var(--muted)">${entry.time || '-'}</td>
-                                    <td class="points-cell">${entry.points}</td>
-                                </tr>`).join("")}
-                        </tbody>
-                    </table>
-                </div>`;
-        }
+
+    // ── Helper : section anti-spoil ──
+    function buildSpoilSection(title, icon, tableHTML, spoilId) {
+        const wasRevealed = sessionStorage.getItem(spoilId) === "true";
+        return `
+            <div class="modal-section">
+                <div class="modal-section-title">${icon} ${title} <span style="font-size:0.7rem;font-weight:400;color:var(--muted);margin-left:0.5rem;">anti-spoil</span></div>
+                <div class="spoil-wrapper ${wasRevealed ? 'revealed' : ''}" id="${spoilId}">
+                    <div class="spoil-overlay">
+                        <div class="spoil-overlay-icon">🔒</div>
+                        <div class="spoil-overlay-text">Résultats masqués pour éviter le spoil</div>
+                        <button class="spoil-btn spoil-btn-reveal" onclick="revealSpoil('${spoilId}')">👁️ Révéler les résultats</button>
+                    </div>
+                    <div class="spoil-blur">
+                        ${tableHTML}
+                    </div>
+                    <button class="spoil-btn-hide" onclick="hideSpoil('${spoilId}')">🙈 Masquer les résultats</button>
+                </div>
+            </div>`;
+    }
+
+    let resultsHTML = "";
+
+    // ── Qualifications Sprint (anti-spoil) ──
+    if (race.sprint && race.sprintQualiResults && race.sprintQualiResults.length > 0) {
+        const sqTable = buildQualiTable(race.sprintQualiResults);
+        resultsHTML += buildSpoilSection("Qualifications Sprint", "⚡", sqTable, `spoil-sq-${index}`);
+    }
+
+    // ── Résultats Sprint ──
+    if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
+        resultsHTML += `
+            <div class="modal-section">
+                <div class="modal-section-title">⚡ Résultats Sprint</div>
+                <table class="full-results-table">
+                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+                    <tbody>
+                        ${race.sprintResult.fullResults.map((entry, idx) => `
+                            <tr>
+                                <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
+                                <td>${entry.driver}</td>
+                                <td style="color:var(--muted)">${entry.team}</td>
+                                <td style="color:var(--muted)">${entry.time || '-'}</td>
+                                <td class="points-cell">${entry.points}</td>
+                            </tr>`).join("")}
+                    </tbody>
+                </table>
+            </div>`;
+    }
+
+    // ── Qualifications Course (anti-spoil) ──
+    if (race.qualiResults && race.qualiResults.length > 0) {
+        const rqTable = buildQualiTable(race.qualiResults);
+        resultsHTML += buildSpoilSection("Qualifications Course", "🔵", rqTable, `spoil-rq-${index}`);
+    }
+
+    // ── Résultats Course ──
+    if (rs === "completed" && race.result && race.result.fullResults) {
+        resultsHTML += `
+            <div class="modal-section">
+                <div class="modal-section-title">🏁 Résultats Course</div>
+                <table class="full-results-table">
+                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+                    <tbody>
+                        ${race.result.fullResults.map((entry, idx) => `
+                            <tr>
+                                <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
+                                <td>${entry.driver}</td>
+                                <td style="color:var(--muted)">${entry.team}</td>
+                                <td style="color:var(--muted)">${entry.time || '-'}</td>
+                                <td class="points-cell">${entry.points}</td>
+                            </tr>`).join("")}
+                    </tbody>
+                </table>
+            </div>`;
     }
 
     if (resultsHTML === "") {
@@ -471,6 +525,21 @@ function saveSchedule(raceIndex) {
 
 function closeModal() {
     document.getElementById("modal-overlay").classList.remove("open");
+}
+
+// Anti-spoil : reveal / hide avec mémorisation sessionStorage
+function revealSpoil(spoilId) {
+    const wrapper = document.getElementById(spoilId);
+    if (!wrapper) return;
+    wrapper.classList.add("revealed");
+    sessionStorage.setItem(spoilId, "true");
+}
+
+function hideSpoil(spoilId) {
+    const wrapper = document.getElementById(spoilId);
+    if (!wrapper) return;
+    wrapper.classList.remove("revealed");
+    sessionStorage.removeItem(spoilId);
 }
 
 function switchView(view) {
@@ -543,12 +612,12 @@ function renderAdminRaceList() {
             <div style="flex:1">
                 <div style="font-weight:600; font-size:0.9rem">${race.name}</div>
                 <div style="font-size:0.75rem; color:var(--muted); display:flex; gap:0.5rem; margin-top:0.2rem;">
-                    <span>🏁 ${rs === 'completed' ? '<span style="color:var(--green)">Terminé</span>' : rs === 'next' ? '<span style="color:var(--red)">Prochain</span>' : 'À venir'}</span>
-                    ${race.sprint ? `<span>⚡ ${ss === 'completed' ? '<span style="color:var(--green)">Terminé</span>' : ss === 'next' ? '<span style="color:var(--sprint-light)">Prochain</span>' : 'À venir'}</span>` : ''}
+                    <span>🏁 ${rs === 'completed' ? '<span style="color:var(--green)">Terminé</span>' : rs === 'next' ? '<span style="color:var(--red)">Prochain</span>' : rs === 'cancelled' ? '<span style="color:#ef4444">✕ Annulé</span>' : 'À venir'}</span>
+                    ${race.sprint ? `<span>⚡ ${ss === 'completed' ? '<span style="color:var(--green)">Terminé</span>' : ss === 'next' ? '<span style="color:var(--sprint-light)">Prochain</span>' : ss === 'cancelled' ? '<span style="color:#ef4444">✕ Annulé</span>' : 'À venir'}</span>` : ''}
                 </div>
             </div>
             <span style="width:8px; height:8px; border-radius:50%;
-                background:${rs === 'completed' ? 'var(--green)' : rs === 'next' ? 'var(--red)' : 'var(--border)'}">
+                background:${rs === 'completed' ? 'var(--green)' : rs === 'next' ? 'var(--red)' : rs === 'cancelled' ? '#ef4444' : 'var(--border)'}">
             </span>`;
         btn.onclick = () => selectAdminRace(index);
         container.appendChild(btn);
@@ -578,48 +647,27 @@ function selectAdminRace(index) {
         sprintHeaderEl.style.display = "block";
         document.getElementById("edit-sprint-status").value = race.sprintStatus || "upcoming";
         document.getElementById("edit-sprint-section").style.display = "block";
+        document.getElementById("edit-sprint-quali-section").style.display = "block";
 
-        // Supprimer l'ancien select Sprint injecté dynamiquement s'il existe
         const oldWrap = document.querySelector("#edit-sprint-section > div[data-sprint-status-wrap]");
         if (oldWrap) oldWrap.remove();
 
         const sResults = (race.sprintResult && race.sprintResult.fullResults) ? race.sprintResult.fullResults : [];
         renderAdminRows(sResults, "edit-sprint-rows", "sprint");
+
+        const sqResults = race.sprintQualiResults || [];
+        renderAdminQualiRows(sqResults, "edit-sprint-quali-rows");
     } else {
         sprintHeaderEl.style.display = "none";
         document.getElementById("edit-sprint-section").style.display = "none";
+        document.getElementById("edit-sprint-quali-section").style.display = "none";
     }
 
     const rResults = (race.result && race.result.fullResults) ? race.result.fullResults : [];
     renderAdminRows(rResults, "edit-race-rows", "race");
-}
 
-// Fonction pour mettre à jour les listes de pilotes et empêcher les doublons
-function updateAllDriverSelects(container) {
-    if (!container) return;
-    
-    // 1. On récupère tous les selects de ce conteneur (Course ou Sprint)
-    const allSelects = Array.from(container.querySelectorAll('.driver-select'));
-    
-    // 2. On liste tous les pilotes actuellement sélectionnés
-    const selectedDrivers = allSelects.map(sel => sel.value).filter(val => val !== "");
-
-    // 3. On met à jour les options de chaque select
-    allSelects.forEach(select => {
-        const currentValue = select.value;
-        
-        // On vide le select
-        select.innerHTML = `<option value="">Pilote...</option>`;
-        
-        // On recrée les options
-        drivers.forEach(d => {
-            // Le pilote est ajouté SI il n'est pas déjà pris OU SI c'est celui sélectionné dans cette ligne précise
-            if (!selectedDrivers.includes(d.driver) || d.driver === currentValue) {
-                const isSelected = (d.driver === currentValue) ? "selected" : "";
-                select.insertAdjacentHTML('beforeend', `<option value="${d.driver}" data-team="${d.team}" ${isSelected}>${d.driver}</option>`);
-            }
-        });
-    });
+    const rqResults = race.qualiResults || [];
+    renderAdminQualiRows(rqResults, "edit-race-quali-rows");
 }
 
 function renderAdminRows(data, containerId, type) {
@@ -630,11 +678,7 @@ function renderAdminRows(data, containerId, type) {
             color:var(--muted); text-transform:uppercase;">
             <span>Pos</span><span>Pilote</span><span>Écurie</span><span>Temps</span><span>Pts</span><span></span>
         </div>`;
-        
     data.forEach(row => container.appendChild(createAdminRow(row, type)));
-    
-    // On met à jour les listes pour cacher les pilotes déjà affichés
-    updateAllDriverSelects(container);
 }
 
 function updateAdminPoints(posInput, type) {
@@ -705,25 +749,17 @@ function createAdminRow(data = {}, type = "race") {
     delBtn.style       = "background:transparent; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0.2rem;";
 
     // === EVENT LISTENERS ===
-    
     // Auto-points dès que la position change
     posInput.addEventListener("input", () => updateAdminPoints(posInput, type));
 
-    // Auto-écurie ET mise à jour des disponibilités dès que le pilote change
+    // Auto-écurie dès que le pilote change
     driverSelect.addEventListener("change", () => {
         const opt = driverSelect.options[driverSelect.selectedIndex];
-        // S'assurer qu'une vraie option est sélectionnée
-        teamInput.value = (opt && opt.value !== "") ? (opt.getAttribute("data-team") || "") : "";
-        // Mettre à jour les autres selecteurs
-        updateAllDriverSelects(div.parentElement);
+        teamInput.value = opt.getAttribute("data-team") || "";
     });
 
-    // Supprimer la ligne ET libérer le pilote
-    delBtn.addEventListener("click", () => {
-        const parent = div.parentElement;
-        div.remove();
-        updateAllDriverSelects(parent);
-    });
+    // Supprimer la ligne
+    delBtn.addEventListener("click", () => div.remove());
 
     div.appendChild(posInput);
     div.appendChild(driverSelect);
@@ -741,27 +777,82 @@ function createAdminRow(data = {}, type = "race") {
 function addAdminRow(type) {
     const containerId = type === 'sprint' ? 'edit-sprint-rows' : 'edit-race-rows';
     const container   = document.getElementById(containerId);
-    
-    // --- NOUVEAU : Blocage à 22 pilotes maximum ---
-    const currentRows = container.querySelectorAll('.admin-row').length;
-    if (currentRows >= 22) {
-        alert("Vous avez atteint la limite de 22 pilotes maximum pour cette session.");
-        return;
-    }
-
-    const nextPos = currentRows + 1;
+    const nextPos     = container.querySelectorAll('.admin-row').length + 1;
     container.appendChild(createAdminRow({ pos: nextPos }, type));
-    
-    // Mettre à jour les listes (au cas où on ajoute une ligne vide, 
-    // elle ne doit pas proposer les pilotes déjà pris au-dessus)
-    updateAllDriverSelects(container);
+}
+
+// ── QUALIFICATIONS ──────────────────────────────────────────
+
+function renderAdminQualiRows(data, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 50px 1.5fr 1fr 120px 30px; gap:0.5rem;
+            padding:0 0.5rem; margin-bottom:0.5rem; font-size:0.75rem; font-weight:bold;
+            color:var(--muted); text-transform:uppercase;">
+            <span>Pos</span><span>Pilote</span><span>Écurie</span><span>Meilleur temps</span><span></span>
+        </div>`;
+    data.forEach(row => container.appendChild(createAdminQualiRow(row)));
+}
+
+function createAdminQualiRow(data = {}) {
+    const div = document.createElement("div");
+    div.className = "admin-row";
+    div.style = "display:grid; grid-template-columns: 50px 1.5fr 1fr 120px 30px; gap:0.5rem; margin-bottom:0.5rem; align-items:center;";
+
+    const posInput = document.createElement("input");
+    posInput.type = "number"; posInput.className = "pos-input"; posInput.placeholder = "#";
+    posInput.value = data.pos || "";
+    posInput.style = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
+
+    const driverSelect = document.createElement("select");
+    driverSelect.className = "driver-select";
+    driverSelect.style = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
+    let opts = `<option value="">Pilote...</option>`;
+    drivers.forEach(d => {
+        opts += `<option value="${d.driver}" data-team="${d.team}" ${data.driver === d.driver ? 'selected' : ''}>${d.driver}</option>`;
+    });
+    driverSelect.innerHTML = opts;
+
+    const teamInput = document.createElement("input");
+    teamInput.type = "text"; teamInput.className = "team-input"; teamInput.placeholder = "Écurie";
+    teamInput.value = data.team || ""; teamInput.readOnly = true;
+    teamInput.style = "width:100%; padding:0.5rem; background:var(--dark); border:1px solid var(--border); color:var(--muted); border-radius:6px; outline:none; cursor:not-allowed;";
+
+    const timeInput = document.createElement("input");
+    timeInput.type = "text"; timeInput.className = "time-input"; timeInput.placeholder = "1:20.123";
+    timeInput.value = data.time || "";
+    timeInput.style = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "✕";
+    delBtn.style = "background:transparent; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0.2rem;";
+
+    driverSelect.addEventListener("change", () => {
+        const opt = driverSelect.options[driverSelect.selectedIndex];
+        teamInput.value = opt.getAttribute("data-team") || "";
+    });
+    delBtn.addEventListener("click", () => div.remove());
+
+    div.appendChild(posInput);
+    div.appendChild(driverSelect);
+    div.appendChild(teamInput);
+    div.appendChild(timeInput);
+    div.appendChild(delBtn);
+    return div;
+}
+
+function addAdminQualiRow(type) {
+    const containerId = type === 'sprint' ? 'edit-sprint-quali-rows' : 'edit-race-quali-rows';
+    const container   = document.getElementById(containerId);
+    const nextPos     = container.querySelectorAll('.admin-row').length + 1;
+    container.appendChild(createAdminQualiRow({ pos: nextPos }));
 }
 
 function saveAdminResults() {
     if (adminCurrentRace === null) return;
     const race      = races[adminCurrentRace];
     race.raceStatus = document.getElementById("edit-status").value;
-    race.status     = race.raceStatus; // rétrocompatibilité
+    race.status     = race.raceStatus;
 
     if (race.sprint) {
         const sprintStatusEl = document.getElementById("edit-sprint-status");
@@ -775,8 +866,12 @@ function saveAdminResults() {
             const driver = row.querySelector(".driver-select").value;
             const team   = row.querySelector(".team-input").value;
             const time   = row.querySelector(".time-input").value.trim();
-            const points = parseInt(row.querySelector(".pts-input").value) || 0;
-            if (driver) rows.push({ pos, driver, team, time, points });
+            const points = row.querySelector(".pts-input") ? (parseInt(row.querySelector(".pts-input").value) || 0) : undefined;
+            if (driver) {
+                const entry = { pos, driver, team, time };
+                if (points !== undefined) entry.points = points;
+                rows.push(entry);
+            }
         });
         return rows.sort((a, b) => a.pos - b.pos);
     };
@@ -793,29 +888,34 @@ function saveAdminResults() {
             podium:      sprintResults.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
             fullResults: sprintResults
         } : null;
+        race.sprintQualiResults = extractData("edit-sprint-quali-rows");
+        if (!race.sprintQualiResults.length) race.sprintQualiResults = null;
     }
 
-    saveToFirebase();
+    race.qualiResults = extractData("edit-race-quali-rows");
+    if (!race.qualiResults.length) race.qualiResults = null;
 
+    saveToFirebase();
     renderAllRaces();
     renderStandings();
     renderTimeline();
     renderSprintView();
     updateStats();
     renderAdminRaceList();
-
     alert("✅ Résultats sauvegardés sur Firebase !");
 }
 
 function clearAdminResults() {
     if (adminCurrentRace === null) return;
     if (!confirm("Attention : Voulez-vous vraiment effacer tous les résultats de cette course ?")) return;
-    const race        = races[adminCurrentRace];
-    race.raceStatus   = "upcoming";
-    race.sprintStatus = race.sprint ? "upcoming" : null;
-    race.status       = "upcoming";
-    race.result       = null;
-    race.sprintResult = null;
+    const race               = races[adminCurrentRace];
+    race.raceStatus          = "upcoming";
+    race.sprintStatus        = race.sprint ? "upcoming" : null;
+    race.status              = "upcoming";
+    race.result              = null;
+    race.sprintResult        = null;
+    race.qualiResults        = null;
+    race.sprintQualiResults  = null;
     saveAdminResults();
     selectAdminRace(adminCurrentRace);
 }

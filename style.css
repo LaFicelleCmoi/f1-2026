@@ -170,6 +170,12 @@ main {
     box-shadow: 0 0 20px rgba(225, 6, 0, 0.1);
 }
 
+.race-card.cancelled {
+    border-left: 4px solid #ef4444;
+    opacity: 0.6;
+    filter: grayscale(0.3);
+}
+
 .race-card.sprint-card {
     border-left: 4px solid var(--sprint);
 }
@@ -265,6 +271,14 @@ main {
     background: rgba(136, 136, 136, 0.1);
     color: var(--muted);
     border: 1px solid var(--border);
+}
+
+.badge-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    text-decoration: line-through;
+    opacity: 0.85;
 }
 
 .sprint-tag {
@@ -442,6 +456,12 @@ main {
 
 .timeline-race-item.next {
     border-left: 4px solid var(--red);
+}
+
+.timeline-race-item.cancelled {
+    border-left: 4px solid #ef4444;
+    opacity: 0.55;
+    filter: grayscale(0.4);
 }
 
 .timeline-race-left {
@@ -716,6 +736,101 @@ main {
 
 .modal::-webkit-scrollbar-thumb:hover {
     background: var(--red);
+}
+
+/* ── Anti-spoil ── */
+.spoil-wrapper {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.spoil-blur {
+    filter: blur(8px);
+    user-select: none;
+    pointer-events: none;
+    transition: filter 0.4s ease;
+}
+
+.spoil-wrapper.revealed .spoil-blur {
+    filter: none;
+    user-select: auto;
+    pointer-events: auto;
+}
+
+.spoil-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(10, 10, 10, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 5;
+    transition: opacity 0.35s ease;
+    border-radius: 10px;
+}
+
+.spoil-wrapper.revealed .spoil-overlay {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spoil-overlay-icon {
+    font-size: 2rem;
+}
+
+.spoil-overlay-text {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.spoil-btn {
+    padding: 0.5rem 1.2rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+}
+
+.spoil-btn:hover {
+    background: rgba(225, 6, 0, 0.15);
+    border-color: var(--red);
+    color: var(--red);
+}
+
+.spoil-wrapper.revealed .spoil-btn-reveal {
+    display: none;
+}
+
+.spoil-btn-hide {
+    display: none;
+    margin-top: 0.75rem;
+    padding: 0.35rem 1rem;
+    background: rgba(225, 6, 0, 0.1);
+    border: 1px solid rgba(225, 6, 0, 0.3);
+    color: var(--red);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.spoil-wrapper.revealed .spoil-btn-hide {
+    display: inline-block;
+}
+
+.spoil-btn-hide:hover {
+    background: rgba(225, 6, 0, 0.2);
 }
 
 @media (max-width: 768px) {
