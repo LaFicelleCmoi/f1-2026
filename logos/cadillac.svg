@@ -1,19 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" fill="none">
-  <!-- Shield outline -->
-  <path d="M50 5 L90 25 L90 75 Q90 100 50 115 Q10 100 10 75 L10 25 Z" fill="#1a1a1a" stroke="#c0c0c0" stroke-width="2"/>
-  <!-- Inner shield -->
-  <path d="M50 12 L83 28 L83 72 Q83 94 50 108 Q17 94 17 72 L17 28 Z" fill="#222" stroke="#888" stroke-width="1"/>
-  <!-- Crown top -->
-  <path d="M35 20 L40 12 L45 18 L50 8 L55 18 L60 12 L65 20" stroke="#d4af37" stroke-width="1.5" fill="none"/>
-  <!-- Horizontal stripes -->
-  <rect x="25" y="35" width="50" height="6" rx="1" fill="#e8002d"/>
-  <rect x="25" y="45" width="50" height="6" rx="1" fill="#c0c0c0"/>
-  <rect x="25" y="55" width="50" height="6" rx="1" fill="#3671c6"/>
-  <rect x="25" y="65" width="50" height="6" rx="1" fill="#d4af37"/>
-  <rect x="25" y="75" width="50" height="6" rx="1" fill="#e8002d"/>
-  <!-- Vertical dividers -->
-  <line x1="42" y1="33" x2="42" y2="83" stroke="#222" stroke-width="2"/>
-  <line x1="58" y1="33" x2="58" y2="83" stroke="#222" stroke-width="2"/>
-  <!-- Laurel wreath hint -->
-  <path d="M25 90 Q35 85 50 95 Q65 85 75 90" stroke="#d4af37" stroke-width="1" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" fill="#fff">
+  <!-- V-shaped outer shield -->
+  <path d="M0 15 L15 0 L60 35 L105 0 L120 15 L60 75 Z" fill="#fff"/>
+  <!-- Inner dark area -->
+  <path d="M10 17 L20 7 L60 37 L100 7 L110 17 L60 68 Z" fill="#111"/>
+  <!-- Horizontal bars - left side -->
+  <rect x="22" y="18" width="30" height="4" fill="#fff" transform="rotate(33 37 20)"/>
+  <rect x="18" y="28" width="32" height="4" fill="#fff" transform="rotate(33 34 30)"/>
+  <rect x="14" y="38" width="34" height="3.5" fill="#fff" transform="rotate(33 31 40)"/>
+  <rect x="18" y="46" width="26" height="3" fill="#fff" transform="rotate(33 31 48)"/>
+  <!-- Horizontal bars - right side -->
+  <rect x="68" y="18" width="30" height="4" fill="#fff" transform="rotate(-33 83 20)"/>
+  <rect x="70" y="28" width="32" height="4" fill="#fff" transform="rotate(-33 86 30)"/>
+  <rect x="72" y="38" width="34" height="3.5" fill="#fff" transform="rotate(-33 89 40)"/>
+  <rect x="76" y="46" width="26" height="3" fill="#fff" transform="rotate(-33 89 48)"/>
+  <!-- Center vertical divider -->
+  <rect x="58" y="22" width="4" height="38" fill="#111"/>
 </svg>
