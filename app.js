@@ -35,7 +35,15 @@ db.ref('f1_results_2026').on('value', snapshot => {
                 race.sprintResult      = found.sprintResult      || null;
                 race.qualiResults      = found.qualiResults      || null;
                 race.sprintQualiResults = found.sprintQualiResults || null;
-                if (found.schedule) race.schedule = found.schedule;
+                // Horaires modifiés en admin : on ne prend que les "time" de Firebase,
+                // les jours et noms de sessions restent ceux de data.js (source de vérité)
+                if (found.schedule && race.schedule) {
+                    found.schedule.forEach((fs, i) => {
+                        if (race.schedule[i] && fs.time) {
+                            race.schedule[i].time = fs.time;
+                        }
+                    });
+                }
             } else {
                 race.raceStatus   = "upcoming";
                 race.sprintStatus = race.sprint ? "upcoming" : null;
