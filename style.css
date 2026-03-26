@@ -526,6 +526,7 @@ main {
     object-fit: contain;
     margin-bottom: 0.3rem;
     filter: brightness(1.1) drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    mix-blend-mode: screen;
     transition: transform 0.3s ease, filter 0.3s ease;
 }
 .podium-card:hover .podium-team-logo {
