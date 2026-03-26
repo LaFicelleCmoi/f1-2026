@@ -35,7 +35,7 @@ const teamColors = {
     "Racing Bulls":     "#6692ff",
     "Aston Martin":     "#229971",
     "Haas":             "#b6babd",
-    "Audi":             "#00e701",
+    "Audi":             "#990000",
     "Alpine":           "#ff87bc",
     "Cadillac":         "#1d1d1b"
 };
