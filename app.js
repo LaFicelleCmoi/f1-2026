@@ -1167,6 +1167,7 @@ function createF1Picker(selectedDriver, onSelect) {
     editBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         unlockPicker();
+        refreshDisabled();
         wrapper.classList.add("open");
     });
 
@@ -1208,6 +1209,7 @@ function createF1Picker(selectedDriver, onSelect) {
             opt.style.borderLeftColor = color;
             opt.innerHTML = `<span class="f1-opt-flag">${d.flag}</span><span class="f1-opt-name">${d.driver}</span>`;
             opt.addEventListener("click", () => {
+                if (opt.classList.contains("f1-picker-disabled")) return;
                 wrapper.classList.remove("open");
                 dropdown.querySelectorAll(".f1-picker-option").forEach(o => o.classList.remove("selected"));
                 opt.classList.add("selected");
@@ -1218,10 +1220,33 @@ function createF1Picker(selectedDriver, onSelect) {
         });
     });
 
+    // Désactiver les pilotes déjà pris dans le même conteneur
+    function refreshDisabled() {
+        const container = wrapper.closest(".admin-rows, #edit-race-rows, #edit-sprint-rows, #edit-race-quali-rows, #edit-sprint-quali-rows");
+        const taken = [];
+        if (container) {
+            container.querySelectorAll(".driver-select").forEach(input => {
+                if (input !== hidden && input.value) taken.push(input.value);
+            });
+        }
+        dropdown.querySelectorAll(".f1-picker-option").forEach(optEl => {
+            const nameEl = optEl.querySelector(".f1-opt-name");
+            if (!nameEl) return;
+            const name = nameEl.textContent;
+            if (name === "— Aucun —") return;
+            if (taken.includes(name)) {
+                optEl.classList.add("f1-picker-disabled");
+            } else {
+                optEl.classList.remove("f1-picker-disabled");
+            }
+        });
+    }
+
     // Toggle
     btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (locked) return; // Ne pas ouvrir si verrouillé
+        if (locked) return;
+        refreshDisabled();
         document.querySelectorAll(".f1-picker.open").forEach(p => { if (p !== wrapper) p.classList.remove("open"); });
         wrapper.classList.toggle("open");
     });

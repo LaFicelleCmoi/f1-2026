@@ -1621,6 +1621,23 @@ main {
     display: block;
 }
 
+/* Pilote déjà pris dans une autre ligne */
+.f1-picker-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    position: relative;
+}
+.f1-picker-disabled::after {
+    content: "✓ déjà sélectionné";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
 .f1-picker-btn {
     width: 100%;
     padding: 0.45rem 0.6rem;
