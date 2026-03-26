@@ -1787,56 +1787,209 @@ main {
     background: rgba(225, 6, 0, 0.2);
 }
 
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤1024px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    main { padding: 1.5rem; }
+    .races-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .standings-container { gap: 1rem; }
+    .modal { max-width: 90vw; }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤768px)
+   ═══════════════════════════════════════════════ */
 @media (max-width: 768px) {
+    /* Header */
     header {
-        padding: 0 1rem;
+        padding: 0.6rem 1rem;
         height: auto;
         flex-wrap: wrap;
-        padding-top: 0.75rem;
-        padding-bottom: 0.75rem;
         gap: 0.5rem;
     }
+    .f1-logo { font-size: 1.5rem; }
+    .season-title { font-size: 0.8rem; letter-spacing: 1px; }
+    .stats-bar { gap: 0.6rem; font-size: 0.72rem; }
+    .stats-bar strong { font-size: 0.85rem; }
+    .header-right { gap: 0.5rem; }
 
-    .stats-bar {
-        gap: 0.75rem;
-        font-size: 0.78rem;
+    /* Countdown */
+    .countdown-bar { padding: 0.4rem 1rem; font-size: 0.78rem; }
+
+    /* Nav */
+    nav { padding: 0 0.5rem; gap: 0; }
+    .nav-tab { padding: 0.75rem 0.7rem; font-size: 0.78rem; letter-spacing: 0; }
+
+    /* Main */
+    main { padding: 1rem 0.75rem; }
+
+    /* Section header */
+    .section-header h2 { font-size: 1.4rem; }
+    .section-header p { font-size: 0.8rem; }
+
+    /* Progress bar */
+    .season-progress { padding: 0.75rem 1rem; }
+    .progress-label { font-size: 0.65rem; }
+
+    /* Filters */
+    .filter-bar { gap: 0.6rem; }
+    .filter-group { width: 100%; }
+    .filter-options { flex-wrap: wrap; }
+    .filter-btn { font-size: 0.7rem; padding: 0.3rem 0.5rem; }
+    .filter-search { min-width: 0; width: 100%; }
+
+    /* Grid */
+    .races-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+    /* Standings */
+    .standings-container { grid-template-columns: 1fr; }
+
+    /* Podium */
+    .podium-stage { gap: 0.3rem; padding: 0.8rem 0 0; }
+    .podium-p1 { width: 110px; }
+    .podium-p2 { width: 95px; }
+    .podium-p3 { width: 90px; }
+    .podium-p1 .podium-pillar { height: 55px; }
+    .podium-p2 .podium-pillar { height: 40px; }
+    .podium-p3 .podium-pillar { height: 28px; }
+    .podium-driver-name { font-size: 0.62rem; }
+    .podium-p1 .podium-driver-name { font-size: 0.7rem; }
+    .podium-team-name { font-size: 0.5rem; padding: 0.12rem 0.35rem; }
+    .podium-team-logo { width: 28px; height: 28px; }
+    .podium-p1 .podium-team-logo { width: 34px; height: 34px; }
+    .podium-position { font-size: 0.5rem; }
+    .podium-crown { font-size: 1.1rem; }
+    .podium-pillar-num { font-size: 1.2rem; }
+    .podium-p1 .podium-pillar-num { font-size: 1.8rem; }
+
+    /* Modal */
+    .modal { max-width: 95vw; max-height: 85vh; border-radius: 12px; }
+    .modal-header { padding: 1rem; }
+    .modal-flag { font-size: 2rem; }
+    .modal-race-name { font-size: 1.1rem; }
+    .modal-meta { font-size: 0.75rem; }
+    .modal-body { padding: 1rem; }
+
+    /* Timeline */
+    .timeline-race-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .timeline-race-right { justify-content: flex-start; flex-wrap: wrap; }
+
+    /* Badges */
+    .new-tag { font-size: 0.55rem; padding: 0.2rem 0.5rem; letter-spacing: 0.8px; }
+    .badge, .sprint-tag { font-size: 0.65rem; }
+
+    /* Ribbon nouveau circuit */
+    .race-card-new::before {
+        top: 16px; right: -48px;
+        font-size: 0.42rem; padding: 0.2rem 3rem;
     }
 
-    nav {
-        padding: 0 0.5rem;
+    /* Admin */
+    .admin-row { font-size: 0.8rem; }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Small phone (≤480px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 480px) {
+    /* Header compact */
+    header { padding: 0.5rem 0.75rem; }
+    .f1-logo { font-size: 1.3rem; }
+    .season-title { display: none; }
+    .stats-bar { display: none; }
+
+    /* Nav scrollable */
+    nav { padding: 0 0.25rem; -webkit-overflow-scrolling: touch; }
+    .nav-tab { padding: 0.65rem 0.55rem; font-size: 0.72rem; }
+
+    /* Main */
+    main { padding: 0.75rem 0.5rem; }
+    .section-header { margin-bottom: 1rem; }
+    .section-header h2 { font-size: 1.2rem; }
+    .section-header p { font-size: 0.72rem; }
+
+    /* Progress */
+    .season-progress { padding: 0.6rem 0.8rem; margin-bottom: 1rem; }
+    .progress-bar-track { height: 6px; }
+
+    /* Filters stack */
+    .filter-bar { gap: 0.5rem; }
+    .filter-btn { font-size: 0.62rem; padding: 0.25rem 0.4rem; border-radius: 6px; }
+
+    /* Cards */
+    .race-card { border-radius: 10px; }
+    .race-card-header { padding: 0.6rem 0.75rem; }
+    .race-card-body { padding: 0.75rem; }
+    .race-round { font-size: 0.75rem; }
+    .race-name { font-size: 0.88rem; }
+    .race-country { font-size: 0.68rem; }
+    .race-info-row { font-size: 0.75rem; }
+
+    /* Podium compact */
+    .podium-stage { gap: 0.2rem; }
+    .podium-p1 { width: 95px; }
+    .podium-p2 { width: 80px; }
+    .podium-p3 { width: 75px; }
+    .podium-p1 .podium-pillar { height: 45px; }
+    .podium-p2 .podium-pillar { height: 32px; }
+    .podium-p3 .podium-pillar { height: 22px; }
+    .podium-driver-name { font-size: 0.55rem; padding: 0 0.2rem; }
+    .podium-p1 .podium-driver-name { font-size: 0.62rem; }
+    .podium-team-name { font-size: 0.45rem; }
+    .podium-team-logo { width: 22px; height: 22px; }
+    .podium-p1 .podium-team-logo { width: 28px; height: 28px; }
+    .podium-crown { font-size: 0.9rem; height: 1.2rem; line-height: 1.2rem; }
+    .podium-pillar-num { font-size: 1rem; }
+    .podium-p1 .podium-pillar-num { font-size: 1.4rem; }
+
+    /* Modal fullscreen */
+    .modal { max-width: 100vw; max-height: 100vh; border-radius: 0; margin: 0; }
+    .modal-overlay { padding: 0; }
+    .modal-header { padding: 0.75rem; border-radius: 0; }
+    .modal-flag { font-size: 1.6rem; }
+    .modal-race-name { font-size: 1rem; }
+    .modal-body { padding: 0.75rem; }
+
+    /* Sprint cards */
+    .sprint-card { border-radius: 10px; }
+
+    /* Ribbon */
+    .race-card-new::before {
+        top: 14px; right: -50px;
+        font-size: 0.38rem; padding: 0.18rem 3rem;
     }
 
-    .nav-tab {
-        padding: 0.85rem 0.85rem;
-        font-size: 0.82rem;
-    }
+    /* Tables */
+    .standings-table { font-size: 0.75rem; }
+    .standings-table th, .standings-table td { padding: 0.5rem 0.4rem; }
+}
 
-    main {
-        padding: 1rem;
-    }
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — Ultra small phone (≤360px)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 360px) {
+    header { padding: 0.4rem 0.5rem; }
+    .f1-logo { font-size: 1.1rem; }
+    .header-right { gap: 0.3rem; }
+    .theme-toggle { padding: 0.3rem 0.4rem; font-size: 0.85rem; }
 
-    .races-grid {
-        grid-template-columns: 1fr;
-    }
+    .nav-tab { padding: 0.55rem 0.4rem; font-size: 0.65rem; }
 
-    .modal-header {
-        padding: 1rem;
-    }
+    main { padding: 0.5rem 0.35rem; }
 
-    .modal-flag {
-        font-size: 2rem;
-    }
+    .filter-btn { font-size: 0.58rem; padding: 0.2rem 0.3rem; }
 
-    .modal-race-name {
-        font-size: 1.1rem;
-    }
+    .race-name { font-size: 0.8rem; }
 
-    .timeline-race-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+    /* Podium minimal */
+    .podium-p1 { width: 85px; }
+    .podium-p2 { width: 72px; }
+    .podium-p3 { width: 68px; }
+    .podium-team-name { display: none; }
+    .podium-team-bar { width: 80%; height: 2px; margin-bottom: 0.3rem; }
 
-    .timeline-race-right {
-        justify-content: flex-start;
-    }
+    /* Modal */
+    .modal-race-name { font-size: 0.9rem; }
+    .modal-body { padding: 0.5rem; }
 }
