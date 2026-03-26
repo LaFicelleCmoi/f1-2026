@@ -1623,19 +1623,37 @@ main {
 
 /* Pilote déjà pris dans une autre ligne */
 .f1-picker-disabled {
-    opacity: 0.3;
+    opacity: 0.35;
     pointer-events: none;
     position: relative;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 4px,
+        rgba(255,255,255,0.02) 4px,
+        rgba(255,255,255,0.02) 8px
+    );
+}
+.f1-picker-disabled .f1-opt-name {
+    text-decoration: line-through;
+    text-decoration-color: rgba(229,0,0,0.5);
+    text-decoration-thickness: 1.5px;
 }
 .f1-picker-disabled::after {
-    content: "✓ déjà sélectionné";
+    content: "PRIS";
     position: absolute;
-    right: 8px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.6rem;
-    color: var(--muted);
-    font-style: italic;
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--red);
+    background: rgba(229,0,0,0.12);
+    border: 1px solid rgba(229,0,0,0.25);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
 }
 
 .f1-picker-btn {
