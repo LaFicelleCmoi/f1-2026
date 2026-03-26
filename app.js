@@ -576,14 +576,13 @@ function openModal(index) {
     // ── Helper : tableau de qualifications (réutilisé) ──
     function buildQualiTable(qualiData) {
         return `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Meilleur temps</th></tr></thead>
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th></tr></thead>
             <tbody>
                 ${qualiData.map((q, qi) => `
                     <tr>
                         <td class="pos-medal ${getPodiumColor(qi+1)}">${qi < 3 ? getPodiumIcon(qi+1) : qi+1}</td>
                         <td style="font-weight:600">${q.driver}</td>
                         <td style="color:var(--muted);font-size:0.82rem">${q.team}</td>
-                        <td style="text-align:right;color:var(--red);font-weight:700">${q.time || '-'}</td>
                     </tr>`).join("")}
             </tbody>
         </table>`;
@@ -620,14 +619,13 @@ function openModal(index) {
     // ── Résultats Sprint (anti-spoil) ──
     if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
         const sprintTable = `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
             <tbody>
                 ${race.sprintResult.fullResults.map((entry, idx) => `
                     <tr>
                         <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
                         <td>${entry.driver}</td>
                         <td style="color:var(--muted)">${entry.team}</td>
-                        <td style="color:var(--muted)">${entry.time || '-'}</td>
                         <td class="points-cell">${entry.points}</td>
                     </tr>`).join("")}
             </tbody>
@@ -644,14 +642,13 @@ function openModal(index) {
     // ── Résultats Course (anti-spoil) ──
     if (rs === "completed" && race.result && race.result.fullResults) {
         const raceTable = `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Points</th></tr></thead>
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
             <tbody>
                 ${race.result.fullResults.map((entry, idx) => `
                     <tr>
                         <td class="pos-medal ${getPodiumColor(idx+1)}">${idx < 3 ? getPodiumIcon(idx+1) : idx+1}</td>
                         <td>${entry.driver}</td>
                         <td style="color:var(--muted)">${entry.team}</td>
-                        <td style="color:var(--muted)">${entry.time || '-'}</td>
                         <td class="points-cell">${entry.points}</td>
                     </tr>`).join("")}
             </tbody>
@@ -868,10 +865,10 @@ function selectAdminRace(index) {
 function renderAdminRows(data, containerId, type) {
     const container = document.getElementById(containerId);
     container.innerHTML = `
-        <div style="display:grid; grid-template-columns: 50px 1.5fr 1fr 100px 60px 30px; gap:0.5rem;
+        <div style="display:grid; grid-template-columns: 50px 1.5fr 1fr 60px 30px; gap:0.5rem;
             padding:0 0.5rem; margin-bottom:0.5rem; font-size:0.75rem; font-weight:bold;
             color:var(--muted); text-transform:uppercase;">
-            <span>Pos</span><span>Pilote</span><span>Écurie</span><span>Temps</span><span>Pts</span><span></span>
+            <span>Pos</span><span>Pilote</span><span>Écurie</span><span>Pts</span><span></span>
         </div>`;
     data.forEach(row => container.appendChild(createAdminRow(row, type)));
 }
@@ -992,7 +989,7 @@ document.addEventListener("click", () => {
 function createAdminRow(data = {}, type = "race") {
     const div = document.createElement("div");
     div.className = "admin-row";
-    div.style = "display:grid; grid-template-columns: 50px 1.5fr 1fr 100px 60px 30px; gap:0.5rem; margin-bottom:0.5rem; align-items:center;";
+    div.style = "display:grid; grid-template-columns: 50px 1.5fr 1fr 60px 30px; gap:0.5rem; margin-bottom:0.5rem; align-items:center;";
     const maxPts = (type === "sprint") ? 8 : 25;
 
     // POS
@@ -1015,17 +1012,8 @@ function createAdminRow(data = {}, type = "race") {
     // PILOTE (F1 Picker)
     const picker = createF1Picker(data.driver || "", (driverName, teamName) => {
         teamInput.value = teamName;
-        // Mettre à jour le hidden input
         picker.querySelector(".driver-select").value = driverName;
     });
-
-    // TEMPS
-    const timeInput = document.createElement("input");
-    timeInput.type        = "text";
-    timeInput.className   = "time-input";
-    timeInput.placeholder = "Temps";
-    timeInput.value       = data.time || "";
-    timeInput.style       = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
 
     // POINTS
     const ptsInput = document.createElement("input");
@@ -1049,7 +1037,6 @@ function createAdminRow(data = {}, type = "race") {
     div.appendChild(posInput);
     div.appendChild(picker);
     div.appendChild(teamInput);
-    div.appendChild(timeInput);
     div.appendChild(ptsInput);
     div.appendChild(delBtn);
 
@@ -1071,10 +1058,10 @@ function addAdminRow(type) {
 function renderAdminQualiRows(data, containerId) {
     const container = document.getElementById(containerId);
     container.innerHTML = `
-        <div style="display:grid; grid-template-columns: 50px 1.5fr 1fr 120px 30px; gap:0.5rem;
+        <div style="display:grid; grid-template-columns: 50px 1.5fr 1fr 30px; gap:0.5rem;
             padding:0 0.5rem; margin-bottom:0.5rem; font-size:0.75rem; font-weight:bold;
             color:var(--muted); text-transform:uppercase;">
-            <span>Pos</span><span>Pilote</span><span>Écurie</span><span>Meilleur temps</span><span></span>
+            <span>Pos</span><span>Pilote</span><span>Écurie</span><span></span>
         </div>`;
     data.forEach(row => container.appendChild(createAdminQualiRow(row)));
 }
@@ -1082,7 +1069,7 @@ function renderAdminQualiRows(data, containerId) {
 function createAdminQualiRow(data = {}) {
     const div = document.createElement("div");
     div.className = "admin-row";
-    div.style = "display:grid; grid-template-columns: 50px 1.5fr 1fr 120px 30px; gap:0.5rem; margin-bottom:0.5rem; align-items:center;";
+    div.style = "display:grid; grid-template-columns: 50px 1.5fr 1fr 30px; gap:0.5rem; margin-bottom:0.5rem; align-items:center;";
 
     const posInput = document.createElement("input");
     posInput.type = "number"; posInput.className = "pos-input"; posInput.placeholder = "#";
@@ -1100,11 +1087,6 @@ function createAdminQualiRow(data = {}) {
         picker.querySelector(".driver-select").value = driverName;
     });
 
-    const timeInput = document.createElement("input");
-    timeInput.type = "text"; timeInput.className = "time-input"; timeInput.placeholder = "1:20.123";
-    timeInput.value = data.time || "";
-    timeInput.style = "width:100%; padding:0.5rem; background:var(--card2); border:1px solid var(--border); color:white; border-radius:6px; outline:none;";
-
     const delBtn = document.createElement("button");
     delBtn.textContent = "✕";
     delBtn.style = "background:transparent; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0.2rem;";
@@ -1114,7 +1096,6 @@ function createAdminQualiRow(data = {}) {
     div.appendChild(posInput);
     div.appendChild(picker);
     div.appendChild(teamInput);
-    div.appendChild(timeInput);
     div.appendChild(delBtn);
     return div;
 }
@@ -1157,7 +1138,6 @@ async function fetchRaceResults(round) {
             pos: parseInt(r.position),
             driver: d.driver,
             team: resolveTeam(r.Constructor.name),
-            time: r.Time ? r.Time.time : (r.status || "-"),
             points: parseInt(r.points) || 0
         };
     });
@@ -1169,12 +1149,10 @@ async function fetchQualifying(round) {
     const results = json?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults || [];
     return results.map(r => {
         const d = resolveDriver(r.Driver.givenName, r.Driver.familyName);
-        const bestTime = r.Q3 || r.Q2 || r.Q1 || "-";
         return {
             pos: parseInt(r.position),
             driver: d.driver,
-            team: resolveTeam(r.Constructor.name),
-            time: bestTime
+            team: resolveTeam(r.Constructor.name)
         };
     });
 }
@@ -1189,7 +1167,6 @@ async function fetchSprintResults(round) {
             pos: parseInt(r.position),
             driver: d.driver,
             team: resolveTeam(r.Constructor.name),
-            time: r.Time ? r.Time.time : (r.status || "-"),
             points: parseInt(r.points) || 0
         };
     });
@@ -1291,10 +1268,9 @@ function saveAdminResults() {
             const pos    = parseInt(row.querySelector(".pos-input").value) || 0;
             const driver = row.querySelector(".driver-select").value;
             const team   = row.querySelector(".team-input").value;
-            const time   = row.querySelector(".time-input").value.trim();
             const points = row.querySelector(".pts-input") ? (parseInt(row.querySelector(".pts-input").value) || 0) : undefined;
             if (driver) {
-                const entry = { pos, driver, team, time };
+                const entry = { pos, driver, team };
                 if (points !== undefined) entry.points = points;
                 rows.push(entry);
             }
