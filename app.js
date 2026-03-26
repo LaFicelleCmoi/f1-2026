@@ -315,12 +315,13 @@ function renderAllRaces() {
 
         let podiumHTML = "";
         if (rs === "completed" && race.result && race.result.podium) {
+            const sortedPodium = [...race.result.podium].sort((a, b) => a.pos - b.pos);
             podiumHTML = `
                 <div class="race-result">
                     <div class="podium">
-                        ${race.result.podium.map((p, i) => `
+                        ${sortedPodium.map(p => `
                             <div class="podium-item">
-                                <div class="podium-pos ${getPodiumColor(i+1)}">${getPodiumIcon(i+1)}</div>
+                                <div class="podium-pos ${getPodiumColor(p.pos)}">${getPodiumIcon(p.pos)}</div>
                                 <div class="podium-driver">${p.driver || '-'}</div>
                                 <div class="podium-team">${p.team || '-'}</div>
                             </div>
@@ -486,12 +487,13 @@ function renderSprintView() {
     sprintRaces.forEach(race => {
         const ss = race.sprintStatus || "upcoming";
         const hasResult = ss === "completed" && race.sprintResult && race.sprintResult.podium;
+        const sortedSprintPodium = hasResult ? [...race.sprintResult.podium].sort((a, b) => a.pos - b.pos) : [];
         let podiumHTML = hasResult ? `
             <div class="race-result">
                 <div class="podium">
-                    ${race.sprintResult.podium.map((p, i) => `
+                    ${sortedSprintPodium.map(p => `
                         <div class="podium-item">
-                            <div class="podium-pos ${getPodiumColor(i+1)}">${getPodiumIcon(i+1)}</div>
+                            <div class="podium-pos ${getPodiumColor(p.pos)}">${getPodiumIcon(p.pos)}</div>
                             <div class="podium-driver">${p.driver || '-'}</div>
                             <div class="podium-team">${p.team || '-'}</div>
                         </div>
