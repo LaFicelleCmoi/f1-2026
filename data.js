@@ -207,7 +207,7 @@ const races = [
         ]
     },
     {
-        round: 9, name: "Grand Prix d'Espagne", country: "Espagne", flag: "🇪🇸",
+        round: 9, name: "Grand Prix Automobile de Barcelone-Catalogne", country: "Espagne", flag: "🇪🇸",
         circuit: "Circuit de Barcelona-Catalunya", city: "Barcelone",
         dates: { full: "12 – 14 Juin 2026", race: "14 Juin 2026" },
         sprint: false, status: "upcoming", isNew: false,
@@ -305,7 +305,7 @@ const races = [
         ]
     },
     {
-        round: 16, name: "Grand Prix de Madrid", country: "Espagne", flag: "🇪🇸",
+        round: 16, name: "Grand Prix d'Espagne", country: "Espagne", flag: "🇪🇸",
         circuit: "Circuito del Jarama", city: "Madrid",
         dates: { full: "11 – 13 Septembre 2026", race: "13 Septembre 2026" },
         sprint: false, status: "upcoming", isNew: true,
