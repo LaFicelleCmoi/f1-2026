@@ -49,9 +49,9 @@ const teamLogos = {
     "Racing Bulls":     "https://media.formula1.com/content/dam/fom-website/teams/2025/racing-bulls-logo.png",
     "Aston Martin":     "https://media.formula1.com/content/dam/fom-website/teams/2025/aston-martin-logo.png",
     "Haas":             "https://media.formula1.com/content/dam/fom-website/teams/2025/haas-logo.png",
-    "Audi":             "https://media.formula1.com/content/dam/fom-website/teams/2025/kick-sauber-logo.png",
+    "Audi":             "logos/audi.svg",
     "Alpine":           "https://media.formula1.com/content/dam/fom-website/teams/2025/alpine-logo.png",
-    "Cadillac":         ""
+    "Cadillac":         "logos/cadillac.svg"
 };
 
 // Mapping API constructor names → local names
