@@ -93,6 +93,15 @@ const constructors = [
     { team: "Cadillac", flag: "🇺🇸" }
 ];
 
+const countryContinent = {
+    "Australie": "Asie-Océanie", "Chine": "Asie-Océanie", "Japon": "Asie-Océanie",
+    "Singapour": "Asie-Océanie", "Bahreïn": "Moyen-Orient", "Arabie Saoudite": "Moyen-Orient",
+    "Qatar": "Moyen-Orient", "Émirats Arabes Unis": "Moyen-Orient", "Azerbaïdjan": "Moyen-Orient",
+    "États-Unis": "Amériques", "Canada": "Amériques", "Mexique": "Amériques", "Brésil": "Amériques",
+    "Monaco": "Europe", "Espagne": "Europe", "Autriche": "Europe", "Royaume-Uni": "Europe",
+    "Belgique": "Europe", "Hongrie": "Europe", "Pays-Bas": "Europe", "Italie": "Europe"
+};
+
 const races = [
     {
         round: 1, name: "Grand Prix d'Australie", country: "Australie", flag: "🇦🇺",

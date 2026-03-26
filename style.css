@@ -231,6 +231,119 @@ main {
     font-size: 0.9rem;
 }
 
+/* ═══ BARRE DE PROGRESSION SAISON ═══ */
+.season-progress {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+}
+.progress-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+.progress-count {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--red);
+}
+.progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--card2);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--red), #ff4444, var(--red));
+    background-size: 200% 100%;
+    animation: progressShine 2s ease-in-out infinite;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 0 10px rgba(229,0,0,0.4);
+}
+.progress-bar-fill::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0;
+    width: 6px; height: 100%;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 15px var(--red);
+}
+@keyframes progressShine {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ═══ DRAPEAU ANIME AU HOVER ═══ */
+.flag-wave {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+.race-card:hover .flag-wave {
+    animation: flagWave 0.6s ease-in-out;
+}
+@keyframes flagWave {
+    0%   { transform: rotate(0deg) scale(1); }
+    15%  { transform: rotate(12deg) scale(1.15); }
+    30%  { transform: rotate(-8deg) scale(1.15); }
+    45%  { transform: rotate(6deg) scale(1.1); }
+    60%  { transform: rotate(-4deg) scale(1.1); }
+    75%  { transform: rotate(2deg) scale(1.05); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+/* ═══ CARTE NEXT RACE — Bordure pulsante ═══ */
+.race-card-next {
+    border: 1.5px solid var(--red) !important;
+    position: relative;
+    overflow: hidden;
+    animation: nextCardGlow 2s ease-in-out infinite;
+}
+
+@keyframes nextCardGlow {
+    0%, 100% {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2), 0 0 15px rgba(229,0,0,0.15);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2), 0 0 30px rgba(229,0,0,0.3), 0 0 60px rgba(229,0,0,0.1);
+    }
+}
+
+/* Barre animée en haut */
+.race-card-next::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 200%;
+    height: 2.5px;
+    background: linear-gradient(90deg, transparent, var(--red), #ff4444, var(--red), transparent);
+    animation: nextCardSweep 2s linear infinite;
+}
+@keyframes nextCardSweep {
+    0%   { transform: translateX(-50%); }
+    100% { transform: translateX(0%); }
+}
+
+.race-card-next:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 35px rgba(229,0,0,0.3) !important;
+}
+
 .filter-bar {
     display: flex;
     flex-wrap: wrap;

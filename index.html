@@ -52,6 +52,15 @@
             <h2>Calendrier des Courses</h2>
             <p>Saison F1 2026 — 24 Grands Prix</p>
         </div>
+        <div class="season-progress" id="season-progress">
+            <div class="progress-info">
+                <span class="progress-label">Progression de la saison</span>
+                <span class="progress-count"><span id="progress-done">0</span> / <span id="progress-total">24</span> courses</span>
+            </div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
         <div class="filter-bar" id="filter-bar">
             <div class="filter-group">
                 <label class="filter-label">Statut</label>
@@ -68,6 +77,16 @@
                     <button class="filter-btn active" data-filter="all">Toutes</button>
                     <button class="filter-btn" data-filter="sprint">⚡ Sprint</button>
                     <button class="filter-btn" data-filter="standard">Standard</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Continent</label>
+                <div class="filter-options" id="filter-continent">
+                    <button class="filter-btn active" data-filter="all">🌍 Tous</button>
+                    <button class="filter-btn" data-filter="Europe">🇪🇺 Europe</button>
+                    <button class="filter-btn" data-filter="Amériques">🌎 Amériques</button>
+                    <button class="filter-btn" data-filter="Asie-Océanie">🌏 Asie-Océanie</button>
+                    <button class="filter-btn" data-filter="Moyen-Orient">🕌 Moyen-Orient</button>
                 </div>
             </div>
             <div class="filter-group">

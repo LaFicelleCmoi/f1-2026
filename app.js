@@ -137,7 +137,7 @@ function updateCountdown() {
 // ============================================================
 let isAdmin = false;
 let adminCurrentRace = null;
-let activeFilters = { status: "all", type: "all", search: "" };
+let activeFilters = { status: "all", type: "all", continent: "all", search: "" };
 
 // ============================================================
 // 🔐 FIREBASE AUTH
@@ -283,12 +283,27 @@ function renderAllRaces() {
         if (activeFilters.status !== "all" && rs !== activeFilters.status) return false;
         if (activeFilters.type === "sprint" && !race.sprint) return false;
         if (activeFilters.type === "standard" && race.sprint) return false;
+        if (activeFilters.continent !== "all") {
+            const cont = countryContinent[race.country] || "";
+            if (cont !== activeFilters.continent) return false;
+        }
         if (activeFilters.search) {
             const q = activeFilters.search.toLowerCase();
             if (!(race.name + race.country + race.circuit + race.city).toLowerCase().includes(q)) return false;
         }
         return true;
     });
+
+    // Barre de progression
+    const doneCount = races.filter(r => (r.raceStatus || r.status || "upcoming") === "completed").length;
+    const totalCount = races.length;
+    const pctDone = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
+    const progressDone = document.getElementById("progress-done");
+    const progressTotal = document.getElementById("progress-total");
+    const progressFill = document.getElementById("progress-fill");
+    if (progressDone) progressDone.textContent = doneCount;
+    if (progressTotal) progressTotal.textContent = totalCount;
+    if (progressFill) progressFill.style.width = pctDone + "%";
 
     filtered.forEach(race => {
         const index = races.indexOf(race);
@@ -360,14 +375,14 @@ function renderAllRaces() {
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
         html += `
-            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}" onclick="openModal(${index})">
+            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" onclick="openModal(${index})">
                 <div class="race-card-header">
                     <span class="race-round">R${race.round}</span>
                     <div class="race-badges">${badgesHTML}</div>
                 </div>
                 <div class="race-card-body">
                     <div class="race-flag-name">
-                        <span class="race-flag">${race.flag}</span>
+                        <span class="race-flag flag-wave">${race.flag}</span>
                         <div>
                             <div class="race-name">${race.name}</div>
                             <div class="race-country">${race.country} — ${race.city}</div>
@@ -531,7 +546,7 @@ function renderSprintView() {
                 </div>
                 <div class="race-card-body">
                     <div class="race-flag-name">
-                        <span class="race-flag">${race.flag}</span>
+                        <span class="race-flag flag-wave">${race.flag}</span>
                         <div>
                             <div class="race-name">${race.name}</div>
                             <div class="race-country">${race.country} — ${race.city}</div>
@@ -1413,6 +1428,14 @@ window.onload = function () {
             document.querySelectorAll("#filter-type .filter-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             activeFilters.type = btn.dataset.filter;
+            renderAllRaces();
+        });
+    });
+    document.querySelectorAll("#filter-continent .filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("#filter-continent .filter-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeFilters.continent = btn.dataset.filter;
             renderAllRaces();
         });
     });
