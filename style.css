@@ -1623,37 +1623,52 @@ main {
 
 /* Pilote déjà pris dans une autre ligne */
 .f1-picker-disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     pointer-events: none;
     position: relative;
-    background: repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 4px,
-        rgba(255,255,255,0.02) 4px,
-        rgba(255,255,255,0.02) 8px
-    );
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(229,0,0,0.04) 0%, transparent 50%, rgba(229,0,0,0.04) 100%);
+    border-left-color: rgba(100,100,100,0.3) !important;
 }
-.f1-picker-disabled .f1-opt-name {
-    text-decoration: line-through;
-    text-decoration-color: rgba(229,0,0,0.5);
-    text-decoration-thickness: 1.5px;
-}
-.f1-picker-disabled::after {
-    content: "PRIS";
+
+/* Barre rouge diagonale qui barre le pilote */
+.f1-picker-disabled::before {
+    content: "";
     position: absolute;
-    right: 10px;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(229,0,0,0.6), rgba(229,0,0,0.6), transparent);
+    transform: rotate(-2deg);
+    z-index: 2;
+}
+
+.f1-picker-disabled .f1-opt-name {
+    color: var(--muted);
+}
+
+.f1-picker-disabled .f1-opt-flag {
+    filter: grayscale(1);
+}
+
+/* Badge PRIS */
+.f1-picker-disabled::after {
+    content: "🔒 PRIS";
+    position: absolute;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.55rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: var(--red);
-    background: rgba(229,0,0,0.12);
-    border: 1px solid rgba(229,0,0,0.25);
-    padding: 0.1rem 0.4rem;
+    font-size: 0.5rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--red), #cc0000);
+    padding: 0.15rem 0.5rem;
     border-radius: 4px;
     text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(229,0,0,0.3);
+    z-index: 3;
 }
 
 .f1-picker-btn {
