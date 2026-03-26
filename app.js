@@ -321,11 +321,13 @@ function renderAllRaces() {
                     <div class="podium-stage">
                         ${sortedPodium.map(p => {
                             const color = teamColors[p.team] || "#666";
+                            const logo = teamLogos[p.team] || "";
                             const posLabel = p.pos === 1 ? "1ST" : p.pos === 2 ? "2ND" : "3RD";
                             return `
                             <div class="podium-card podium-p${p.pos}" style="--team-color:${color}">
                                 <div class="podium-crown">${p.pos === 1 ? '👑' : ''}</div>
                                 <div class="podium-position">${posLabel}</div>
+                                ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${p.team}" onerror="this.style.display='none'">` : ''}
                                 <div class="podium-team-bar"></div>
                                 <div class="podium-driver-name">${p.driver || '-'}</div>
                                 <div class="podium-team-name">${p.team || '-'}</div>
@@ -501,11 +503,13 @@ function renderSprintView() {
                 <div class="podium-stage">
                     ${sortedSprintPodium.map(p => {
                         const color = teamColors[p.team] || "#666";
+                        const logo = teamLogos[p.team] || "";
                         const posLabel = p.pos === 1 ? "1ST" : p.pos === 2 ? "2ND" : "3RD";
                         return `
                         <div class="podium-card podium-p${p.pos}" style="--team-color:${color}">
                             <div class="podium-crown">${p.pos === 1 ? '👑' : ''}</div>
                             <div class="podium-position">${posLabel}</div>
+                            ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${p.team}" onerror="this.style.display='none'">` : ''}
                             <div class="podium-team-bar"></div>
                             <div class="podium-driver-name">${p.driver || '-'}</div>
                             <div class="podium-team-name">${p.team || '-'}</div>

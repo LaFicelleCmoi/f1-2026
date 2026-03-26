@@ -40,6 +40,20 @@ const teamColors = {
     "Cadillac":         "#1d1d1b"
 };
 
+const teamLogos = {
+    "McLaren":          "https://media.formula1.com/content/dam/fom-website/teams/2025/mclaren-logo.png",
+    "Mercedes":         "https://media.formula1.com/content/dam/fom-website/teams/2025/mercedes-logo.png",
+    "Red Bull Racing":  "https://media.formula1.com/content/dam/fom-website/teams/2025/red-bull-racing-logo.png",
+    "Ferrari":          "https://media.formula1.com/content/dam/fom-website/teams/2025/ferrari-logo.png",
+    "Williams":         "https://media.formula1.com/content/dam/fom-website/teams/2025/williams-logo.png",
+    "Racing Bulls":     "https://media.formula1.com/content/dam/fom-website/teams/2025/racing-bulls-logo.png",
+    "Aston Martin":     "https://media.formula1.com/content/dam/fom-website/teams/2025/aston-martin-logo.png",
+    "Haas":             "https://media.formula1.com/content/dam/fom-website/teams/2025/haas-logo.png",
+    "Audi":             "https://media.formula1.com/content/dam/fom-website/teams/2025/kick-sauber-logo.png",
+    "Alpine":           "https://media.formula1.com/content/dam/fom-website/teams/2025/alpine-logo.png",
+    "Cadillac":         ""
+};
+
 // Mapping API constructor names → local names
 const teamAliases = {
     "McLaren":           "McLaren",
