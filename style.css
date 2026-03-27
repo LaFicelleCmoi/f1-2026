@@ -2438,36 +2438,65 @@ main {
     overflow: hidden;
     width: 100%;
     text-align: center;
-    background: linear-gradient(90deg, #c00 0%, var(--red) 40%, #a00 100%);
+    /* Fond sombre avec liseré rouge en bas */
+    background: linear-gradient(180deg,
+        rgba(25,25,25,0.98) 0%,
+        rgba(18,18,18,0.98) 100%);
     border: none;
-    border-radius: 3px;
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 900;
+    border-top: 1px solid rgba(229,0,0,0.15);
+    border-bottom: 3px solid var(--red);
+    border-radius: 0 0 4px 4px;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.6rem;
+    font-weight: 800;
     font-style: italic;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-transform: uppercase;
     cursor: pointer;
-    padding: 0.5rem 0;
-    margin-top: 0.6rem;
-    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
-    box-shadow: 0 2px 12px rgba(229,0,0,0.35);
-    transition: box-shadow 0.2s ease, filter 0.2s ease;
+    padding: 0.55rem 1rem;
+    margin-top: 0.5rem;
+    transition: color 0.25s ease, background 0.25s ease,
+                border-bottom-color 0.25s ease, box-shadow 0.25s ease;
 }
-/* Sweep shine */
+
+/* Barre rouge gauche style F1 timing */
 .card-spoil-hide-btn::before {
     content: "";
     position: absolute;
-    top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.35s ease;
+    left: 0; top: 15%; bottom: 15%;
+    width: 3px;
+    background: var(--red);
+    border-radius: 0 2px 2px 0;
+    box-shadow: 0 0 8px rgba(229,0,0,0.6);
+    transition: height 0.2s ease, box-shadow 0.2s ease;
 }
-.card-spoil-hide-btn:hover::before { left: 150%; }
+
+/* Reflet diagonal qui traverse au hover */
+.card-spoil-hide-btn::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -80%;
+    width: 50%; height: 100%;
+    background: linear-gradient(105deg,
+        transparent 30%,
+        rgba(255,255,255,0.06) 50%,
+        transparent 70%);
+    transition: left 0.4s ease;
+}
+
 .card-spoil-hide-btn:hover {
-    filter: brightness(1.15);
-    box-shadow: 0 3px 18px rgba(229,0,0,0.55);
+    background: linear-gradient(180deg,
+        rgba(35,35,35,0.99) 0%,
+        rgba(229,0,0,0.08) 100%);
+    color: rgba(255,255,255,0.9);
+    border-bottom-color: #ff2222;
+    box-shadow: 0 4px 16px rgba(229,0,0,0.2);
 }
+.card-spoil-hide-btn:hover::before {
+    box-shadow: 0 0 14px rgba(229,0,0,0.9);
+}
+.card-spoil-hide-btn:hover::after { left: 140%; }
+
 .card-spoil-wrapper.revealed .card-spoil-hide-btn {
     display: block;
 }
