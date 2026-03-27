@@ -1341,22 +1341,41 @@ main {
     font-size: 0.78rem;
 }
 
+/* ═══ Ligne animée ═══ */
+.standing-row {
+    transition: background 0.25s ease;
+}
+
 /* ═══ Cellule points avec barre de progression ═══ */
 .standing-points-cell {
     position: relative;
-    min-width: 100px;
+    min-width: 140px;
     padding-right: 1rem !important;
 }
 .standing-points-bar-wrap {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     overflow: hidden;
+    border-radius: 0 2px 2px 0;
 }
 .standing-points-bar {
     position: absolute;
     top: 0; left: 0; bottom: 0;
-    opacity: 0.12;
-    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0.18;
+    border-radius: 0 3px 3px 0;
+    /* L'animation est gérée par JS via requestAnimationFrame */
+    transition: none;
+}
+/* Tip lumineux à l'extrémité de la barre */
+.standing-points-bar::after {
+    content: "";
+    position: absolute;
+    right: 0; top: 15%; bottom: 15%;
+    width: 3px;
+    background: inherit;
+    filter: brightness(2.5);
+    border-radius: 2px;
+    box-shadow: 0 0 8px currentColor;
 }
 .standing-pts-value {
     position: relative;
@@ -1365,6 +1384,7 @@ main {
     font-size: 0.95rem;
     color: white;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
 }
 
 /* ═══ TOP 3 — Effets premium ═══ */
