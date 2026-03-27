@@ -1009,21 +1009,23 @@ function openModal(index) {
     content.innerHTML = `
         <div class="modal-header" style="--hero-color:${teamColor}">
             <div class="modal-hero-bar"></div>
-            <div class="modal-title-block">
-                <span class="modal-flag">${race.flag}</span>
-                <div>
-                    <div class="modal-race-name">${race.name}</div>
-                    <div class="modal-meta">
-                        <span>📅 ${dateFull}</span>
-                        <span>🏟️ ${race.circuit}</span>
-                        <span>🏁 R${race.round}</span>
-                        ${race.sprint ? '<span class="modal-meta-sprint">⚡ Sprint</span>' : ""}
-                        ${race.isNew ? '<span class="modal-meta-new">✨ Nouveau</span>' : ""}
-                        ${isAdmin ? '<span style="color:var(--red);font-size:0.72rem;">⚙️ Admin</span>' : ""}
+            <div class="modal-header-row">
+                <div class="modal-title-block">
+                    <span class="modal-flag">${race.flag}</span>
+                    <div>
+                        <div class="modal-race-name">${race.name}</div>
+                        <div class="modal-meta">
+                            <span>📅 ${dateFull}</span>
+                            <span>🏟️ ${race.circuit}</span>
+                            <span>🏁 R${race.round}</span>
+                            ${race.sprint ? '<span class="modal-meta-sprint">⚡ Sprint</span>' : ""}
+                            ${race.isNew ? '<span class="modal-meta-new">✨ Nouveau</span>' : ""}
+                            ${isAdmin ? '<span style="color:var(--red);font-size:0.72rem;">⚙️ Admin</span>' : ""}
+                        </div>
                     </div>
                 </div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
-            <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
 
         <div class="modal-tabs">

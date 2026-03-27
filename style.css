@@ -1591,11 +1591,17 @@ main {
                 0 0 40px color-mix(in srgb, var(--hero-color, var(--red)) 40%, transparent);
 }
 
+.modal-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1.2rem 1.2rem 1rem 1.5rem;
+}
+
 .modal-title-block {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-    padding: 1.2rem 1.5rem 1rem;
     flex: 1;
 }
 
@@ -1643,8 +1649,7 @@ main {
     justify-content: center;
     flex-shrink: 0;
     transition: background 0.2s ease, border-color 0.2s ease;
-    margin: 1rem 1.2rem 0 0;
-    align-self: flex-start;
+    flex-shrink: 0;
 }
 .modal-close:hover {
     background: var(--red);
