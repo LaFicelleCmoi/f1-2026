@@ -1637,6 +1637,8 @@ window.onload = function () {
         tab.addEventListener("click", () => switchView(tab.dataset.view));
     });
 
+    document.getElementById("header-home").addEventListener("click", () => switchView("calendar"));
+
     document.querySelectorAll(".modal-overlay").forEach(overlay => {
         overlay.addEventListener("click", function (e) {
             if (e.target === this) this.classList.remove("open");
