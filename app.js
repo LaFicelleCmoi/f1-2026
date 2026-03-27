@@ -480,16 +480,16 @@ function renderStandings() {
                 const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
                 const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
                 return `
-                <tr class="${posClass}">
+                <tr class="standing-row ${posClass}" style="--row-delay:${i * 45}ms">
                     <td class="standing-pos">${medalIcon || (i + 1)}</td>
-                    <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color}"></span></td>
+                    <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color};box-shadow:0 0 8px ${color}55"></span></td>
                     <td class="standing-driver">${d.flag} ${d.driver}</td>
-                    <td class="standing-team">${d.team}</td>
+                    <td class="standing-team" style="color:${color}">${d.team}</td>
                     <td class="standing-points-cell">
                         <div class="standing-points-bar-wrap">
-                            <div class="standing-points-bar" style="width:${pct}%;background:${color}"></div>
+                            <div class="standing-points-bar" data-pct="${pct}" style="width:0%;background:linear-gradient(90deg,${color}cc,${color});box-shadow:0 0 6px ${color}66"></div>
                         </div>
-                        <span class="standing-pts-value">${d.points}</span>
+                        <span class="standing-pts-value" data-pts="${d.points}">0</span>
                     </td>
                 </tr>`;
             }).join("")}
@@ -504,19 +504,67 @@ function renderStandings() {
                 const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
                 const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
                 return `
-                <tr class="${posClass}">
+                <tr class="standing-row ${posClass}" style="--row-delay:${i * 45}ms">
                     <td class="standing-pos">${medalIcon || (i + 1)}</td>
-                    <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color}"></span></td>
+                    <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color};box-shadow:0 0 8px ${color}55"></span></td>
                     <td class="standing-driver">${c.flag} ${c.team}</td>
                     <td class="standing-points-cell">
                         <div class="standing-points-bar-wrap">
-                            <div class="standing-points-bar" style="width:${pct}%;background:${color}"></div>
+                            <div class="standing-points-bar" data-pct="${pct}" style="width:0%;background:linear-gradient(90deg,${color}cc,${color});box-shadow:0 0 6px ${color}66"></div>
                         </div>
-                        <span class="standing-pts-value">${c.points}</span>
+                        <span class="standing-pts-value" data-pts="${c.points}">0</span>
                     </td>
                 </tr>`;
             }).join("")}
         </tbody>`;
+
+    // Animation des barres et compteurs
+    animateStandings();
+}
+
+function animateStandings() {
+    const duration = 900;
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+    const rows = document.querySelectorAll(".standing-row");
+    rows.forEach((row, i) => {
+        const delay = i * 45;
+        // Apparition de la ligne
+        row.style.opacity = "0";
+        row.style.transform = "translateX(-12px)";
+        setTimeout(() => {
+            row.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+            row.style.opacity = "1";
+            row.style.transform = "translateX(0)";
+        }, delay);
+
+        // Animation barre + compteur
+        const bar = row.querySelector(".standing-points-bar");
+        const pts = row.querySelector(".standing-pts-value");
+        if (!bar || !pts) return;
+
+        const targetPct = parseFloat(bar.dataset.pct) || 0;
+        const targetPts = parseInt(pts.dataset.pts) || 0;
+
+        setTimeout(() => {
+            const start = performance.now();
+            function step(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeOut(progress);
+
+                bar.style.width = (targetPct * eased) + "%";
+                pts.textContent = Math.round(targetPts * eased);
+
+                if (progress < 1) requestAnimationFrame(step);
+                else {
+                    bar.style.width = targetPct + "%";
+                    pts.textContent = targetPts;
+                }
+            }
+            requestAnimationFrame(step);
+        }, delay + 150);
+    });
 }
 
 function renderTimeline() {
@@ -1052,10 +1100,12 @@ function switchView(view) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
     const target = document.getElementById("view-" + view);
-    void target.offsetWidth; // Force reflow pour re-trigger l'animation
+    void target.offsetWidth;
     target.classList.add("active");
     const activeTab = document.querySelector("[data-view='" + view + "']");
     if (activeTab) activeTab.classList.add("active");
+    // Re-déclencher animation classements à chaque visite de l'onglet
+    if (view === "standings") setTimeout(animateStandings, 80);
 }
 
 // --------------------------------------------------------
