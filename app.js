@@ -848,7 +848,7 @@ function openModal(index) {
                     </tr>`).join("")}
             </tbody>
         </table>`;
-        resultsHTML += buildDropdownSection("Résultats Sprint", "⚡", sprintTable, `dropdown-sr-${index}`);
+        resultsHTML += buildSpoilSection("Résultats Sprint", "⚡", sprintTable, `spoil-sr-${index}`);
     }
 
     // ── Qualifications Course (menu déroulant) ──
@@ -871,7 +871,7 @@ function openModal(index) {
                     </tr>`).join("")}
             </tbody>
         </table>`;
-        resultsHTML += buildDropdownSection("Résultats Course", "🏁", raceTable, `dropdown-rc-${index}`);
+        resultsHTML += buildSpoilSection("Résultats Course", "🏁", raceTable, `spoil-rc-${index}`);
     }
 
     if (resultsHTML === "") {
