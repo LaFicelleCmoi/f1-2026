@@ -1735,14 +1735,14 @@ async function fetchPracticeResults(sessionName, countryName, year = 2026) {
     // sessionName : "Practice 1", "Practice 2", "Practice 3"
     const res = await fetch(`${OPENF1_BASE}/sessions?session_name=${encodeURIComponent(sessionName)}&country_name=${encodeURIComponent(englishCountry)}&year=${year}`);
     const sessions = await res.json();
-    if (!sessions || sessions.length === 0) return [];
+    if (!Array.isArray(sessions) || sessions.length === 0) return [];
     const sessionKey = sessions[0].session_key;
     if (!sessionKey) return [];
 
     // Récupérer les laps de la session et prendre le meilleur temps par pilote
     const lapsRes = await fetch(`${OPENF1_BASE}/laps?session_key=${sessionKey}`);
     const laps = await lapsRes.json();
-    if (!laps || laps.length === 0) return [];
+    if (!Array.isArray(laps) || laps.length === 0) return [];
 
     // Grouper par driver_number, trouver le meilleur tour
     const bestByDriver = {};
@@ -1757,6 +1757,7 @@ async function fetchPracticeResults(sessionName, countryName, year = 2026) {
     // Récupérer les infos pilotes
     const driversRes = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`);
     const driversData = await driversRes.json();
+    if (!Array.isArray(driversData) || driversData.length === 0) return [];
     const driverMap = {};
     driversData.forEach(d => { driverMap[d.driver_number] = d; });
 
