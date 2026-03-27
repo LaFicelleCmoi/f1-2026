@@ -457,27 +457,54 @@ function renderStandings() {
     const sortedConstructors  = Object.values(constructorsMap).sort((a, b) => b.points - a.points);
     const medalColors         = ["#ffd700", "#c0c0c0", "#cd7f32"];
 
+    const maxDriverPts = sortedDrivers[0]?.points || 1;
+    const maxConstrPts = sortedConstructors[0]?.points || 1;
+
     document.getElementById("drivers-standings").innerHTML = `
-        <thead><tr><th>#</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
+        <thead><tr><th>#</th><th colspan="2">Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
         <tbody>
-            ${sortedDrivers.map((d, i) => `
-                <tr>
-                    <td style="font-weight:900;color:${medalColors[i] || "var(--text)"}">${i + 1}</td>
-                    <td>${d.flag} ${d.driver}</td>
-                    <td style="color:var(--muted);font-size:0.8rem">${d.team}</td>
-                    <td class="points-cell">${d.points} pts</td>
-                </tr>`).join("")}
+            ${sortedDrivers.map((d, i) => {
+                const color = teamColors[d.team] || "#666";
+                const pct = maxDriverPts > 0 ? (d.points / maxDriverPts * 100) : 0;
+                const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
+                const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                return `
+                <tr class="${posClass}">
+                    <td class="standing-pos">${medalIcon || (i + 1)}</td>
+                    <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color}"></span></td>
+                    <td class="standing-driver">${d.flag} ${d.driver}</td>
+                    <td class="standing-team">${d.team}</td>
+                    <td class="standing-points-cell">
+                        <div class="standing-points-bar-wrap">
+                            <div class="standing-points-bar" style="width:${pct}%;background:${color}"></div>
+                        </div>
+                        <span class="standing-pts-value">${d.points}</span>
+                    </td>
+                </tr>`;
+            }).join("")}
         </tbody>`;
 
     document.getElementById("constructors-standings").innerHTML = `
-        <thead><tr><th>#</th><th>Écurie</th><th>Points</th></tr></thead>
+        <thead><tr><th>#</th><th colspan="2">Écurie</th><th>Points</th></tr></thead>
         <tbody>
-            ${sortedConstructors.map((c, i) => `
-                <tr>
-                    <td style="font-weight:900;color:${medalColors[i] || "var(--text)"}">${i + 1}</td>
-                    <td>${c.flag} ${c.team}</td>
-                    <td class="points-cell">${c.points} pts</td>
-                </tr>`).join("")}
+            ${sortedConstructors.map((c, i) => {
+                const color = teamColors[c.team] || "#666";
+                const pct = maxConstrPts > 0 ? (c.points / maxConstrPts * 100) : 0;
+                const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
+                const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                return `
+                <tr class="${posClass}">
+                    <td class="standing-pos">${medalIcon || (i + 1)}</td>
+                    <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color}"></span></td>
+                    <td class="standing-driver">${c.flag} ${c.team}</td>
+                    <td class="standing-points-cell">
+                        <div class="standing-points-bar-wrap">
+                            <div class="standing-points-bar" style="width:${pct}%;background:${color}"></div>
+                        </div>
+                        <span class="standing-pts-value">${c.points}</span>
+                    </td>
+                </tr>`;
+            }).join("")}
         </tbody>`;
 }
 

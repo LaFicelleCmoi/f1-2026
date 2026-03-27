@@ -1259,7 +1259,8 @@ main {
 
 .standings-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background: var(--card);
     border-radius: 12px;
     overflow: hidden;
@@ -1267,23 +1268,24 @@ main {
 }
 
 .standings-table thead {
-    background: var(--card2);
+    background: linear-gradient(180deg, var(--card2), rgba(30,30,30,0.95));
 }
 
 .standings-table th {
     padding: 0.85rem 1rem;
     text-align: left;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     color: var(--muted);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    font-weight: 700;
 }
 
 .standings-table td {
-    padding: 0.85rem 1rem;
+    padding: 0.7rem 0.8rem;
     font-size: 0.88rem;
-    border-bottom: 1px solid rgba(42, 42, 42, 0.5);
+    border-bottom: 1px solid rgba(42, 42, 42, 0.4);
     vertical-align: middle;
 }
 
@@ -1291,8 +1293,154 @@ main {
     border-bottom: none;
 }
 
+.standings-table tbody tr {
+    transition: all 0.25s ease;
+    position: relative;
+}
+
 .standings-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.04);
+    transform: scale(1.005);
+}
+
+/* ═══ Barre de couleur équipe ═══ */
+.standing-color-cell {
+    width: 4px;
+    padding: 0 !important;
+    position: relative;
+}
+.standing-color-bar {
+    display: block;
+    width: 4px;
+    height: 70%;
+    min-height: 22px;
+    border-radius: 2px;
+    position: absolute;
+    top: 15%;
+    left: 0.5rem;
+    box-shadow: 0 0 6px color-mix(in srgb, var(--team-color, #666) 60%, transparent);
+}
+
+/* ═══ Position ═══ */
+.standing-pos {
+    font-weight: 900;
+    font-size: 0.95rem;
+    text-align: center;
+    width: 38px;
+    min-width: 38px;
+}
+
+/* ═══ Nom pilote / écurie ═══ */
+.standing-driver {
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.standing-team {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+/* ═══ Cellule points avec barre de progression ═══ */
+.standing-points-cell {
+    position: relative;
+    min-width: 100px;
+    padding-right: 1rem !important;
+}
+.standing-points-bar-wrap {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+}
+.standing-points-bar {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    opacity: 0.12;
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.standing-pts-value {
+    position: relative;
+    z-index: 1;
+    font-weight: 900;
+    font-size: 0.95rem;
+    color: white;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═══ TOP 3 — Effets premium ═══ */
+.standing-top {
+    position: relative;
+}
+
+/* P1 — Gold */
+.standing-p1 {
+    background: linear-gradient(90deg, rgba(255,215,0,0.08) 0%, transparent 60%) !important;
+}
+.standing-p1:hover {
+    background: linear-gradient(90deg, rgba(255,215,0,0.14) 0%, rgba(255,215,0,0.03) 60%) !important;
+}
+.standing-p1 .standing-pos {
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 4px rgba(255,215,0,0.3));
+}
+.standing-p1 .standing-driver {
+    color: var(--gold);
+    text-shadow: 0 0 15px rgba(255,215,0,0.15);
+}
+.standing-p1 .standing-pts-value {
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.3);
+    font-size: 1.05rem;
+}
+.standing-p1 td:first-child {
+    box-shadow: inset 3px 0 0 var(--gold);
+}
+
+/* P2 — Silver */
+.standing-p2 {
+    background: linear-gradient(90deg, rgba(192,192,192,0.06) 0%, transparent 50%) !important;
+}
+.standing-p2:hover {
+    background: linear-gradient(90deg, rgba(192,192,192,0.1) 0%, rgba(192,192,192,0.02) 50%) !important;
+}
+.standing-p2 .standing-pos {
+    font-size: 1.15rem;
+    filter: drop-shadow(0 2px 4px rgba(192,192,192,0.2));
+}
+.standing-p2 .standing-driver {
+    color: var(--silver);
+}
+.standing-p2 .standing-pts-value {
+    color: var(--silver);
+}
+.standing-p2 td:first-child {
+    box-shadow: inset 3px 0 0 var(--silver);
+}
+
+/* P3 — Bronze */
+.standing-p3 {
+    background: linear-gradient(90deg, rgba(205,127,50,0.06) 0%, transparent 50%) !important;
+}
+.standing-p3:hover {
+    background: linear-gradient(90deg, rgba(205,127,50,0.1) 0%, rgba(205,127,50,0.02) 50%) !important;
+}
+.standing-p3 .standing-pos {
+    font-size: 1.1rem;
+    filter: drop-shadow(0 2px 4px rgba(205,127,50,0.2));
+}
+.standing-p3 .standing-driver {
+    color: var(--bronze);
+}
+.standing-p3 .standing-pts-value {
+    color: var(--bronze);
+}
+.standing-p3 td:first-child {
+    box-shadow: inset 3px 0 0 var(--bronze);
+}
+
+/* Séparateur après le top 3 */
+.standing-p3 td {
+    border-bottom: 2px solid rgba(255,255,255,0.08) !important;
 }
 
 .points-cell {
