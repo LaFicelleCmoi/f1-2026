@@ -124,12 +124,20 @@ function updateCountdown() {
     const mins  = Math.floor((diff % 3600000) / 60000);
     const secs  = Math.floor((diff % 60000) / 1000);
 
-    let timeStr = "";
-    if (days > 0) timeStr += `${days}j `;
-    timeStr += `${String(hours).padStart(2,"0")}h ${String(mins).padStart(2,"0")}m ${String(secs).padStart(2,"0")}s`;
-
     const shortName = next.race.name.replace("Grand Prix ", "GP ");
-    el.innerHTML = `<span style="color:var(--muted)">Prochain :</span> <strong>${next.session.name}</strong> ${next.race.flag} ${shortName} — <span style="color:var(--red);font-weight:800">${timeStr}</span>`;
+
+    const timeBlocks = [];
+    if (days > 0) timeBlocks.push(`<span class="cd-block"><span class="cd-num">${days}</span><span class="cd-label">JOUR${days > 1 ? 'S' : ''}</span></span>`);
+    timeBlocks.push(`<span class="cd-block"><span class="cd-num">${String(hours).padStart(2,"0")}</span><span class="cd-label">H</span></span>`);
+    timeBlocks.push(`<span class="cd-block"><span class="cd-num">${String(mins).padStart(2,"0")}</span><span class="cd-label">MIN</span></span>`);
+    timeBlocks.push(`<span class="cd-block"><span class="cd-num cd-sec">${String(secs).padStart(2,"0")}</span><span class="cd-label">SEC</span></span>`);
+
+    el.innerHTML = `
+        <span class="cd-next">PROCHAIN</span>
+        <span class="cd-session">${next.session.name}</span>
+        <span class="cd-sep">—</span>
+        <span class="cd-race">${next.race.flag} ${shortName}</span>
+        <span class="cd-timer">${timeBlocks.join('<span class="cd-colon">:</span>')}</span>`;
 }
 
 // ============================================================
