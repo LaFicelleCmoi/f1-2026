@@ -126,22 +126,26 @@ function updateCountdown() {
 
     const shortName = next.race.name.replace("Grand Prix ", "GP ");
 
+    const dPad = String(days).padStart(2,"0");
+    const hPad = String(hours).padStart(2,"0");
+    const mPad = String(mins).padStart(2,"0");
+    const sPad = String(secs).padStart(2,"0");
+
     el.innerHTML = `
-        <div class="f1-timer-board">
-            <div class="f1-timer-left">
-                <span class="f1-timer-live">LIVE</span>
-                <span class="f1-timer-session">${next.session.name}</span>
+        <div class="rc-board">
+            <div class="rc-top">
+                <span class="rc-label">PROCHAIN</span>
+                <span class="rc-session">${next.session.name}</span>
+                <span class="rc-dot">●</span>
+                <span class="rc-gp">${next.race.flag} ${shortName}</span>
             </div>
-            <div class="f1-timer-center">
-                <span class="f1-timer-race">${next.race.flag} ${shortName}</span>
-            </div>
-            <div class="f1-timer-right">
-                ${days > 0 ? `<div class="f1-timer-digit-group"><span class="f1-timer-digit">${days}</span><span class="f1-timer-unit">J</span></div><span class="f1-timer-sep">:</span>` : ''}
-                <div class="f1-timer-digit-group"><span class="f1-timer-digit">${String(hours).padStart(2,"0")}</span><span class="f1-timer-unit">H</span></div>
-                <span class="f1-timer-sep">:</span>
-                <div class="f1-timer-digit-group"><span class="f1-timer-digit">${String(mins).padStart(2,"0")}</span><span class="f1-timer-unit">M</span></div>
-                <span class="f1-timer-sep">:</span>
-                <div class="f1-timer-digit-group f1-timer-sec"><span class="f1-timer-digit">${String(secs).padStart(2,"0")}</span><span class="f1-timer-unit">S</span></div>
+            <div class="rc-digits">
+                ${days > 0 ? `<span class="rc-char">${dPad[0]}</span><span class="rc-char">${dPad[1]}</span><span class="rc-colon">:</span>` : ''}
+                <span class="rc-char">${hPad[0]}</span><span class="rc-char">${hPad[1]}</span>
+                <span class="rc-colon">:</span>
+                <span class="rc-char">${mPad[0]}</span><span class="rc-char">${mPad[1]}</span>
+                <span class="rc-colon">:</span>
+                <span class="rc-char rc-sec">${sPad[0]}</span><span class="rc-char rc-sec">${sPad[1]}</span>
             </div>
         </div>`;
 }

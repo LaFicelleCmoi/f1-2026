@@ -125,244 +125,149 @@ header {
 }
 
 /* ═══════════════════════════════════════════════
-   F1 TIMING BOARD — Style panneau officiel
+   RACE CONTROL — Panneau LED de circuit
    ═══════════════════════════════════════════════ */
 
 .countdown-bar {
-    background:
-        repeating-linear-gradient(
-            90deg,
-            rgba(255,255,255,0.015) 0px,
-            rgba(255,255,255,0.015) 1px,
-            transparent 1px,
-            transparent 4px
-        ),
-        linear-gradient(180deg, #151515 0%, #0d0d0d 100%);
+    background: #000;
     border-bottom: none;
     padding: 0;
     position: relative;
     overflow: hidden;
 }
 
-/* Bande rouge F1 en haut */
+/* Bande rouge fine en haut */
 .countdown-bar::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 3px;
+    height: 2px;
     background: var(--red);
-    box-shadow: 0 0 15px rgba(229,0,0,0.5), 0 0 30px rgba(229,0,0,0.2);
-}
-
-/* Sweep lumineux */
-.countdown-bar::after {
-    content: "";
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 150px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-    animation: timerSweep 4s ease-in-out infinite;
-    pointer-events: none;
-}
-@keyframes timerSweep {
-    0%   { left: -150px; }
-    50%  { left: calc(100% + 150px); }
-    100% { left: calc(100% + 150px); }
 }
 
 #countdown-text {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
-    gap: 0;
-    flex-wrap: nowrap;
 }
 
-/* ── Layout du board ── */
-.f1-timer-board {
+/* ── Board container ── */
+.rc-board {
     display: flex;
-    align-items: stretch;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
-    min-height: 48px;
+    padding: 0.6rem 1rem 0.8rem;
+    gap: 0.4rem;
 }
 
-/* ── Partie gauche — LIVE + Session ── */
-.f1-timer-left {
+/* ── Ligne du haut — session + GP ── */
+.rc-top {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 1rem;
-    background: rgba(229,0,0,0.06);
-    border-right: 1px solid rgba(229,0,0,0.15);
-    flex-shrink: 0;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
-.f1-timer-live {
+.rc-label {
     font-size: 0.5rem;
     font-weight: 900;
     letter-spacing: 3px;
-    color: var(--red);
-    background: rgba(229,0,0,0.15);
-    border: 1px solid rgba(229,0,0,0.4);
-    padding: 0.2rem 0.5rem;
-    border-radius: 2px;
-    position: relative;
-    animation: livePulse 2s ease-in-out infinite;
-}
-.f1-timer-live::before {
-    content: "";
-    position: absolute;
-    top: 50%; left: -2px;
-    transform: translateY(-50%);
-    width: 5px; height: 5px;
+    color: #000;
     background: var(--red);
-    border-radius: 50%;
-    box-shadow: 0 0 6px var(--red);
-    animation: liveDot 1.5s ease-in-out infinite;
-}
-@keyframes livePulse {
-    0%, 100% { border-color: rgba(229,0,0,0.4); }
-    50% { border-color: rgba(229,0,0,0.7); }
-}
-@keyframes liveDot {
-    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--red); }
-    50% { opacity: 0.3; box-shadow: 0 0 2px var(--red); }
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
 }
 
-.f1-timer-session {
+.rc-session {
+    font-size: 0.8rem;
     font-weight: 800;
-    font-size: 0.75rem;
     color: #fff;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
-/* ── Centre — Nom du GP ── */
-.f1-timer-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 0 1rem;
-    border-right: 1px solid rgba(255,255,255,0.06);
+.rc-dot {
+    color: var(--red);
+    font-size: 0.35rem;
+    animation: rcDotPulse 1.5s ease-in-out infinite;
+}
+@keyframes rcDotPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
 }
 
-.f1-timer-race {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.7);
+.rc-gp {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.5);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
 
-/* ── Droite — Timer digital ── */
-.f1-timer-right {
+/* ── Chiffres géants ── */
+.rc-digits {
     display: flex;
     align-items: center;
-    gap: 0.15rem;
-    padding: 0.4rem 1rem;
-    background: rgba(0,0,0,0.3);
-    flex-shrink: 0;
+    justify-content: center;
+    gap: 0.2rem;
 }
 
-.f1-timer-digit-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: linear-gradient(180deg, rgba(229,0,0,0.12) 0%, rgba(229,0,0,0.04) 100%);
-    border: 1px solid rgba(229,0,0,0.25);
-    border-radius: 4px;
-    padding: 0.2rem 0.4rem 0.15rem;
-    min-width: 34px;
-    position: relative;
-}
-
-/* Ligne de séparation horizontale au milieu du digit (style LCD) */
-.f1-timer-digit-group::after {
-    content: "";
-    position: absolute;
-    left: 2px; right: 2px;
-    top: 50%;
-    height: 1px;
-    background: rgba(0,0,0,0.3);
-    pointer-events: none;
-}
-
-.f1-timer-digit {
-    font-family: 'Courier New', 'SF Mono', 'Consolas', monospace;
-    font-size: 1.1rem;
+.rc-char {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 2.2rem;
     font-weight: 900;
     color: var(--red);
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    text-shadow: 0 0 8px rgba(229,0,0,0.5), 0 0 20px rgba(229,0,0,0.2);
-    letter-spacing: 1px;
-    position: relative;
-    z-index: 1;
-}
-
-.f1-timer-unit {
-    font-size: 0.35rem;
-    font-weight: 800;
-    color: rgba(255,255,255,0.35);
+    text-shadow:
+        0 0 10px rgba(229,0,0,0.6),
+        0 0 25px rgba(229,0,0,0.3),
+        0 0 50px rgba(229,0,0,0.1);
     letter-spacing: 2px;
-    margin-top: 2px;
-    position: relative;
-    z-index: 1;
+    min-width: 1.4rem;
+    text-align: center;
 }
 
-.f1-timer-sep {
-    color: var(--red);
-    font-size: 1rem;
+.rc-colon {
+    font-family: 'Courier New', monospace;
+    font-size: 1.8rem;
     font-weight: 900;
-    opacity: 0.5;
-    margin: 0 0.05rem;
-    animation: sepBlink 1s step-end infinite;
-    text-shadow: 0 0 5px rgba(229,0,0,0.4);
+    color: var(--red);
+    opacity: 0.4;
+    margin: 0 0.1rem;
+    animation: rcColonBlink 1s step-end infinite;
+    text-shadow: 0 0 8px rgba(229,0,0,0.4);
 }
-@keyframes sepBlink {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 0.15; }
+@keyframes rcColonBlink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.1; }
 }
 
-/* Secondes — effet pulsant */
-.f1-timer-sec {
-    border-color: rgba(229,0,0,0.35);
-    background: linear-gradient(180deg, rgba(229,0,0,0.18) 0%, rgba(229,0,0,0.06) 100%);
+/* Secondes — glow plus intense */
+.rc-sec {
+    color: #ff1e1e;
+    text-shadow:
+        0 0 12px rgba(255,30,30,0.7),
+        0 0 30px rgba(255,30,30,0.4),
+        0 0 60px rgba(255,30,30,0.15);
+    animation: rcSecGlow 1s ease-in-out infinite;
 }
-.f1-timer-sec .f1-timer-digit {
-    animation: secPulse 1s ease-in-out infinite;
-}
-@keyframes secPulse {
-    0%, 100% { text-shadow: 0 0 8px rgba(229,0,0,0.5), 0 0 20px rgba(229,0,0,0.2); }
-    50% { text-shadow: 0 0 15px rgba(229,0,0,0.8), 0 0 30px rgba(229,0,0,0.4), 0 0 50px rgba(229,0,0,0.15); }
+@keyframes rcSecGlow {
+    0%, 100% {
+        text-shadow: 0 0 12px rgba(255,30,30,0.7), 0 0 30px rgba(255,30,30,0.4), 0 0 60px rgba(255,30,30,0.15);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(255,30,30,0.9), 0 0 40px rgba(255,30,30,0.5), 0 0 80px rgba(255,30,30,0.25);
+    }
 }
 
 /* ── Light mode ── */
 [data-theme="light"] .countdown-bar {
-    background:
-        repeating-linear-gradient(90deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 4px),
-        linear-gradient(180deg, #f8f8f8 0%, #f0f0f0 100%);
+    background: #111;
 }
-[data-theme="light"] .countdown-bar::before {
-    box-shadow: 0 0 10px rgba(229,0,0,0.3);
-}
-[data-theme="light"] .f1-timer-left {
-    background: rgba(229,0,0,0.04);
-    border-right-color: rgba(229,0,0,0.1);
-}
-[data-theme="light"] .f1-timer-session { color: #1a1a1a; }
-[data-theme="light"] .f1-timer-race { color: #555; }
-[data-theme="light"] .f1-timer-right { background: rgba(0,0,0,0.04); }
-[data-theme="light"] .f1-timer-digit-group {
-    background: linear-gradient(180deg, rgba(229,0,0,0.08) 0%, rgba(229,0,0,0.02) 100%);
-    border-color: rgba(229,0,0,0.15);
-}
-[data-theme="light"] .f1-timer-digit {
-    text-shadow: 0 0 5px rgba(229,0,0,0.3);
-}
-[data-theme="light"] .f1-timer-center {
-    border-right-color: rgba(0,0,0,0.06);
-}
+[data-theme="light"] .rc-session { color: #fff; }
+[data-theme="light"] .rc-gp { color: rgba(255,255,255,0.5); }
 
 nav {
     background: var(--dark);
@@ -2247,15 +2152,13 @@ main {
     .stats-bar strong { font-size: 0.85rem; }
     .header-right { gap: 0.5rem; }
 
-    /* F1 Timer Board responsive */
-    .f1-timer-board { flex-wrap: wrap; min-height: auto; }
-    .f1-timer-left { padding: 0.35rem 0.6rem; gap: 0.4rem; flex: 1; border-right: none; border-bottom: 1px solid rgba(229,0,0,0.1); }
-    .f1-timer-center { padding: 0.3rem 0.6rem; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.04); flex: 1; min-width: 50%; }
-    .f1-timer-right { padding: 0.35rem 0.6rem; justify-content: center; flex: 1; min-width: 100%; }
-    .f1-timer-session { font-size: 0.65rem; }
-    .f1-timer-race { font-size: 0.7rem; }
-    .f1-timer-digit { font-size: 0.9rem; }
-    .f1-timer-digit-group { min-width: 28px; padding: 0.15rem 0.3rem 0.1rem; }
+    /* Race Control responsive */
+    .rc-board { padding: 0.4rem 0.5rem 0.6rem; gap: 0.3rem; }
+    .rc-top { gap: 0.3rem; }
+    .rc-session { font-size: 0.65rem; letter-spacing: 1px; }
+    .rc-gp { font-size: 0.62rem; }
+    .rc-char { font-size: 1.5rem; min-width: 1rem; letter-spacing: 1px; }
+    .rc-colon { font-size: 1.2rem; }
 
     /* Nav */
     nav { padding: 0 0.5rem; gap: 0; }
