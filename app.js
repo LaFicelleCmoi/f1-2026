@@ -939,18 +939,76 @@ function openModal(index) {
     }
 
     const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
+    const teamColor = (() => {
+        const winner = race.result?.fullResults?.find(r => r.pos === 1);
+        return winner ? (teamColors[winner.team] || "var(--red)") : "var(--red)";
+    })();
 
-    // Bouton sauvegarder horaires visible uniquement en admin
-    const saveScheduleBtn = isAdmin ? `
-        <button onclick="saveSchedule(${index})"
-            style="margin-top:0.75rem; padding:0.5rem 1.2rem; background:var(--red);
-                border:none; color:white; border-radius:8px; font-weight:bold;
-                cursor:pointer; font-size:0.85rem;">
-            💾 Sauvegarder les horaires
-        </button>` : "";
+    // ── Onglets disponibles ──
+    const tabs = [];
+    tabs.push({ id: "info",    icon: "📋", label: "Programme" });
+    if (race.sprint) {
+        if (race.sprintQualiResults?.length > 0)  tabs.push({ id: "sq",  icon: "⚡", label: "Qualifs Sprint" });
+        if (ss === "completed" && race.sprintResult?.fullResults?.length > 0)
+            tabs.push({ id: "sr", icon: "⚡", label: "Sprint" });
+    }
+    if (race.qualiResults?.length > 0)  tabs.push({ id: "rq",  icon: "🏁", label: "Qualifications" });
+    if (rs === "completed" && race.result?.fullResults?.length > 0)
+        tabs.push({ id: "rc", icon: "🏆", label: "Course" });
+
+    // Onglet actif par défaut : dernier disponible (résultats) ou infos
+    const defaultTab = tabs[tabs.length - 1]?.id || "info";
+
+    // ── Contenu de chaque onglet ──
+    function tabContent(tabId) {
+        switch(tabId) {
+            case "info": return `
+                <div class="modal-tab-pane">
+                    <div class="modal-section-title">📋 Programme${isAdmin ? ' <span style="color:var(--red);font-size:0.75rem;font-weight:normal;">— cliquez sur une heure pour modifier</span>' : ''}</div>
+                    <div class="schedule-grid">${scheduleHTML}</div>
+                    ${isAdmin ? `<button onclick="saveSchedule(${index})" class="modal-save-btn">💾 Sauvegarder les horaires</button>` : ""}
+                </div>`;
+            case "sq": {
+                const t = buildQualiTable(race.sprintQualiResults);
+                return `<div class="modal-tab-pane">${buildSpoilSection("Qualifications Sprint","⚡",t,`spoil-sq-${index}`)}</div>`;
+            }
+            case "sr": {
+                const t = `<table class="full-results-table">
+                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Pts</th></tr></thead>
+                    <tbody>${race.sprintResult.fullResults.map((e,i)=>`
+                        <tr class="${i<3?'podium-row-'+(i+1):''}">
+                            <td class="pos-medal ${getPodiumColor(i+1)}">${i<3?getPodiumIcon(i+1):i+1}</td>
+                            <td style="font-weight:600">${e.driver}</td>
+                            <td style="color:var(--muted);font-size:0.82rem">${e.team}</td>
+                            <td class="points-cell">${e.points}</td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
+                return `<div class="modal-tab-pane">${buildSpoilSection("Résultats Sprint","⚡",t,`spoil-sr-${index}`)}</div>`;
+            }
+            case "rq": {
+                const t = buildQualiTable(race.qualiResults);
+                return `<div class="modal-tab-pane">${buildSpoilSection("Qualifications Course","🏁",t,`spoil-rq-${index}`)}</div>`;
+            }
+            case "rc": {
+                const t = `<table class="full-results-table">
+                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Pts</th></tr></thead>
+                    <tbody>${race.result.fullResults.map((e,i)=>`
+                        <tr class="${i<3?'podium-row-'+(i+1):''}">
+                            <td class="pos-medal ${getPodiumColor(i+1)}">${i<3?getPodiumIcon(i+1):i+1}</td>
+                            <td style="font-weight:600">${e.driver}</td>
+                            <td style="color:var(--muted);font-size:0.82rem">${e.team}</td>
+                            <td class="points-cell">${e.points}</td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
+                return `<div class="modal-tab-pane">${buildSpoilSection("Résultats Course","🏆",t,`spoil-rc-${index}`)}</div>`;
+            }
+            default: return "";
+        }
+    }
 
     content.innerHTML = `
-        <div class="modal-header">
+        <div class="modal-header" style="--hero-color:${teamColor}">
+            <div class="modal-hero-bar"></div>
             <div class="modal-title-block">
                 <span class="modal-flag">${race.flag}</span>
                 <div>
@@ -958,23 +1016,48 @@ function openModal(index) {
                     <div class="modal-meta">
                         <span>📅 ${dateFull}</span>
                         <span>🏟️ ${race.circuit}</span>
-                        <span>🏁 Round ${race.round}</span>
-                        ${race.sprint ? '<span style="color:var(--sprint-light)">⚡ Sprint</span>' : ""}
-                        ${isAdmin ? '<span style="color:var(--red); font-size:0.75rem;">⚙️ Mode Admin</span>' : ""}
+                        <span>🏁 R${race.round}</span>
+                        ${race.sprint ? '<span class="modal-meta-sprint">⚡ Sprint</span>' : ""}
+                        ${race.isNew ? '<span class="modal-meta-new">✨ Nouveau</span>' : ""}
+                        ${isAdmin ? '<span style="color:var(--red);font-size:0.72rem;">⚙️ Admin</span>' : ""}
                     </div>
                 </div>
             </div>
             <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="modal-section">
-                <div class="modal-section-title">📋 Programme${isAdmin ? ' <span style="color:var(--red);font-size:0.75rem;font-weight:normal;">— cliquez sur une heure pour modifier</span>' : ''}</div>
-                <div class="schedule-grid">${scheduleHTML}</div>
-                ${saveScheduleBtn}
-            </div>
-            ${resultsHTML}
+
+        <div class="modal-tabs">
+            ${tabs.map(t => `
+                <button class="modal-tab-btn ${t.id === defaultTab ? 'active' : ''}"
+                        data-tab="${t.id}"
+                        onclick="switchModalTab('${t.id}', this)">
+                    ${t.icon} ${t.label}
+                </button>`).join("")}
+        </div>
+
+        <div class="modal-body" id="modal-tab-body">
+            ${tabContent(defaultTab)}
         </div>`;
+
+    // Stocker le renderer pour switchModalTab
+    const body = document.getElementById("modal-tab-body");
+    if (body) body._tabRenderer = tabContent;
     overlay.classList.add("open");
+}
+
+// Switch onglet modal
+function switchModalTab(tabId, btnEl) {
+    // Stocker le contexte de l'onglet courant (tabContent a besoin de la closure de openModal)
+    // On re-génère le contenu via l'attribut data sur le body
+    const body = document.getElementById("modal-tab-body");
+    if (!body) return;
+    // Activer le bon bouton
+    document.querySelectorAll(".modal-tab-btn").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+    // Le contenu est généré dans openModal — on stocke la fn sur le DOM
+    if (body._tabRenderer) {
+        body.innerHTML = body._tabRenderer(tabId);
+    }
 }
 
 // Met à jour l'horaire en mémoire en temps réel
