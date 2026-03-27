@@ -131,18 +131,11 @@ function updateCountdown() {
     const mPad = String(mins).padStart(2,"0");
     const sPad = String(secs).padStart(2,"0");
 
-    // Feux de départ : on allume progressivement les 5 ronds basé sur les secondes
-    const lightPhase = secs % 5;
-    const lights = [0,1,2,3,4].map(i =>
-        `<span class="sg-light ${i <= lightPhase ? 'sg-light-on' : ''}" style="animation-delay:${i * 0.15}s"></span>`
-    ).join("");
-
     el.innerHTML = `
         <div class="sg-board">
             <div class="sg-speed-lines"></div>
             <div class="sg-content">
                 <div class="sg-left">
-                    <div class="sg-lights">${lights}</div>
                     <div class="sg-info">
                         <span class="sg-label">GRID</span>
                         <span class="sg-session">${next.session.name}</span>

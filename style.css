@@ -139,36 +139,6 @@ header {
     overflow: hidden;
 }
 
-/* Bande rouge diagonale */
-.countdown-bar::before {
-    content: "";
-    position: absolute;
-    top: -50%; left: -10%;
-    width: 8px;
-    height: 200%;
-    background: var(--red);
-    transform: rotate(20deg);
-    box-shadow: 0 0 20px rgba(229,0,0,0.6), 0 0 40px rgba(229,0,0,0.3);
-    animation: sgStripe 6s linear infinite;
-    z-index: 1;
-}
-@keyframes sgStripe {
-    0%   { left: -10%; }
-    100% { left: 110%; }
-}
-
-/* Deuxieme bande rouge décalée */
-.countdown-bar::after {
-    content: "";
-    position: absolute;
-    top: -50%; left: -10%;
-    width: 4px;
-    height: 200%;
-    background: rgba(229,0,0,0.4);
-    transform: rotate(20deg);
-    animation: sgStripe 6s linear infinite 0.3s;
-    z-index: 1;
-}
 
 #countdown-text {
     display: flex;
