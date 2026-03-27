@@ -413,8 +413,19 @@ function renderAllRaces() {
                     </div>
                     <div class="race-info-row"><span>📅</span><span>${dateFull}</span></div>
                     <div class="race-info-row"><span>🏟️</span><span>${race.circuit}</span></div>
-                    ${statsHTML}
-                    ${podiumHTML}
+                    ${(statsHTML || podiumHTML !== `<div class="no-result">Résultats course à venir</div>`) ? `
+                    <div class="card-spoil-wrapper ${sessionStorage.getItem('card-spoil-' + index) === 'true' ? 'revealed' : ''}" id="card-spoil-${index}">
+                        <div class="card-spoil-overlay" onclick="event.stopPropagation()">
+                            <span class="card-spoil-icon">🔒</span>
+                            <span class="card-spoil-text">Résultats masqués</span>
+                            <button class="card-spoil-btn" onclick="event.stopPropagation(); revealCardSpoil(${index})">👁️ Voir</button>
+                        </div>
+                        <div class="card-spoil-content">
+                            ${statsHTML}
+                            ${podiumHTML}
+                            <button class="card-spoil-hide-btn" onclick="event.stopPropagation(); hideCardSpoil(${index})">🙈 Masquer</button>
+                        </div>
+                    </div>` : podiumHTML}
                 </div>
             </div>`;
     });
@@ -990,6 +1001,20 @@ function saveSchedule(raceIndex) {
 
 function closeModal() {
     document.getElementById("modal-overlay").classList.remove("open");
+}
+
+// Anti-spoil cartes page d'accueil
+function revealCardSpoil(index) {
+    const wrapper = document.getElementById(`card-spoil-${index}`);
+    if (!wrapper) return;
+    wrapper.classList.add("revealed");
+    sessionStorage.setItem(`card-spoil-${index}`, "true");
+}
+function hideCardSpoil(index) {
+    const wrapper = document.getElementById(`card-spoil-${index}`);
+    if (!wrapper) return;
+    wrapper.classList.remove("revealed");
+    sessionStorage.removeItem(`card-spoil-${index}`);
 }
 
 // Anti-spoil : reveal / hide avec mémorisation sessionStorage
