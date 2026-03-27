@@ -1702,13 +1702,42 @@ async function fetchSprintResults(round) {
     });
 }
 
+// ── Mapping pays FR → EN pour OpenF1 ──
+const countryNameMap = {
+    "Australie": "Australia",
+    "Chine": "China",
+    "Japon": "Japan",
+    "Bahreïn": "Bahrain",
+    "Arabie Saoudite": "Saudi Arabia",
+    "États-Unis": "United States",
+    "Canada": "Canada",
+    "Monaco": "Monaco",
+    "Espagne": "Spain",
+    "Autriche": "Austria",
+    "Royaume-Uni": "Great Britain",
+    "Belgique": "Belgium",
+    "Hongrie": "Hungary",
+    "Pays-Bas": "Netherlands",
+    "Italie": "Italy",
+    "Azerbaïdjan": "Azerbaijan",
+    "Singapour": "Singapore",
+    "Mexique": "Mexico",
+    "Brésil": "Brazil",
+    "Qatar": "Qatar",
+    "Émirats Arabes Unis": "United Arab Emirates"
+};
+
 // ── Fetch Essais Libres via OpenF1 API ──
 async function fetchPracticeResults(sessionName, countryName, year = 2026) {
+    // Traduire le nom du pays FR → EN
+    const englishCountry = countryNameMap[countryName] || countryName;
+
     // sessionName : "Practice 1", "Practice 2", "Practice 3"
-    const res = await fetch(`${OPENF1_BASE}/sessions?session_name=${encodeURIComponent(sessionName)}&country_name=${encodeURIComponent(countryName)}&year=${year}`);
+    const res = await fetch(`${OPENF1_BASE}/sessions?session_name=${encodeURIComponent(sessionName)}&country_name=${encodeURIComponent(englishCountry)}&year=${year}`);
     const sessions = await res.json();
     if (!sessions || sessions.length === 0) return [];
     const sessionKey = sessions[0].session_key;
+    if (!sessionKey) return [];
 
     // Récupérer les laps de la session et prendre le meilleur temps par pilote
     const lapsRes = await fetch(`${OPENF1_BASE}/laps?session_key=${sessionKey}`);
