@@ -131,21 +131,32 @@ function updateCountdown() {
     const mPad = String(mins).padStart(2,"0");
     const sPad = String(secs).padStart(2,"0");
 
+    // Feux de départ : on allume progressivement les 5 ronds basé sur les secondes
+    const lightPhase = secs % 5;
+    const lights = [0,1,2,3,4].map(i =>
+        `<span class="sg-light ${i <= lightPhase ? 'sg-light-on' : ''}" style="animation-delay:${i * 0.15}s"></span>`
+    ).join("");
+
     el.innerHTML = `
-        <div class="rc-board">
-            <div class="rc-top">
-                <span class="rc-label">PROCHAIN</span>
-                <span class="rc-session">${next.session.name}</span>
-                <span class="rc-dot">●</span>
-                <span class="rc-gp">${next.race.flag} ${shortName}</span>
-            </div>
-            <div class="rc-digits">
-                ${days > 0 ? `<span class="rc-char">${dPad[0]}</span><span class="rc-char">${dPad[1]}</span><span class="rc-colon">:</span>` : ''}
-                <span class="rc-char">${hPad[0]}</span><span class="rc-char">${hPad[1]}</span>
-                <span class="rc-colon">:</span>
-                <span class="rc-char">${mPad[0]}</span><span class="rc-char">${mPad[1]}</span>
-                <span class="rc-colon">:</span>
-                <span class="rc-char rc-sec">${sPad[0]}</span><span class="rc-char rc-sec">${sPad[1]}</span>
+        <div class="sg-board">
+            <div class="sg-speed-lines"></div>
+            <div class="sg-content">
+                <div class="sg-left">
+                    <div class="sg-lights">${lights}</div>
+                    <div class="sg-info">
+                        <span class="sg-label">GRID</span>
+                        <span class="sg-session">${next.session.name}</span>
+                    </div>
+                </div>
+                <div class="sg-timer">
+                    ${days > 0 ? `<span class="sg-digit">${dPad}</span><span class="sg-colon">:</span>` : ''}
+                    <span class="sg-digit">${hPad}</span><span class="sg-colon">:</span>
+                    <span class="sg-digit">${mPad}</span><span class="sg-colon">:</span>
+                    <span class="sg-digit sg-digit-sec">${sPad}</span>
+                </div>
+                <div class="sg-right">
+                    <span class="sg-gp">${next.race.flag} ${shortName}</span>
+                </div>
             </div>
         </div>`;
 }
