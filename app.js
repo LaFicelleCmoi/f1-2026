@@ -126,18 +126,24 @@ function updateCountdown() {
 
     const shortName = next.race.name.replace("Grand Prix ", "GP ");
 
-    const timeBlocks = [];
-    if (days > 0) timeBlocks.push(`<span class="cd-block"><span class="cd-num">${days}</span><span class="cd-label">JOUR${days > 1 ? 'S' : ''}</span></span>`);
-    timeBlocks.push(`<span class="cd-block"><span class="cd-num">${String(hours).padStart(2,"0")}</span><span class="cd-label">H</span></span>`);
-    timeBlocks.push(`<span class="cd-block"><span class="cd-num">${String(mins).padStart(2,"0")}</span><span class="cd-label">MIN</span></span>`);
-    timeBlocks.push(`<span class="cd-block"><span class="cd-num cd-sec">${String(secs).padStart(2,"0")}</span><span class="cd-label">SEC</span></span>`);
-
     el.innerHTML = `
-        <span class="cd-next">PROCHAIN</span>
-        <span class="cd-session">${next.session.name}</span>
-        <span class="cd-sep">—</span>
-        <span class="cd-race">${next.race.flag} ${shortName}</span>
-        <span class="cd-timer">${timeBlocks.join('<span class="cd-colon">:</span>')}</span>`;
+        <div class="f1-timer-board">
+            <div class="f1-timer-left">
+                <span class="f1-timer-live">LIVE</span>
+                <span class="f1-timer-session">${next.session.name}</span>
+            </div>
+            <div class="f1-timer-center">
+                <span class="f1-timer-race">${next.race.flag} ${shortName}</span>
+            </div>
+            <div class="f1-timer-right">
+                ${days > 0 ? `<div class="f1-timer-digit-group"><span class="f1-timer-digit">${days}</span><span class="f1-timer-unit">J</span></div><span class="f1-timer-sep">:</span>` : ''}
+                <div class="f1-timer-digit-group"><span class="f1-timer-digit">${String(hours).padStart(2,"0")}</span><span class="f1-timer-unit">H</span></div>
+                <span class="f1-timer-sep">:</span>
+                <div class="f1-timer-digit-group"><span class="f1-timer-digit">${String(mins).padStart(2,"0")}</span><span class="f1-timer-unit">M</span></div>
+                <span class="f1-timer-sep">:</span>
+                <div class="f1-timer-digit-group f1-timer-sec"><span class="f1-timer-digit">${String(secs).padStart(2,"0")}</span><span class="f1-timer-unit">S</span></div>
+            </div>
+        </div>`;
 }
 
 // ============================================================
