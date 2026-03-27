@@ -1811,7 +1811,7 @@ async function autoImportResults() {
             } catch (e) { errors.push("Sprint: " + e.message); }
         }
 
-        // 4. Essais Libres (OpenF1 API) — sauvegarde directe en base
+        // 4. Essais Libres (OpenF1 API) — sauvegarde via saveToFirebase
         try {
             const countryName = race.country;
             if (race.sprint) {
@@ -1820,7 +1820,6 @@ async function autoImportResults() {
                     const fp1 = await fetchPracticeResults("Practice 1", countryName);
                     if (fp1.length > 0) {
                         race.fp1Results = fp1;
-                        await db.ref(`races/${adminCurrentRace}/fp1Results`).set(fp1);
                         importedAny = true;
                     }
                 } catch (e) { errors.push("EL1: " + e.message); }
@@ -1831,7 +1830,6 @@ async function autoImportResults() {
                         const fpData = await fetchPracticeResults(sessionName, countryName);
                         if (fpData.length > 0) {
                             race[key] = fpData;
-                            await db.ref(`races/${adminCurrentRace}/${key}`).set(fpData);
                             importedAny = true;
                         }
                     } catch (e) { errors.push(sessionName + ": " + e.message); }
@@ -1842,6 +1840,9 @@ async function autoImportResults() {
     } catch (e) {
         errors.push("Erreur générale: " + e.message);
     }
+
+    // Sauvegarder les EL en base même si l'admin ne clique pas Sauvegarder
+    if (importedAny) saveToFirebase();
 
     if (btn) {
         btn.disabled = false;
