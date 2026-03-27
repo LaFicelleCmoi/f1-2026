@@ -831,7 +831,7 @@ function openModal(index) {
     // ── Qualifications Sprint (menu déroulant) ──
     if (race.sprint && race.sprintQualiResults && race.sprintQualiResults.length > 0) {
         const sqTable = buildQualiTable(race.sprintQualiResults);
-        resultsHTML += buildDropdownSection("Qualifications Sprint", "⚡", sqTable, `dropdown-sq-${index}`);
+        resultsHTML += buildSpoilSection("Qualifications Sprint", "⚡", sqTable, `spoil-sq-${index}`);
     }
 
     // ── Résultats Sprint (anti-spoil) ──
@@ -854,7 +854,7 @@ function openModal(index) {
     // ── Qualifications Course (menu déroulant) ──
     if (race.qualiResults && race.qualiResults.length > 0) {
         const rqTable = buildQualiTable(race.qualiResults);
-        resultsHTML += buildDropdownSection("Qualifications Course", "🏁", rqTable, `dropdown-rq-${index}`);
+        resultsHTML += buildSpoilSection("Qualifications Course", "🏁", rqTable, `spoil-rq-${index}`);
     }
 
     // ── Résultats Course (anti-spoil) ──
