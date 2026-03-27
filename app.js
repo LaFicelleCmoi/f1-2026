@@ -213,6 +213,9 @@ db.ref('f1_results_2026').on('value', snapshot => {
                 race.sprintResult      = found.sprintResult      || null;
                 race.qualiResults      = found.qualiResults      || null;
                 race.sprintQualiResults = found.sprintQualiResults || null;
+                race.fp1Results        = found.fp1Results        || null;
+                race.fp2Results        = found.fp2Results        || null;
+                race.fp3Results        = found.fp3Results        || null;
                 // Horaires modifiés en admin : on ne prend que les "time" de Firebase,
                 // les jours et noms de sessions restent ceux de data.js (source de vérité)
                 if (found.schedule && race.schedule) {
@@ -252,7 +255,10 @@ function saveToFirebase() {
         sprintResult:      r.sprintResult      || null,
         schedule:          r.schedule          || null,
         qualiResults:      r.qualiResults      || null,
-        sprintQualiResults: r.sprintQualiResults || null
+        sprintQualiResults: r.sprintQualiResults || null,
+        fp1Results:        r.fp1Results        || null,
+        fp2Results:        r.fp2Results        || null,
+        fp3Results:        r.fp3Results        || null
     }));
     db.ref('f1_results_2026').set(toSave);
 }
@@ -995,6 +1001,15 @@ function openModal(index) {
     // ── Onglets disponibles ──
     const tabs = [];
     tabs.push({ id: "info",    icon: "📋", label: "Programme" });
+
+    // Essais Libres
+    if (race.fp1Results?.length > 0) tabs.push({ id: "fp1", icon: "🔧", label: "EL1" });
+    if (!race.sprint) {
+        if (race.fp2Results?.length > 0) tabs.push({ id: "fp2", icon: "🔧", label: "EL2" });
+        if (race.fp3Results?.length > 0) tabs.push({ id: "fp3", icon: "🔧", label: "EL3" });
+    }
+
+    // Sprint weekend
     if (race.sprint) {
         if (race.sprintQualiResults?.length > 0)  tabs.push({ id: "sq",  icon: "⚡", label: "Qualifs Sprint" });
         if (ss === "completed" && race.sprintResult?.fullResults?.length > 0)
@@ -1008,6 +1023,24 @@ function openModal(index) {
     const defaultTab = tabs[tabs.length - 1]?.id || "info";
 
     // ── Contenu de chaque onglet ──
+    // Helper : tableau d'essais libres (avec temps + écart)
+    function buildFPTable(fpData, sessionLabel) {
+        const t = `<table class="full-results-table">
+            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Écart</th></tr></thead>
+            <tbody>
+                ${fpData.map((e, i) => `
+                    <tr class="${i < 3 ? 'podium-row-' + (i+1) : ''}">
+                        <td class="pos-medal ${getPodiumColor(i+1)}">${i < 3 ? getPodiumIcon(i+1) : i+1}</td>
+                        <td style="font-weight:600">${e.driver}</td>
+                        <td style="color:var(--muted);font-size:0.82rem">${e.team}</td>
+                        <td style="color:var(--red);font-weight:700;font-family:monospace">${e.time || '-'}</td>
+                        <td style="color:var(--muted);font-family:monospace;font-size:0.8rem">${e.gap || ''}</td>
+                    </tr>`).join("")}
+            </tbody>
+        </table>`;
+        return t;
+    }
+
     function tabContent(tabId) {
         switch(tabId) {
             case "info": return `
@@ -1016,6 +1049,9 @@ function openModal(index) {
                     <div class="schedule-grid">${scheduleHTML}</div>
                     ${isAdmin ? `<button onclick="saveSchedule(${index})" class="modal-save-btn">💾 Sauvegarder les horaires</button>` : ""}
                 </div>`;
+            case "fp1": return `<div class="modal-tab-pane">${buildFPTable(race.fp1Results, "Essais Libres 1")}</div>`;
+            case "fp2": return `<div class="modal-tab-pane">${buildFPTable(race.fp2Results, "Essais Libres 2")}</div>`;
+            case "fp3": return `<div class="modal-tab-pane">${buildFPTable(race.fp3Results, "Essais Libres 3")}</div>`;
             case "sq": {
                 const t = buildQualiTable(race.sprintQualiResults);
                 return `<div class="modal-tab-pane">${buildSpoilSection("Qualifications Sprint","⚡",t,`spoil-sq-${index}`)}</div>`;
@@ -1604,6 +1640,7 @@ function addAdminQualiRow(type) {
 // 🤖 IMPORT AUTOMATIQUE DEPUIS API F1 (Jolpica / Ergast)
 // ============================================================
 const API_BASE = "https://api.jolpi.ca/ergast/f1/2026";
+const OPENF1_BASE = "https://api.openf1.org/v1";
 
 function resolveTeam(apiName) {
     return teamAliases[apiName] || apiName;
@@ -1665,6 +1702,72 @@ async function fetchSprintResults(round) {
     });
 }
 
+// ── Fetch Essais Libres via OpenF1 API ──
+async function fetchPracticeResults(sessionName, countryName, year = 2026) {
+    // sessionName : "Practice 1", "Practice 2", "Practice 3"
+    const res = await fetch(`${OPENF1_BASE}/sessions?session_name=${encodeURIComponent(sessionName)}&country_name=${encodeURIComponent(countryName)}&year=${year}`);
+    const sessions = await res.json();
+    if (!sessions || sessions.length === 0) return [];
+    const sessionKey = sessions[0].session_key;
+
+    // Récupérer les laps de la session et prendre le meilleur temps par pilote
+    const lapsRes = await fetch(`${OPENF1_BASE}/laps?session_key=${sessionKey}`);
+    const laps = await lapsRes.json();
+    if (!laps || laps.length === 0) return [];
+
+    // Grouper par driver_number, trouver le meilleur tour
+    const bestByDriver = {};
+    laps.forEach(lap => {
+        if (!lap.lap_duration || lap.lap_duration <= 0) return;
+        const num = lap.driver_number;
+        if (!bestByDriver[num] || lap.lap_duration < bestByDriver[num].lap_duration) {
+            bestByDriver[num] = lap;
+        }
+    });
+
+    // Récupérer les infos pilotes
+    const driversRes = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`);
+    const driversData = await driversRes.json();
+    const driverMap = {};
+    driversData.forEach(d => { driverMap[d.driver_number] = d; });
+
+    // Construire le classement trié par temps
+    const results = Object.entries(bestByDriver)
+        .map(([num, lap]) => {
+            const dInfo = driverMap[num];
+            if (!dInfo) return null;
+            const fullName = `${dInfo.first_name} ${dInfo.last_name}`;
+            const resolved = resolveDriver(dInfo.first_name, dInfo.last_name);
+            const teamName = resolveTeam(dInfo.team_name || "");
+            const mins = Math.floor(lap.lap_duration / 60);
+            const secs = (lap.lap_duration % 60).toFixed(3);
+            const timeStr = mins > 0 ? `${mins}:${secs.padStart(6, '0')}` : secs;
+            return {
+                pos: 0,
+                driver: resolved.driver,
+                team: teamName,
+                time: timeStr,
+                lapDuration: lap.lap_duration
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.lapDuration - b.lapDuration);
+
+    // Attribuer les positions et calculer l'écart au leader
+    const leaderTime = results[0]?.lapDuration || 0;
+    results.forEach((r, i) => {
+        r.pos = i + 1;
+        if (i === 0) {
+            r.gap = "";
+        } else {
+            r.gap = "+" + (r.lapDuration - leaderTime).toFixed(3) + "s";
+        }
+        delete r.lapDuration;
+    });
+
+    return results;
+}
+
 // Bouton import : remplit le formulaire admin avec les données API
 async function autoImportResults() {
     if (adminCurrentRace === null) return;
@@ -1707,6 +1810,34 @@ async function autoImportResults() {
                 }
             } catch (e) { errors.push("Sprint: " + e.message); }
         }
+
+        // 4. Essais Libres (OpenF1 API) — sauvegarde directe en base
+        try {
+            const countryName = race.country;
+            if (race.sprint) {
+                // Sprint weekend : EL1 seulement
+                try {
+                    const fp1 = await fetchPracticeResults("Practice 1", countryName);
+                    if (fp1.length > 0) {
+                        race.fp1Results = fp1;
+                        await db.ref(`races/${adminCurrentRace}/fp1Results`).set(fp1);
+                        importedAny = true;
+                    }
+                } catch (e) { errors.push("EL1: " + e.message); }
+            } else {
+                // Weekend normal : EL1, EL2, EL3
+                for (const [key, sessionName] of [["fp1Results", "Practice 1"], ["fp2Results", "Practice 2"], ["fp3Results", "Practice 3"]]) {
+                    try {
+                        const fpData = await fetchPracticeResults(sessionName, countryName);
+                        if (fpData.length > 0) {
+                            race[key] = fpData;
+                            await db.ref(`races/${adminCurrentRace}/${key}`).set(fpData);
+                            importedAny = true;
+                        }
+                    } catch (e) { errors.push(sessionName + ": " + e.message); }
+                }
+            }
+        } catch (e) { errors.push("Essais Libres: " + e.message); }
 
     } catch (e) {
         errors.push("Erreur générale: " + e.message);
