@@ -631,6 +631,24 @@ main {
     position: relative;
 }
 
+.race-card-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.08;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.race-card:hover .race-card-bg {
+    opacity: 0.14;
+}
+.race-card-header, .race-card-body {
+    position: relative;
+    z-index: 1;
+}
+
 .race-card:hover {
     transform: translateY(-3px) scale(1.01);
     border-color: var(--red);
@@ -2825,4 +2843,293 @@ main {
     /* Modal */
     .modal-race-name { font-size: 0.9rem; }
     .modal-body { padding: 0.5rem; }
+
+    .pred-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ============================================================
+   🔮 PRÉDICTIONS
+   ============================================================ */
+
+.predictions-score-banner {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.pred-score-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 2rem;
+    text-align: center;
+    min-width: 120px;
+}
+
+.pred-score-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--red);
+}
+
+.pred-score-max {
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.pred-score-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pred-section-title {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.pred-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.pred-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.pred-card:hover {
+    border-color: rgba(225, 6, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+.pred-card--saved {
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.pred-card--result {
+    border-color: var(--border);
+}
+
+.pred-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.pred-flag {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.pred-race-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.pred-race-date {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.pred-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+.pred-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.pred-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pred-pos {
+    font-weight: 800;
+    font-size: 0.85rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.pred-pos-1 { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+.pred-pos-2 { background: rgba(192, 192, 192, 0.15); color: #c0c0c0; }
+.pred-pos-3 { background: rgba(205, 127, 50, 0.15); color: #cd7f32; }
+
+.pred-select {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.pred-select:focus {
+    border-color: var(--red);
+}
+
+.pred-save-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+    padding: 0.7rem;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.pred-save-btn:hover {
+    opacity: 0.9;
+}
+
+.pred-save-btn:active {
+    transform: scale(0.98);
+}
+
+.pred-no-prediction {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem 0;
+    font-style: italic;
+}
+
+.pred-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pred-compare-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.pred-compare-row.pred-exact {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.pred-compare-row.pred-partial {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.pred-compare-row.pred-wrong {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.pred-compare-detail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.pred-compare-pred {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.pred-compare-actual {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.pred-compare-icon {
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   🗺️ Circuit Tab (TheSportsDB)
+   ============================================================ */
+.circuit-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+.circuit-map-section, .circuit-poster-section {
+    text-align: center;
+}
+.circuit-map-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.circuit-map-wrapper {
+    background: var(--card2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+}
+.circuit-map-img {
+    max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+[data-theme="light"] .circuit-map-img {
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+}
+.circuit-poster-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+.circuit-poster-img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    background: #000;
+    border-radius: 12px;
 }

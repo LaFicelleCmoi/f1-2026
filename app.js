@@ -15,6 +15,51 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 // ============================================================
+// 🖼️ TheSportsDB — Images GP (poster, map, thumb)
+// ============================================================
+const SPORTSDB_BASE = "https://www.thesportsdb.com/api/v1/json/3";
+const sportsDbCache = {};
+
+async function fetchSportsDbImages(round) {
+    if (sportsDbCache[round]) return sportsDbCache[round];
+    const cached = sessionStorage.getItem(`sportsdb-${round}`);
+    if (cached) { sportsDbCache[round] = JSON.parse(cached); return sportsDbCache[round]; }
+    const name = sportsDbNames[round];
+    if (!name) return null;
+    try {
+        // Try 2026 first, fallback to 2024 for images
+        for (const year of [2026, 2025, 2024]) {
+            const res = await fetch(`${SPORTSDB_BASE}/searchevents.php?e=${encodeURIComponent(name)}&s=${year}`);
+            const json = await res.json();
+            const events = json?.event || [];
+            const gp = events.find(e =>
+                e.strLeague === "Formula 1" &&
+                !e.strEvent.includes("Practice") &&
+                !e.strEvent.includes("Qualifying") &&
+                !e.strEvent.includes("Sprint")
+            );
+            if (gp && (gp.strPoster || gp.strMap || gp.strThumb)) {
+                const data = {
+                    poster: gp.strPoster || null,
+                    map: gp.strMap || null,
+                    thumb: gp.strThumb || null,
+                    banner: gp.strBanner || null
+                };
+                sportsDbCache[round] = data;
+                sessionStorage.setItem(`sportsdb-${round}`, JSON.stringify(data));
+                return data;
+            }
+        }
+    } catch { /* silent */ }
+    return null;
+}
+
+// Preload all images at startup (non-blocking)
+function preloadSportsDbImages() {
+    races.forEach(race => fetchSportsDbImages(race.round));
+}
+
+// ============================================================
 // 🎨 THEME CLAIR / SOMBRE
 // ============================================================
 function initTheme() {
@@ -237,6 +282,7 @@ db.ref('f1_results_2026').on('value', snapshot => {
     renderTimeline();
     renderSprintView();
     renderPalmares();
+    renderPredictions();
     updateStats();
     updateCountdown();
     if (isAdmin) renderAdminRaceList();
@@ -403,8 +449,13 @@ function renderAllRaces() {
 
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
+        // TheSportsDB image for card background
+        const cardImages = sportsDbCache[race.round];
+        const cardBgImg = cardImages?.thumb || cardImages?.poster || null;
+
         html += `
-            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" onclick="openModal(${index})">
+            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" onclick="openModal(${index})"${cardBgImg ? ` data-bg="${cardBgImg}"` : ''}>
+                ${cardBgImg ? `<div class="race-card-bg" style="background-image:url('${cardBgImg}')"></div>` : ''}
                 <div class="race-card-header">
                     <span class="race-round">R${race.round}</span>
                     <div class="race-badges">${badgesHTML}</div>
@@ -998,9 +1049,13 @@ function openModal(index) {
         return winner ? (teamColors[winner.team] || "var(--red)") : "var(--red)";
     })();
 
+    // ── Image circuit (TheSportsDB) ──
+    const sdbImages = sportsDbCache[race.round] || null;
+
     // ── Onglets disponibles ──
     const tabs = [];
     tabs.push({ id: "info",    icon: "📋", label: "Programme" });
+    if (sdbImages && (sdbImages.map || sdbImages.poster)) tabs.push({ id: "circuit", icon: "🗺️", label: "Circuit" });
 
     // Essais Libres
     if (race.fp1Results?.length > 0) tabs.push({ id: "fp1", icon: "🔧", label: "EL1" });
@@ -1049,6 +1104,35 @@ function openModal(index) {
                     <div class="schedule-grid">${scheduleHTML}</div>
                     ${isAdmin ? `<button onclick="saveSchedule(${index})" class="modal-save-btn">💾 Sauvegarder les horaires</button>` : ""}
                 </div>`;
+            case "circuit": {
+                const mapImg = sdbImages?.map || null;
+                const posterImg = sdbImages?.poster || null;
+                const thumbImg = sdbImages?.thumb || null;
+                return `<div class="modal-tab-pane circuit-tab">
+                    ${mapImg ? `
+                        <div class="circuit-map-section">
+                            <div class="circuit-map-title">🗺️ Tracé du circuit</div>
+                            <div class="circuit-map-wrapper">
+                                <img src="${mapImg}" alt="Circuit ${race.name}" class="circuit-map-img" loading="lazy" onerror="this.parentElement.style.display='none'">
+                            </div>
+                        </div>` : ''}
+                    ${posterImg ? `
+                        <div class="circuit-poster-section">
+                            <div class="circuit-map-title">🏁 Affiche du Grand Prix</div>
+                            <div class="circuit-poster-wrapper">
+                                <img src="${posterImg}" alt="Poster ${race.name}" class="circuit-poster-img" loading="lazy" onerror="this.parentElement.style.display='none'">
+                            </div>
+                        </div>` : ''}
+                    ${thumbImg && !posterImg ? `
+                        <div class="circuit-poster-section">
+                            <div class="circuit-map-title">📸 Aperçu</div>
+                            <div class="circuit-poster-wrapper">
+                                <img src="${thumbImg}" alt="${race.name}" class="circuit-poster-img" loading="lazy" onerror="this.parentElement.style.display='none'">
+                            </div>
+                        </div>` : ''}
+                    ${!mapImg && !posterImg && !thumbImg ? '<div class="no-data-box"><div style="font-size:3rem">🗺️</div><p>Images non disponibles pour ce circuit.</p></div>' : ''}
+                </div>`;
+            }
             case "fp1": return `<div class="modal-tab-pane">${buildFPTable(race.fp1Results, "Essais Libres 1")}</div>`;
             case "fp2": return `<div class="modal-tab-pane">${buildFPTable(race.fp2Results, "Essais Libres 2")}</div>`;
             case "fp3": return `<div class="modal-tab-pane">${buildFPTable(race.fp3Results, "Essais Libres 3")}</div>`;
@@ -1978,6 +2062,212 @@ function clearAdminResults() {
     selectAdminRace(adminCurrentRace);
 }
 
+// ============================================================
+// 🔮 PRÉDICTIONS
+// ============================================================
+
+function getPredictions() {
+    try {
+        return JSON.parse(localStorage.getItem("f1-predictions-2026")) || {};
+    } catch { return {}; }
+}
+
+function savePrediction(round, p1, p2, p3) {
+    const preds = getPredictions();
+    preds[round] = { p1, p2, p3, savedAt: Date.now() };
+    localStorage.setItem("f1-predictions-2026", JSON.stringify(preds));
+}
+
+function calcPredictionScore(pred, result) {
+    if (!pred || !result || !result.podium || result.podium.length < 3) return null;
+    const actual = result.podium.map(p => p.driver);
+    let score = 0;
+    // Position exacte : 3 pts
+    if (pred.p1 === actual[0]) score += 3;
+    if (pred.p2 === actual[1]) score += 3;
+    if (pred.p3 === actual[2]) score += 3;
+    // Bonne personne, mauvaise position : 1 pt
+    if (pred.p1 !== actual[0] && actual.includes(pred.p1)) score += 1;
+    if (pred.p2 !== actual[1] && actual.includes(pred.p2)) score += 1;
+    if (pred.p3 !== actual[2] && actual.includes(pred.p3)) score += 1;
+    return score; // max 9
+}
+
+function renderPredictions() {
+    const container = document.getElementById("predictions-content");
+    const banner = document.getElementById("predictions-score-banner");
+    if (!container) return;
+
+    const preds = getPredictions();
+    const driverNames = drivers.map(d => d.driver).sort();
+
+    // Score global
+    let totalScore = 0, totalMax = 0, completedPreds = 0;
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        const pred = preds[race.round];
+        if (rs === "completed" && pred && race.result) {
+            const s = calcPredictionScore(pred, race.result);
+            if (s !== null) { totalScore += s; totalMax += 9; completedPreds++; }
+        }
+    });
+
+    if (completedPreds > 0) {
+        const pct = Math.round((totalScore / totalMax) * 100);
+        banner.innerHTML = `
+            <div class="pred-score-card">
+                <div class="pred-score-number">${totalScore}<span class="pred-score-max">/${totalMax}</span></div>
+                <div class="pred-score-label">Score total</div>
+            </div>
+            <div class="pred-score-card">
+                <div class="pred-score-number">${pct}<span class="pred-score-max">%</span></div>
+                <div class="pred-score-label">Précision</div>
+            </div>
+            <div class="pred-score-card">
+                <div class="pred-score-number">${completedPreds}</div>
+                <div class="pred-score-label">Courses prédites</div>
+            </div>
+        `;
+    } else {
+        banner.innerHTML = "";
+    }
+
+    // Séparer upcoming et completed
+    const upcoming = [];
+    const completed = [];
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs === "completed") completed.push(race);
+        else upcoming.push(race);
+    });
+
+    let html = "";
+
+    // ── Courses à venir (formulaire de prédiction) ──
+    if (upcoming.length > 0) {
+        html += `<h3 class="pred-section-title">Courses à venir</h3>`;
+        html += `<div class="pred-grid">`;
+        upcoming.forEach(race => {
+            const pred = preds[race.round];
+            const hasPred = pred && pred.p1;
+            html += `
+                <div class="pred-card ${hasPred ? 'pred-card--saved' : ''}">
+                    <div class="pred-card-header">
+                        <span class="pred-flag">${race.flag}</span>
+                        <div>
+                            <div class="pred-race-name">${race.name}</div>
+                            <div class="pred-race-date">${race.dates.race}</div>
+                        </div>
+                    </div>
+                    <div class="pred-form">
+                        <div class="pred-row">
+                            <span class="pred-pos pred-pos-1">P1</span>
+                            <select class="pred-select" id="pred-${race.round}-p1">
+                                <option value="">— Choisir —</option>
+                                ${driverNames.map(d => `<option value="${d}" ${pred?.p1 === d ? 'selected' : ''}>${d}</option>`).join("")}
+                            </select>
+                        </div>
+                        <div class="pred-row">
+                            <span class="pred-pos pred-pos-2">P2</span>
+                            <select class="pred-select" id="pred-${race.round}-p2">
+                                <option value="">— Choisir —</option>
+                                ${driverNames.map(d => `<option value="${d}" ${pred?.p2 === d ? 'selected' : ''}>${d}</option>`).join("")}
+                            </select>
+                        </div>
+                        <div class="pred-row">
+                            <span class="pred-pos pred-pos-3">P3</span>
+                            <select class="pred-select" id="pred-${race.round}-p3">
+                                <option value="">— Choisir —</option>
+                                ${driverNames.map(d => `<option value="${d}" ${pred?.p3 === d ? 'selected' : ''}>${d}</option>`).join("")}
+                            </select>
+                        </div>
+                        <button class="pred-save-btn" onclick="savePredictionFromUI(${race.round})">
+                            ${hasPred ? '✏️ Modifier' : '💾 Sauvegarder'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    // ── Courses terminées (résultat vs prédiction) ──
+    if (completed.length > 0) {
+        html += `<h3 class="pred-section-title">Résultats de mes prédictions</h3>`;
+        html += `<div class="pred-grid">`;
+        completed.forEach(race => {
+            const pred = preds[race.round];
+            const score = calcPredictionScore(pred, race.result);
+            const actual = race.result?.podium || [];
+
+            html += `<div class="pred-card pred-card--result">`;
+            html += `
+                <div class="pred-card-header">
+                    <span class="pred-flag">${race.flag}</span>
+                    <div>
+                        <div class="pred-race-name">${race.name}</div>
+                        <div class="pred-race-date">${race.dates.race}</div>
+                    </div>
+                    ${score !== null ? `<div class="pred-badge">${score}/9</div>` : ''}
+                </div>
+            `;
+
+            if (!pred || !pred.p1) {
+                html += `<div class="pred-no-prediction">Aucune prédiction enregistrée</div>`;
+            } else {
+                const positions = [
+                    { label: "P1", pred: pred.p1, actual: actual[0]?.driver },
+                    { label: "P2", pred: pred.p2, actual: actual[1]?.driver },
+                    { label: "P3", pred: pred.p3, actual: actual[2]?.driver }
+                ];
+                html += `<div class="pred-comparison">`;
+                positions.forEach(pos => {
+                    const exact = pos.pred === pos.actual;
+                    const inPodium = !exact && actual.some(a => a.driver === pos.pred);
+                    const cls = exact ? 'pred-exact' : inPodium ? 'pred-partial' : 'pred-wrong';
+                    const icon = exact ? '✅' : inPodium ? '🔄' : '❌';
+                    const pts = exact ? '+3' : inPodium ? '+1' : '0';
+                    html += `
+                        <div class="pred-compare-row ${cls}">
+                            <span class="pred-pos pred-pos-${pos.label.charAt(1)}">${pos.label}</span>
+                            <div class="pred-compare-detail">
+                                <span class="pred-compare-pred">${pos.pred}</span>
+                                ${!exact ? `<span class="pred-compare-actual">Réel : ${pos.actual || '?'}</span>` : ''}
+                            </div>
+                            <span class="pred-compare-icon">${icon} ${pts}</span>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            html += `</div>`;
+        });
+        html += `</div>`;
+    }
+
+    if (upcoming.length === 0 && completed.length === 0) {
+        html = `<div style="text-align:center; color:var(--muted); padding:4rem 0;"><span style="font-size:3rem;">🔮</span><p style="margin-top:1rem;">Aucune course disponible pour le moment.</p></div>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function savePredictionFromUI(round) {
+    const p1 = document.getElementById(`pred-${round}-p1`)?.value;
+    const p2 = document.getElementById(`pred-${round}-p2`)?.value;
+    const p3 = document.getElementById(`pred-${round}-p3`)?.value;
+    if (!p1 || !p2 || !p3) {
+        alert("Sélectionnez un pilote pour chaque position du podium.");
+        return;
+    }
+    if (p1 === p2 || p1 === p3 || p2 === p3) {
+        alert("Vous ne pouvez pas sélectionner le même pilote deux fois.");
+        return;
+    }
+    savePrediction(round, p1, p2, p3);
+    renderPredictions();
+}
+
 // --------------------------------------------------------
 // DÉMARRAGE DU SITE
 // --------------------------------------------------------
@@ -2031,6 +2321,9 @@ window.onload = function () {
     });
     const searchInput = document.getElementById("filter-search");
     if (searchInput) searchInput.addEventListener("input", e => { activeFilters.search = e.target.value; renderAllRaces(); });
+
+    // Preload TheSportsDB images
+    preloadSportsDbImages();
 
     // PWA Service Worker
     if ("serviceWorker" in navigator) {
