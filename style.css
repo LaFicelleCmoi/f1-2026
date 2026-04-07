@@ -3133,3 +3133,37 @@ main {
     background: #000;
     border-radius: 12px;
 }
+
+/* ============================================================
+   📄 Footer
+   ============================================================ */
+.site-footer {
+    margin-top: 3rem;
+    padding: 2rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+    text-align: center;
+}
+.footer-content {
+    max-width: 720px;
+    margin: 0 auto;
+}
+.footer-brand {
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--red);
+    margin-bottom: 0.75rem;
+}
+.footer-disclaimer {
+    font-size: 0.72rem;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 0.75rem;
+}
+.footer-apis {
+    font-size: 0.7rem;
+    color: var(--muted);
+    opacity: 0.7;
+}
