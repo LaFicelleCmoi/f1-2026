@@ -152,7 +152,7 @@ function updateCountdown() {
 
     const next = getNextSession();
     if (!next.date) {
-        el.innerHTML = "🏁 <strong>Saison 2026 terminée</strong>";
+        el.innerHTML = `🏁 <strong>${t("countdown.season_over")}</strong>`;
         return;
     }
 
@@ -160,7 +160,7 @@ function updateCountdown() {
     const diff = next.date - now;
 
     if (diff <= 0) {
-        el.innerHTML = `🔴 <strong>EN COURS</strong> — ${next.session.name} ${next.race.flag} ${next.race.country}`;
+        el.innerHTML = `<strong>${t("countdown.live")}</strong> — ${next.session.name} ${next.race.flag} ${next.race.country}`;
         return;
     }
 
@@ -216,14 +216,14 @@ auth.onAuthStateChanged(user => {
     if (isAdmin) {
         if (adminTab) adminTab.style.display = "block";
         if (btnToggle) {
-            btnToggle.textContent = "Déconnexion Admin";
+            btnToggle.textContent = currentLang === "fr" ? "Déconnexion Admin" : "Sign out Admin";
             btnToggle.style.color = "var(--red)";
         }
         renderAdminRaceList();
     } else {
         if (adminTab) adminTab.style.display = "none";
         if (btnToggle) {
-            btnToggle.textContent = "Admin";
+            btnToggle.textContent = t("admin.admin_btn");
             btnToggle.style.color = "#555";
         }
         // Si on est sur l'onglet admin, revenir aux courses
@@ -342,10 +342,10 @@ function getBadgeClass(status) {
 }
 
 function getBadgeLabel(status) {
-    if (status === "completed")  return "✓ Terminé";
-    if (status === "next")       return "▶ Prochain";
-    if (status === "cancelled")  return "✕ Annulé";
-    return "À venir";
+    if (status === "completed")  return "✓ " + t("status.completed_f");
+    if (status === "next")       return "▶ " + t("status.next_f");
+    if (status === "cancelled")  return "✕ " + t("status.cancelled_f");
+    return t("status.upcoming");
 }
 
 function renderAllRaces() {
@@ -429,7 +429,7 @@ function renderAllRaces() {
                     </div>
                 </div>`;
         } else {
-            podiumHTML = `<div class="no-result">Résultats course à venir</div>`;
+            podiumHTML = `<div class="no-result">${t("races.results_coming")}</div>`;
         }
 
         // Badges vainqueur / pole
@@ -470,17 +470,17 @@ function renderAllRaces() {
                     </div>
                     <div class="race-info-row"><span>📅</span><span>${dateFull}</span></div>
                     <div class="race-info-row"><span>🏟️</span><span>${race.circuit}</span></div>
-                    ${(statsHTML || podiumHTML !== `<div class="no-result">Résultats course à venir</div>`) ? `
+                    ${(statsHTML || podiumHTML !== `<div class="no-result">${t("races.results_coming")}</div>`) ? `
                     <div class="card-spoil-wrapper ${sessionStorage.getItem('card-spoil-' + index) === 'true' ? 'revealed' : ''}" id="card-spoil-${index}">
                         <div class="card-spoil-overlay" onclick="event.stopPropagation()">
                             <span class="card-spoil-icon">🔒</span>
-                            <span class="card-spoil-text">Résultats masqués</span>
-                            <button class="card-spoil-btn" onclick="event.stopPropagation(); revealCardSpoil(${index})">👁️ Voir</button>
+                            <span class="card-spoil-text">${t("spoil.card_locked")}</span>
+                            <button class="card-spoil-btn" onclick="event.stopPropagation(); revealCardSpoil(${index})">${t("spoil.card_reveal")}</button>
                         </div>
                         <div class="card-spoil-content">
                             ${statsHTML}
                             ${podiumHTML}
-                            <button class="card-spoil-hide-btn" onclick="event.stopPropagation(); hideCardSpoil(${index})">🙈 Masquer</button>
+                            <button class="card-spoil-hide-btn" onclick="event.stopPropagation(); hideCardSpoil(${index})">${t("spoil.card_hide")}</button>
                         </div>
                     </div>` : podiumHTML}
                 </div>
@@ -488,7 +488,7 @@ function renderAllRaces() {
     });
 
     if (filtered.length === 0) {
-        html = '<div class="no-data-box" style="grid-column:1/-1"><div style="font-size:3rem">🔍</div><p>Aucune course ne correspond aux filtres.</p></div>';
+        html = `<div class="no-data-box" style="grid-column:1/-1"><div style="font-size:3rem">🔍</div><p>${t("races.no_match")}</p></div>`;
     }
     grid.innerHTML = html;
 }
@@ -529,7 +529,7 @@ function renderStandings() {
     const maxConstrPts = sortedConstructors[0]?.points || 1;
 
     document.getElementById("drivers-standings").innerHTML = `
-        <thead><tr><th>#</th><th colspan="2">Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
+        <thead><tr><th>#</th><th colspan="2">${t("standings.driver")}</th><th>${t("standings.team")}</th><th>${t("standings.points")}</th></tr></thead>
         <tbody>
             ${sortedDrivers.map((d, i) => {
                 const color = teamColors[d.team] || "#666";
@@ -553,7 +553,7 @@ function renderStandings() {
         </tbody>`;
 
     document.getElementById("constructors-standings").innerHTML = `
-        <thead><tr><th>#</th><th colspan="2">Écurie</th><th>Points</th></tr></thead>
+        <thead><tr><th>#</th><th colspan="2">${t("standings.team")}</th><th>${t("standings.points")}</th></tr></thead>
         <tbody>
             ${sortedConstructors.map((c, i) => {
                 const color = teamColors[c.team] || "#666";
@@ -707,7 +707,7 @@ function renderPalmares() {
     });
 
     // Trier par victoires puis podiums
-    const sortedTeams = Object.values(teamStats).filter(t => t.wins > 0 || t.podiums > 0).sort((a, b) => b.wins - a.wins || b.podiums - a.podiums);
+    const sortedTeams = Object.values(teamStats).filter(tm => tm.wins > 0 || tm.podiums > 0).sort((a, b) => b.wins - a.wins || b.podiums - a.podiums);
     const sortedDrivers = Object.values(driverStats).filter(d => d.wins > 0 || d.podiums > 0).sort((a, b) => b.wins - a.wins || b.podiums - a.podiums);
 
     // Podium des 3 meilleures équipes
@@ -719,23 +719,24 @@ function renderPalmares() {
 
         teamPodiumHTML = `
         <div class="palmares-section">
-            <h3 class="palmares-title">🏭 Meilleures Écuries</h3>
+            <h3 class="palmares-title">${t("palmares.top_teams")}</h3>
             <div class="podium-stage">
-                ${top3.map((t, i) => {
+                ${top3.map((tm, i) => {
                     const pos = i + 1;
-                    const color = teamColors[t.team] || "#666";
-                    const logo = teamLogos[t.team] || "";
+                    const color = teamColors[tm.team] || "#666";
+                    const logo = teamLogos[tm.team] || "";
                     const posLabel = pos === 1 ? "1ST" : pos === 2 ? "2ND" : "3RD";
+                    const winLabel = tm.wins > 1 ? t("palmares.wins") : t("palmares.wins").replace(/s$/, "");
                     return `
                     <div class="podium-card podium-p${pos}" style="--team-color:${color}">
                         <div class="podium-crown">${pos === 1 ? '👑' : ''}</div>
                         <div class="podium-position">${posLabel}</div>
-                        ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${t.team}" onerror="this.style.display='none'">` : ''}
+                        ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${tm.team}" onerror="this.style.display='none'">` : ''}
                         <div class="podium-team-bar"></div>
-                        <div class="podium-driver-name">${t.team || '-'}</div>
-                        <div class="podium-team-name">${t.wins} victoire${t.wins > 1 ? 's' : ''} — ${t.podiums} podium${t.podiums > 1 ? 's' : ''}</div>
+                        <div class="podium-driver-name">${tm.team || '-'}</div>
+                        <div class="podium-team-name">${tm.wins} ${winLabel} — ${tm.podiums} podium${tm.podiums > 1 ? 's' : ''}</div>
                         <div class="podium-pillar">
-                            <span class="podium-pillar-num">${t.wins}</span>
+                            <span class="podium-pillar-num">${tm.wins}</span>
                         </div>
                     </div>`;
                 }).join("")}
@@ -751,13 +752,14 @@ function renderPalmares() {
 
         driverPodiumHTML = `
         <div class="palmares-section">
-            <h3 class="palmares-title">🧑‍🚀 Meilleurs Pilotes</h3>
+            <h3 class="palmares-title">${t("palmares.top_drivers")}</h3>
             <div class="podium-stage">
                 ${top3d.map((d, i) => {
                     const pos = i + 1;
                     const color = teamColors[d.team] || "#666";
                     const logo = teamLogos[d.team] || "";
                     const posLabel = pos === 1 ? "1ST" : pos === 2 ? "2ND" : "3RD";
+                    const winLabel = d.wins > 1 ? t("palmares.wins") : t("palmares.wins").replace(/s$/, "");
                     return `
                     <div class="podium-card podium-p${pos}" style="--team-color:${color}">
                         <div class="podium-crown">${pos === 1 ? '👑' : ''}</div>
@@ -765,7 +767,7 @@ function renderPalmares() {
                         ${logo ? `<img class="podium-team-logo" src="${logo}" alt="${d.team}" onerror="this.style.display='none'">` : ''}
                         <div class="podium-team-bar"></div>
                         <div class="podium-driver-name">${d.flag} ${d.driver || '-'}</div>
-                        <div class="podium-team-name">${d.wins} victoire${d.wins > 1 ? 's' : ''} — ${d.podiums} podium${d.podiums > 1 ? 's' : ''}</div>
+                        <div class="podium-team-name">${d.wins} ${winLabel} — ${d.podiums} podium${d.podiums > 1 ? 's' : ''}</div>
                         <div class="podium-pillar">
                             <span class="podium-pillar-num">${d.wins}</span>
                         </div>
@@ -780,18 +782,18 @@ function renderPalmares() {
     if (sortedTeams.length > 0) {
         teamTableHTML = `
         <div class="palmares-section">
-            <h3 class="palmares-title">📊 Détail par Écurie</h3>
+            <h3 class="palmares-title">📊 ${t("standings.team")}</h3>
             <table class="standings-table palmares-table">
-                <thead><tr><th>#</th><th>Écurie</th><th>🏆 Victoires</th><th>🥇 Podiums</th><th>⚡ Poles</th></tr></thead>
+                <thead><tr><th>#</th><th>${t("standings.team")}</th><th>🏆 ${t("palmares.wins")}</th><th>🥇 Podiums</th><th>⚡ Poles</th></tr></thead>
                 <tbody>
-                    ${sortedTeams.map((t, i) => {
-                        const color = teamColors[t.team] || "#666";
+                    ${sortedTeams.map((tm, i) => {
+                        const color = teamColors[tm.team] || "#666";
                         return `<tr>
                             <td style="font-weight:800;color:var(--muted)">${i + 1}</td>
-                            <td><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:8px;vertical-align:middle"></span>${t.flag} ${t.team}</td>
-                            <td style="font-weight:800;color:var(--gold)">${t.wins}</td>
-                            <td style="font-weight:700;color:var(--silver)">${t.podiums}</td>
-                            <td style="color:var(--muted)">${t.poles}</td>
+                            <td><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:8px;vertical-align:middle"></span>${tm.flag} ${tm.team}</td>
+                            <td style="font-weight:800;color:var(--gold)">${tm.wins}</td>
+                            <td style="font-weight:700;color:var(--silver)">${tm.podiums}</td>
+                            <td style="color:var(--muted)">${tm.poles}</td>
                         </tr>`;
                     }).join("")}
                 </tbody>
@@ -803,9 +805,9 @@ function renderPalmares() {
     if (sortedDrivers.length > 0) {
         driverTableHTML = `
         <div class="palmares-section">
-            <h3 class="palmares-title">📊 Détail par Pilote</h3>
+            <h3 class="palmares-title">📊 ${t("standings.driver")}</h3>
             <table class="standings-table palmares-table">
-                <thead><tr><th>#</th><th>Pilote</th><th>Écurie</th><th>🏆 Vict.</th><th>🥇 Pod.</th><th>⚡ Poles</th></tr></thead>
+                <thead><tr><th>#</th><th>${t("standings.driver")}</th><th>${t("standings.team")}</th><th>🏆 ${t("palmares.wins")}</th><th>🥇 Pod.</th><th>⚡ Poles</th></tr></thead>
                 <tbody>
                     ${sortedDrivers.map((d, i) => {
                         const color = teamColors[d.team] || "#666";
@@ -825,7 +827,7 @@ function renderPalmares() {
 
     // Si aucune course terminée
     if (sortedTeams.length === 0 && sortedDrivers.length === 0) {
-        container.innerHTML = `<div class="no-data-box"><div style="font-size:3rem">🏁</div><p>Aucune course terminée pour le moment.</p><p style="color:var(--muted);font-size:0.85rem">Les statistiques apparaîtront après la première course.</p></div>`;
+        container.innerHTML = `<div class="no-data-box"><div style="font-size:3rem">🏁</div><p>${t("palmares.no_wins_yet")}</p></div>`;
         return;
     }
 
@@ -865,7 +867,7 @@ function renderSprintView() {
                         </div>`;
                     }).join("")}
                 </div>
-            </div>` : `<div class="no-result">Résultats Sprint à venir</div>`;
+            </div>` : `<div class="no-result">${t("races.results_coming")}</div>`;
 
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
@@ -944,7 +946,7 @@ function openModal(index) {
     // ── Helper : tableau de qualifications (réutilisé) ──
     function buildQualiTable(qualiData) {
         return `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th></tr></thead>
+            <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th></tr></thead>
             <tbody>
                 ${qualiData.map((q, qi) => `
                     <tr class="${qi < 3 ? 'podium-row-' + (qi+1) : ''}">
@@ -961,17 +963,17 @@ function openModal(index) {
         const wasRevealed = sessionStorage.getItem(spoilId) === "true";
         return `
             <div class="modal-section">
-                <div class="modal-section-title">${icon} ${title} <span style="font-size:0.7rem;font-weight:400;color:var(--muted);margin-left:0.5rem;">anti-spoil</span></div>
+                <div class="modal-section-title">${icon} ${title} <span style="font-size:0.7rem;font-weight:400;color:var(--muted);margin-left:0.5rem;">${t("spoil.anti_spoil")}</span></div>
                 <div class="spoil-wrapper ${wasRevealed ? 'revealed' : ''}" id="${spoilId}">
                     <div class="spoil-overlay">
                         <div class="spoil-overlay-icon">🔒</div>
-                        <div class="spoil-overlay-text">Résultats masqués pour éviter le spoil</div>
-                        <button class="spoil-btn spoil-btn-reveal" onclick="revealSpoil('${spoilId}')">👁️ Révéler les résultats</button>
+                        <div class="spoil-overlay-text">${t("spoil.locked_text")}</div>
+                        <button class="spoil-btn spoil-btn-reveal" onclick="revealSpoil('${spoilId}')">${t("spoil.reveal")}</button>
                     </div>
                     <div class="spoil-blur">
                         ${tableHTML}
                     </div>
-                    <button class="spoil-btn-hide" onclick="hideSpoil('${spoilId}')">🙈 Masquer les résultats</button>
+                    <button class="spoil-btn-hide" onclick="hideSpoil('${spoilId}')">${t("spoil.hide")}</button>
                 </div>
             </div>`;
     }
@@ -996,13 +998,13 @@ function openModal(index) {
     // ── Qualifications Sprint (menu déroulant) ──
     if (race.sprint && race.sprintQualiResults && race.sprintQualiResults.length > 0) {
         const sqTable = buildQualiTable(race.sprintQualiResults);
-        resultsHTML += buildSpoilSection("Qualifications Sprint", "⚡", sqTable, `spoil-sq-${index}`);
+        resultsHTML += buildSpoilSection(t("modal.sprint_quali"), "⚡", sqTable, `spoil-sq-${index}`);
     }
 
     // ── Résultats Sprint (anti-spoil) ──
     if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
         const sprintTable = `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
+            <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.points")}</th></tr></thead>
             <tbody>
                 ${race.sprintResult.fullResults.map((entry, idx) => `
                     <tr class="${idx < 3 ? 'podium-row-' + (idx+1) : ''}">
@@ -1013,19 +1015,19 @@ function openModal(index) {
                     </tr>`).join("")}
             </tbody>
         </table>`;
-        resultsHTML += buildSpoilSection("Résultats Sprint", "⚡", sprintTable, `spoil-sr-${index}`);
+        resultsHTML += buildSpoilSection(t("modal.sprint_results"), "⚡", sprintTable, `spoil-sr-${index}`);
     }
 
     // ── Qualifications Course (menu déroulant) ──
     if (race.qualiResults && race.qualiResults.length > 0) {
         const rqTable = buildQualiTable(race.qualiResults);
-        resultsHTML += buildSpoilSection("Qualifications Course", "🏁", rqTable, `spoil-rq-${index}`);
+        resultsHTML += buildSpoilSection(t("modal.race_quali"), "🏁", rqTable, `spoil-rq-${index}`);
     }
 
     // ── Résultats Course (anti-spoil) ──
     if (rs === "completed" && race.result && race.result.fullResults) {
         const raceTable = `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Points</th></tr></thead>
+            <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.points")}</th></tr></thead>
             <tbody>
                 ${race.result.fullResults.map((entry, idx) => `
                     <tr class="${idx < 3 ? 'podium-row-' + (idx+1) : ''}">
@@ -1036,11 +1038,11 @@ function openModal(index) {
                     </tr>`).join("")}
             </tbody>
         </table>`;
-        resultsHTML += buildSpoilSection("Résultats Course", "🏁", raceTable, `spoil-rc-${index}`);
+        resultsHTML += buildSpoilSection(t("modal.race_results"), "🏁", raceTable, `spoil-rc-${index}`);
     }
 
     if (resultsHTML === "") {
-        resultsHTML = `<div class="modal-section"><div class="no-data-box"><div style="font-size:3rem">🏎️</div><p>Les résultats seront disponibles après la course.</p></div></div>`;
+        resultsHTML = `<div class="modal-section"><div class="no-data-box"><div style="font-size:3rem">🏎️</div><p>${t("modal.results_unavailable")}</p></div></div>`;
     }
 
     const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
@@ -1054,25 +1056,25 @@ function openModal(index) {
 
     // ── Onglets disponibles ──
     const tabs = [];
-    tabs.push({ id: "info",    icon: "📋", label: "Programme" });
-    if (sdbImages && (sdbImages.map || sdbImages.poster)) tabs.push({ id: "circuit", icon: "🗺️", label: "Circuit" });
+    tabs.push({ id: "info",    icon: "📋", label: t("modal.tab_info") });
+    if (sdbImages && (sdbImages.map || sdbImages.poster)) tabs.push({ id: "circuit", icon: "🗺️", label: t("modal.tab_circuit") });
 
     // Essais Libres
-    if (race.fp1Results?.length > 0) tabs.push({ id: "fp1", icon: "🔧", label: "EL1" });
+    if (race.fp1Results?.length > 0) tabs.push({ id: "fp1", icon: "🔧", label: t("modal.tab_fp1") });
     if (!race.sprint) {
-        if (race.fp2Results?.length > 0) tabs.push({ id: "fp2", icon: "🔧", label: "EL2" });
-        if (race.fp3Results?.length > 0) tabs.push({ id: "fp3", icon: "🔧", label: "EL3" });
+        if (race.fp2Results?.length > 0) tabs.push({ id: "fp2", icon: "🔧", label: t("modal.tab_fp2") });
+        if (race.fp3Results?.length > 0) tabs.push({ id: "fp3", icon: "🔧", label: t("modal.tab_fp3") });
     }
 
     // Sprint weekend
     if (race.sprint) {
-        if (race.sprintQualiResults?.length > 0)  tabs.push({ id: "sq",  icon: "⚡", label: "Qualifs Sprint" });
+        if (race.sprintQualiResults?.length > 0)  tabs.push({ id: "sq",  icon: "⚡", label: t("modal.tab_sq") });
         if (ss === "completed" && race.sprintResult?.fullResults?.length > 0)
-            tabs.push({ id: "sr", icon: "⚡", label: "Sprint" });
+            tabs.push({ id: "sr", icon: "⚡", label: t("modal.tab_sr") });
     }
-    if (race.qualiResults?.length > 0)  tabs.push({ id: "rq",  icon: "🏁", label: "Qualifications" });
+    if (race.qualiResults?.length > 0)  tabs.push({ id: "rq",  icon: "🏁", label: t("modal.tab_rq") });
     if (rs === "completed" && race.result?.fullResults?.length > 0)
-        tabs.push({ id: "rc", icon: "🏆", label: "Course" });
+        tabs.push({ id: "rc", icon: "🏆", label: t("modal.tab_rc") });
 
     // Onglet actif par défaut : dernier disponible (résultats) ou infos
     const defaultTab = tabs[tabs.length - 1]?.id || "info";
@@ -1080,8 +1082,8 @@ function openModal(index) {
     // ── Contenu de chaque onglet ──
     // Helper : tableau d'essais libres (avec temps + écart)
     function buildFPTable(fpData, sessionLabel) {
-        const t = `<table class="full-results-table">
-            <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Temps</th><th>Écart</th></tr></thead>
+        const tbl = `<table class="full-results-table">
+            <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.time")}</th><th>${t("modal.gap")}</th></tr></thead>
             <tbody>
                 ${fpData.map((e, i) => `
                     <tr class="${i < 3 ? 'podium-row-' + (i+1) : ''}">
@@ -1093,16 +1095,16 @@ function openModal(index) {
                     </tr>`).join("")}
             </tbody>
         </table>`;
-        return t;
+        return tbl;
     }
 
     function tabContent(tabId) {
         switch(tabId) {
             case "info": return `
                 <div class="modal-tab-pane">
-                    <div class="modal-section-title">📋 Programme${isAdmin ? ' <span style="color:var(--red);font-size:0.75rem;font-weight:normal;">— cliquez sur une heure pour modifier</span>' : ''}</div>
+                    <div class="modal-section-title">${t("modal.schedule_title")}${isAdmin ? ` <span style="color:var(--red);font-size:0.75rem;font-weight:normal;">${t("modal.schedule_edit_hint")}</span>` : ''}</div>
                     <div class="schedule-grid">${scheduleHTML}</div>
-                    ${isAdmin ? `<button onclick="saveSchedule(${index})" class="modal-save-btn">💾 Sauvegarder les horaires</button>` : ""}
+                    ${isAdmin ? `<button onclick="saveSchedule(${index})" class="modal-save-btn">${t("admin.save_schedule")}</button>` : ""}
                 </div>`;
             case "circuit": {
                 const mapImg = sdbImages?.map || null;
@@ -1111,38 +1113,38 @@ function openModal(index) {
                 return `<div class="modal-tab-pane circuit-tab">
                     ${mapImg ? `
                         <div class="circuit-map-section">
-                            <div class="circuit-map-title">🗺️ Tracé du circuit</div>
+                            <div class="circuit-map-title">${t("modal.circuit_layout")}</div>
                             <div class="circuit-map-wrapper">
                                 <img src="${mapImg}" alt="Circuit ${race.name}" class="circuit-map-img" loading="lazy" onerror="this.parentElement.style.display='none'">
                             </div>
                         </div>` : ''}
                     ${posterImg ? `
                         <div class="circuit-poster-section">
-                            <div class="circuit-map-title">🏁 Affiche du Grand Prix</div>
+                            <div class="circuit-map-title">${t("modal.circuit_poster")}</div>
                             <div class="circuit-poster-wrapper">
                                 <img src="${posterImg}" alt="Poster ${race.name}" class="circuit-poster-img" loading="lazy" onerror="this.parentElement.style.display='none'">
                             </div>
                         </div>` : ''}
                     ${thumbImg && !posterImg ? `
                         <div class="circuit-poster-section">
-                            <div class="circuit-map-title">📸 Aperçu</div>
+                            <div class="circuit-map-title">${t("modal.circuit_preview")}</div>
                             <div class="circuit-poster-wrapper">
                                 <img src="${thumbImg}" alt="${race.name}" class="circuit-poster-img" loading="lazy" onerror="this.parentElement.style.display='none'">
                             </div>
                         </div>` : ''}
-                    ${!mapImg && !posterImg && !thumbImg ? '<div class="no-data-box"><div style="font-size:3rem">🗺️</div><p>Images non disponibles pour ce circuit.</p></div>' : ''}
+                    ${!mapImg && !posterImg && !thumbImg ? `<div class="no-data-box"><div style="font-size:3rem">🗺️</div><p>${t("modal.circuit_unavailable")}</p></div>` : ''}
                 </div>`;
             }
             case "fp1": return `<div class="modal-tab-pane">${buildFPTable(race.fp1Results, "Essais Libres 1")}</div>`;
             case "fp2": return `<div class="modal-tab-pane">${buildFPTable(race.fp2Results, "Essais Libres 2")}</div>`;
             case "fp3": return `<div class="modal-tab-pane">${buildFPTable(race.fp3Results, "Essais Libres 3")}</div>`;
             case "sq": {
-                const t = buildQualiTable(race.sprintQualiResults);
-                return `<div class="modal-tab-pane">${buildSpoilSection("Qualifications Sprint","⚡",t,`spoil-sq-${index}`)}</div>`;
+                const tbl = buildQualiTable(race.sprintQualiResults);
+                return `<div class="modal-tab-pane">${buildSpoilSection(t("modal.sprint_quali"),"⚡",tbl,`spoil-sq-${index}`)}</div>`;
             }
             case "sr": {
-                const t = `<table class="full-results-table">
-                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Pts</th></tr></thead>
+                const tbl = `<table class="full-results-table">
+                    <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.points_abbr")}</th></tr></thead>
                     <tbody>${race.sprintResult.fullResults.map((e,i)=>`
                         <tr class="${i<3?'podium-row-'+(i+1):''}">
                             <td class="pos-medal ${getPodiumColor(i+1)}">${i<3?getPodiumIcon(i+1):i+1}</td>
@@ -1151,15 +1153,15 @@ function openModal(index) {
                             <td class="points-cell">${e.points}</td>
                         </tr>`).join("")}
                     </tbody></table>`;
-                return `<div class="modal-tab-pane">${buildSpoilSection("Résultats Sprint","⚡",t,`spoil-sr-${index}`)}</div>`;
+                return `<div class="modal-tab-pane">${buildSpoilSection(t("modal.sprint_results"),"⚡",tbl,`spoil-sr-${index}`)}</div>`;
             }
             case "rq": {
-                const t = buildQualiTable(race.qualiResults);
-                return `<div class="modal-tab-pane">${buildSpoilSection("Qualifications Course","🏁",t,`spoil-rq-${index}`)}</div>`;
+                const tbl = buildQualiTable(race.qualiResults);
+                return `<div class="modal-tab-pane">${buildSpoilSection(t("modal.race_quali"),"🏁",tbl,`spoil-rq-${index}`)}</div>`;
             }
             case "rc": {
-                const t = `<table class="full-results-table">
-                    <thead><tr><th>Pos</th><th>Pilote</th><th>Écurie</th><th>Pts</th></tr></thead>
+                const tbl = `<table class="full-results-table">
+                    <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.points_abbr")}</th></tr></thead>
                     <tbody>${race.result.fullResults.map((e,i)=>`
                         <tr class="${i<3?'podium-row-'+(i+1):''}">
                             <td class="pos-medal ${getPodiumColor(i+1)}">${i<3?getPodiumIcon(i+1):i+1}</td>
@@ -1168,7 +1170,7 @@ function openModal(index) {
                             <td class="points-cell">${e.points}</td>
                         </tr>`).join("")}
                     </tbody></table>`;
-                return `<div class="modal-tab-pane">${buildSpoilSection("Résultats Course","🏆",t,`spoil-rc-${index}`)}</div>`;
+                return `<div class="modal-tab-pane">${buildSpoilSection(t("modal.race_results"),"🏆",tbl,`spoil-rc-${index}`)}</div>`;
             }
             default: return "";
         }
@@ -1186,9 +1188,9 @@ function openModal(index) {
                             <span>📅 ${dateFull}</span>
                             <span>🏟️ ${race.circuit}</span>
                             <span>🏁 R${race.round}</span>
-                            ${race.sprint ? '<span class="modal-meta-sprint">⚡ Sprint</span>' : ""}
-                            ${race.isNew ? '<span class="modal-meta-new">✨ Nouveau</span>' : ""}
-                            ${isAdmin ? '<span style="color:var(--red);font-size:0.72rem;">⚙️ Admin</span>' : ""}
+                            ${race.sprint ? `<span class="modal-meta-sprint">${t("modal.sprint_badge")}</span>` : ""}
+                            ${race.isNew ? `<span class="modal-meta-new">${t("modal.new_badge")}</span>` : ""}
+                            ${isAdmin ? `<span style="color:var(--red);font-size:0.72rem;">${t("modal.admin_badge")}</span>` : ""}
                         </div>
                     </div>
                 </div>
@@ -1197,11 +1199,11 @@ function openModal(index) {
         </div>
 
         <div class="modal-tabs">
-            ${tabs.map(t => `
-                <button class="modal-tab-btn ${t.id === defaultTab ? 'active' : ''}"
-                        data-tab="${t.id}"
-                        onclick="switchModalTab('${t.id}', this)">
-                    ${t.icon} ${t.label}
+            ${tabs.map(tab => `
+                <button class="modal-tab-btn ${tab.id === defaultTab ? 'active' : ''}"
+                        data-tab="${tab.id}"
+                        onclick="switchModalTab('${tab.id}', this)">
+                    ${tab.icon} ${tab.label}
                 </button>`).join("")}
         </div>
 
@@ -1243,10 +1245,10 @@ function saveSchedule(raceIndex) {
     // Feedback visuel
     const btn = document.querySelector("#modal-content button[onclick^='saveSchedule']");
     if (btn) {
-        btn.textContent = "✅ Sauvegardé !";
+        btn.textContent = t("msg.saved");
         btn.style.background = "var(--green)";
         setTimeout(() => {
-            btn.textContent = "💾 Sauvegarder les horaires";
+            btn.textContent = t("admin.save_schedule");
             btn.style.background = "var(--red)";
         }, 2000);
     }
@@ -1303,7 +1305,7 @@ function toggleDropdown(dropdownId) {
 
 function switchView(view) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".nav-tab").forEach(nt => nt.classList.remove("active"));
     const target = document.getElementById("view-" + view);
     void target.offsetWidth;
     target.classList.add("active");
@@ -1367,8 +1369,8 @@ function renderAdminRaceList() {
             <div style="flex:1">
                 <div style="font-weight:600; font-size:0.9rem">${race.name}</div>
                 <div style="font-size:0.75rem; color:var(--muted); display:flex; gap:0.5rem; margin-top:0.2rem;">
-                    <span>🏁 ${rs === 'completed' ? '<span style="color:var(--green)">Terminé</span>' : rs === 'next' ? '<span style="color:var(--red)">Prochain</span>' : rs === 'cancelled' ? '<span style="color:#ef4444">✕ Annulé</span>' : 'À venir'}</span>
-                    ${race.sprint ? `<span>⚡ ${ss === 'completed' ? '<span style="color:var(--green)">Terminé</span>' : ss === 'next' ? '<span style="color:var(--sprint-light)">Prochain</span>' : ss === 'cancelled' ? '<span style="color:#ef4444">✕ Annulé</span>' : 'À venir'}</span>` : ''}
+                    <span>🏁 ${rs === 'completed' ? `<span style="color:var(--green)">${t("admin.completed_m")}</span>` : rs === 'next' ? `<span style="color:var(--red)">${t("admin.next_m")}</span>` : rs === 'cancelled' ? `<span style="color:#ef4444">${t("admin.cancelled_m")}</span>` : t("admin.upcoming")}</span>
+                    ${race.sprint ? `<span>⚡ ${ss === 'completed' ? `<span style="color:var(--green)">${t("admin.completed_m")}</span>` : ss === 'next' ? `<span style="color:var(--sprint-light)">${t("admin.next_m")}</span>` : ss === 'cancelled' ? `<span style="color:#ef4444">${t("admin.cancelled_m")}</span>` : t("admin.upcoming")}</span>` : ''}
                 </div>
             </div>
             <span style="width:8px; height:8px; border-radius:50%;
@@ -1431,7 +1433,7 @@ function renderAdminRows(data, containerId, type) {
         <div style="display:grid; grid-template-columns: 50px 1.5fr 1fr 60px 30px; gap:0.5rem;
             padding:0 0.5rem; margin-bottom:0.5rem; font-size:0.75rem; font-weight:bold;
             color:var(--muted); text-transform:uppercase;">
-            <span>Pos</span><span>Pilote</span><span>Écurie</span><span>Pts</span><span></span>
+            <span>${t("modal.pos")}</span><span>${t("modal.driver")}</span><span>${t("modal.team")}</span><span>${t("modal.points_abbr")}</span><span></span>
         </div>`;
     data.forEach(row => container.appendChild(createAdminRow(row, type)));
 }
@@ -2117,15 +2119,15 @@ function renderPredictions() {
         banner.innerHTML = `
             <div class="pred-score-card">
                 <div class="pred-score-number">${totalScore}<span class="pred-score-max">/${totalMax}</span></div>
-                <div class="pred-score-label">Score total</div>
+                <div class="pred-score-label">${t("predictions.score_total")}</div>
             </div>
             <div class="pred-score-card">
                 <div class="pred-score-number">${pct}<span class="pred-score-max">%</span></div>
-                <div class="pred-score-label">Précision</div>
+                <div class="pred-score-label">${t("predictions.avg")}</div>
             </div>
             <div class="pred-score-card">
                 <div class="pred-score-number">${completedPreds}</div>
-                <div class="pred-score-label">Courses prédites</div>
+                <div class="pred-score-label">${t("predictions.completed_races")}</div>
             </div>
         `;
     } else {
@@ -2145,7 +2147,7 @@ function renderPredictions() {
 
     // ── Courses à venir (formulaire de prédiction) ──
     if (upcoming.length > 0) {
-        html += `<h3 class="pred-section-title">Courses à venir</h3>`;
+        html += `<h3 class="pred-section-title">${t("predictions.upcoming")}</h3>`;
         html += `<div class="pred-grid">`;
         upcoming.forEach(race => {
             const pred = preds[race.round];
@@ -2163,26 +2165,26 @@ function renderPredictions() {
                         <div class="pred-row">
                             <span class="pred-pos pred-pos-1">P1</span>
                             <select class="pred-select" id="pred-${race.round}-p1">
-                                <option value="">— Choisir —</option>
+                                <option value="">— —</option>
                                 ${driverNames.map(d => `<option value="${d}" ${pred?.p1 === d ? 'selected' : ''}>${d}</option>`).join("")}
                             </select>
                         </div>
                         <div class="pred-row">
                             <span class="pred-pos pred-pos-2">P2</span>
                             <select class="pred-select" id="pred-${race.round}-p2">
-                                <option value="">— Choisir —</option>
+                                <option value="">— —</option>
                                 ${driverNames.map(d => `<option value="${d}" ${pred?.p2 === d ? 'selected' : ''}>${d}</option>`).join("")}
                             </select>
                         </div>
                         <div class="pred-row">
                             <span class="pred-pos pred-pos-3">P3</span>
                             <select class="pred-select" id="pred-${race.round}-p3">
-                                <option value="">— Choisir —</option>
+                                <option value="">— —</option>
                                 ${driverNames.map(d => `<option value="${d}" ${pred?.p3 === d ? 'selected' : ''}>${d}</option>`).join("")}
                             </select>
                         </div>
                         <button class="pred-save-btn" onclick="savePredictionFromUI(${race.round})">
-                            ${hasPred ? '✏️ Modifier' : '💾 Sauvegarder'}
+                            ${hasPred ? '✏️ ' + t("predictions.edit") : '💾 ' + t("predictions.save")}
                         </button>
                     </div>
                 </div>
@@ -2193,7 +2195,7 @@ function renderPredictions() {
 
     // ── Courses terminées (résultat vs prédiction) ──
     if (completed.length > 0) {
-        html += `<h3 class="pred-section-title">Résultats de mes prédictions</h3>`;
+        html += `<h3 class="pred-section-title">${t("predictions.completed")}</h3>`;
         html += `<div class="pred-grid">`;
         completed.forEach(race => {
             const pred = preds[race.round];
@@ -2213,7 +2215,7 @@ function renderPredictions() {
             `;
 
             if (!pred || !pred.p1) {
-                html += `<div class="pred-no-prediction">Aucune prédiction enregistrée</div>`;
+                html += `<div class="pred-no-prediction">${t("predictions.no_prediction")}</div>`;
             } else {
                 const positions = [
                     { label: "P1", pred: pred.p1, actual: actual[0]?.driver },
@@ -2232,7 +2234,7 @@ function renderPredictions() {
                             <span class="pred-pos pred-pos-${pos.label.charAt(1)}">${pos.label}</span>
                             <div class="pred-compare-detail">
                                 <span class="pred-compare-pred">${pos.pred}</span>
-                                ${!exact ? `<span class="pred-compare-actual">Réel : ${pos.actual || '?'}</span>` : ''}
+                                ${!exact ? `<span class="pred-compare-actual">${t("predictions.actual_result")}: ${pos.actual || '?'}</span>` : ''}
                             </div>
                             <span class="pred-compare-icon">${icon} ${pts}</span>
                         </div>
@@ -2246,7 +2248,7 @@ function renderPredictions() {
     }
 
     if (upcoming.length === 0 && completed.length === 0) {
-        html = `<div style="text-align:center; color:var(--muted); padding:4rem 0;"><span style="font-size:3rem;">🔮</span><p style="margin-top:1rem;">Aucune course disponible pour le moment.</p></div>`;
+        html = `<div style="text-align:center; color:var(--muted); padding:4rem 0;"><span style="font-size:3rem;">🔮</span><p style="margin-top:1rem;">${t("predictions.empty_state")}</p></div>`;
     }
 
     container.innerHTML = html;
@@ -2257,11 +2259,11 @@ function savePredictionFromUI(round) {
     const p2 = document.getElementById(`pred-${round}-p2`)?.value;
     const p3 = document.getElementById(`pred-${round}-p3`)?.value;
     if (!p1 || !p2 || !p3) {
-        alert("Sélectionnez un pilote pour chaque position du podium.");
+        alert(t("predictions.fill_all"));
         return;
     }
     if (p1 === p2 || p1 === p3 || p2 === p3) {
-        alert("Vous ne pouvez pas sélectionner le même pilote deux fois.");
+        alert(t("predictions.no_duplicate"));
         return;
     }
     savePrediction(round, p1, p2, p3);

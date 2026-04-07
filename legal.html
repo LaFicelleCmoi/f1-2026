@@ -15,11 +15,14 @@
     <div class="header-left" onclick="window.location.href='index.html'" style="cursor:pointer">
         <div class="logo-f1">F1</div>
         <div>
-            <div class="site-title">F1 2026 Race Hub</div>
-            <div class="site-subtitle">Legal Notice</div>
+            <div class="site-title" data-i18n="footer.brand">F1 2026 Race Hub</div>
+            <div class="site-subtitle" data-i18n="legal.subtitle">Legal Notice</div>
         </div>
     </div>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()" data-i18n-title="header.lang_title" title="Switch to English" style="margin-right:1.5rem;">EN</button>
 </header>
+
+<script src="i18n.js"></script>
 
 <main class="legal-main">
     <div class="legal-container">

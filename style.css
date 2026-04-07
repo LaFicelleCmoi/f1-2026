@@ -112,6 +112,24 @@ header {
     border-color: var(--red);
 }
 
+.lang-toggle {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 0.7rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    line-height: 1;
+}
+.lang-toggle:hover {
+    border-color: var(--red);
+    color: var(--red);
+}
+
 .stats-bar {
     display: flex;
     gap: 1.5rem;
