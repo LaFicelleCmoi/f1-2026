@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 2026 — Suivi de Saison</title>
+    <title data-i18n="meta.title">F1 2026 — Suivi de Saison</title>
     <meta name="description" content="Suivez la saison F1 2026 en temps réel : résultats, classements, calendrier, sprints.">
     <meta name="theme-color" content="#e10600">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,42 +22,43 @@
 <header>
     <div class="header-left" id="header-home" style="cursor:pointer">
         <div class="f1-logo">F1</div>
-        <div class="season-title">Saison 2026</div>
+        <div class="season-title" data-i18n="header.subtitle">Saison 2026</div>
     </div>
     <div class="header-right">
-        <button class="theme-toggle" id="theme-toggle" title="Basculer thème clair/sombre">🌙</button>
+        <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()" data-i18n-title="header.lang_title" title="Switch to English">EN</button>
+        <button class="theme-toggle" id="theme-toggle" data-i18n-title="header.theme_toggle" title="Basculer thème clair/sombre">🌙</button>
         <div class="stats-bar">
-            <span>🏁 <strong id="stat-completed">0</strong> Disputées</span>
-            <span>📅 <strong id="stat-upcoming">0</strong> À venir</span>
-            <span>🔢 <strong id="stat-total">0</strong> Total</span>
+            <span>🏁 <strong id="stat-completed">0</strong> <span data-i18n="header.stat_completed">Disputées</span></span>
+            <span>📅 <strong id="stat-upcoming">0</strong> <span data-i18n="header.stat_upcoming">À venir</span></span>
+            <span>🔢 <strong id="stat-total">0</strong> <span data-i18n="header.stat_total">Total</span></span>
         </div>
     </div>
 </header>
 
 <div class="countdown-bar" id="countdown-bar">
-    <span id="countdown-text">Chargement du calendrier...</span>
+    <span id="countdown-text" data-i18n="countdown.loading">Chargement du calendrier...</span>
 </div>
 
 <nav>
-    <button class="nav-tab active" data-view="races">🏎️ Courses</button>
-    <button class="nav-tab" data-view="standings">🏆 Classements</button>
-    <button class="nav-tab" data-view="timeline">📆 Calendrier</button>
-    <button class="nav-tab" data-view="sprint">⚡ Sprint</button>
-    <button class="nav-tab" data-view="palmares">🏅 Palmarès</button>
-    <button class="nav-tab" data-view="predictions">🔮 Prédictions</button>
-    <button class="nav-tab" data-view="admin" id="admin-tab" style="display: none;">⚙️ Administration</button>
+    <button class="nav-tab active" data-view="races" data-i18n="nav.races">🏎️ Courses</button>
+    <button class="nav-tab" data-view="standings" data-i18n="nav.standings">🏆 Classements</button>
+    <button class="nav-tab" data-view="timeline" data-i18n="nav.timeline">📆 Calendrier</button>
+    <button class="nav-tab" data-view="sprint" data-i18n="nav.sprint">⚡ Sprint</button>
+    <button class="nav-tab" data-view="palmares" data-i18n="nav.palmares">🏅 Palmarès</button>
+    <button class="nav-tab" data-view="predictions" data-i18n="nav.predictions">🔮 Prédictions</button>
+    <button class="nav-tab" data-view="admin" id="admin-tab" style="display: none;" data-i18n="nav.admin">⚙️ Administration</button>
 </nav>
 
 <main>
     <div id="view-races" class="view active">
         <div class="section-header">
-            <h2>Calendrier des Courses</h2>
-            <p>Saison F1 2026 — 24 Grands Prix</p>
+            <h2 data-i18n="races.title">Calendrier des Courses</h2>
+            <p data-i18n="races.subtitle">Saison F1 2026 — 24 Grands Prix</p>
         </div>
         <div class="season-progress" id="season-progress">
             <div class="progress-info">
-                <span class="progress-label">Progression de la saison</span>
-                <span class="progress-count"><span id="progress-done">0</span> / <span id="progress-total">24</span> courses</span>
+                <span class="progress-label" data-i18n="races.progress_label">Progression de la saison</span>
+                <span class="progress-count"><span id="progress-done">0</span> / <span id="progress-total">24</span> <span data-i18n="races.progress_count">courses</span></span>
             </div>
             <div class="progress-bar-track">
                 <div class="progress-bar-fill" id="progress-fill"></div>
@@ -65,34 +66,34 @@
         </div>
         <div class="filter-bar" id="filter-bar">
             <div class="filter-group">
-                <label class="filter-label">Statut</label>
+                <label class="filter-label" data-i18n="races.filter_status">Statut</label>
                 <div class="filter-options" id="filter-status">
-                    <button class="filter-btn active" data-filter="all">Tous</button>
-                    <button class="filter-btn" data-filter="completed">Terminées</button>
-                    <button class="filter-btn" data-filter="upcoming">À venir</button>
-                    <button class="filter-btn" data-filter="next">Prochaine</button>
+                    <button class="filter-btn active" data-filter="all" data-i18n="races.filter_all">Tous</button>
+                    <button class="filter-btn" data-filter="completed" data-i18n="races.filter_completed">Terminées</button>
+                    <button class="filter-btn" data-filter="upcoming" data-i18n="races.filter_upcoming">À venir</button>
+                    <button class="filter-btn" data-filter="next" data-i18n="races.filter_next">Prochaine</button>
                 </div>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Type</label>
+                <label class="filter-label" data-i18n="races.filter_type">Type</label>
                 <div class="filter-options" id="filter-type">
-                    <button class="filter-btn active" data-filter="all">Toutes</button>
-                    <button class="filter-btn" data-filter="sprint">⚡ Sprint</button>
-                    <button class="filter-btn" data-filter="standard">Standard</button>
+                    <button class="filter-btn active" data-filter="all" data-i18n="races.filter_all_f">Toutes</button>
+                    <button class="filter-btn" data-filter="sprint" data-i18n="races.filter_sprint">⚡ Sprint</button>
+                    <button class="filter-btn" data-filter="standard" data-i18n="races.filter_standard">Standard</button>
                 </div>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Continent</label>
+                <label class="filter-label" data-i18n="races.filter_continent">Continent</label>
                 <div class="filter-options" id="filter-continent">
-                    <button class="filter-btn active" data-filter="all">🌍 Tous</button>
-                    <button class="filter-btn" data-filter="Europe">🇪🇺 Europe</button>
-                    <button class="filter-btn" data-filter="Amériques">🌎 Amériques</button>
-                    <button class="filter-btn" data-filter="Asie-Océanie">🌏 Asie-Océanie</button>
-                    <button class="filter-btn" data-filter="Moyen-Orient">🕌 Moyen-Orient</button>
+                    <button class="filter-btn active" data-filter="all" data-i18n="races.continent_all">🌍 Tous</button>
+                    <button class="filter-btn" data-filter="Europe" data-i18n="races.continent_europe">🇪🇺 Europe</button>
+                    <button class="filter-btn" data-filter="Amériques" data-i18n="races.continent_americas">🌎 Amériques</button>
+                    <button class="filter-btn" data-filter="Asie-Océanie" data-i18n="races.continent_asia">🌏 Asie-Océanie</button>
+                    <button class="filter-btn" data-filter="Moyen-Orient" data-i18n="races.continent_middle_east">🕌 Moyen-Orient</button>
                 </div>
             </div>
             <div class="filter-group">
-                <input type="text" id="filter-search" class="filter-search" placeholder="🔍 Rechercher pays, circuit...">
+                <input type="text" id="filter-search" class="filter-search" data-i18n-placeholder="races.search_placeholder" placeholder="🔍 Rechercher pays, circuit...">
             </div>
         </div>
         <div class="races-grid" id="races-grid"></div>
@@ -100,16 +101,16 @@
 
     <div id="view-standings" class="view">
         <div class="section-header">
-            <h2>Classements</h2>
-            <p>Championnat du Monde F1 2026</p>
+            <h2 data-i18n="standings.title">Classements</h2>
+            <p data-i18n="standings.subtitle">Championnat du Monde F1 2026</p>
         </div>
         <div class="standings-container">
             <div class="standings-block">
-                <h3>🧑‍🚀 Pilotes</h3>
+                <h3 data-i18n="standings.drivers">🧑‍🚀 Pilotes</h3>
                 <table id="drivers-standings" class="standings-table"></table>
             </div>
             <div class="standings-block">
-                <h3>🏭 Constructeurs</h3>
+                <h3 data-i18n="standings.constructors">🏭 Constructeurs</h3>
                 <table id="constructors-standings" class="standings-table"></table>
             </div>
         </div>
@@ -117,32 +118,32 @@
 
     <div id="view-timeline" class="view">
         <div class="section-header">
-            <h2>Calendrier Complet</h2>
-            <p>Vue chronologique de la saison 2026</p>
+            <h2 data-i18n="timeline.title">Calendrier Complet</h2>
+            <p data-i18n="timeline.subtitle">Vue chronologique de la saison 2026</p>
         </div>
         <div id="timeline-content"></div>
     </div>
 
     <div id="view-sprint" class="view">
         <div class="section-header">
-            <h2>⚡ Weekends Sprint</h2>
-            <p><span id="sprint-done-count">0</span> / <span id="sprint-total-count">0</span> Sprints disputés</p>
+            <h2 data-i18n="sprint.title">⚡ Weekends Sprint</h2>
+            <p><span id="sprint-done-count">0</span> / <span id="sprint-total-count">0</span> <span data-i18n="sprint.subtitle_count">Sprints disputés</span></p>
         </div>
         <div class="races-grid" id="sprint-grid"></div>
     </div>
 
     <div id="view-palmares" class="view">
         <div class="section-header">
-            <h2>🏅 Palmarès Saison 2026</h2>
-            <p>Victoires par équipe et pilotes</p>
+            <h2 data-i18n="palmares.title">🏅 Palmarès Saison 2026</h2>
+            <p data-i18n="palmares.subtitle">Victoires par équipe et pilotes</p>
         </div>
         <div id="palmares-content"></div>
     </div>
 
     <div id="view-predictions" class="view">
         <div class="section-header">
-            <h2>🔮 Mes Prédictions</h2>
-            <p>Pronostiquez le podium de chaque course et mesurez votre score</p>
+            <h2 data-i18n="predictions.title">🔮 Mes Prédictions</h2>
+            <p data-i18n="predictions.subtitle">Pronostiquez le podium de chaque course et mesurez votre score</p>
         </div>
         <div class="predictions-score-banner" id="predictions-score-banner"></div>
         <div id="predictions-content"></div>
@@ -150,20 +151,20 @@
 
     <div id="view-admin" class="view">
         <div class="section-header">
-            <h2>Administration</h2>
-            <p>Gestion des résultats de la saison</p>
+            <h2 data-i18n="admin.title">Administration</h2>
+            <p data-i18n="admin.subtitle">Gestion des résultats de la saison</p>
         </div>
-        
+
         <div style="display: grid; grid-template-columns: minmax(250px, 300px) 1fr; gap: 2rem; align-items: start;">
             <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; max-height: 700px; overflow-y: auto;">
-                <p style="color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Sélectionnez une course</p>
+                <p style="color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;" data-i18n="admin.select_race">Sélectionnez une course</p>
                 <div id="admin-race-list" style="display: flex; flex-direction: column; gap: 0.25rem;"></div>
             </div>
 
             <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem;">
                 <div id="admin-no-selection" style="text-align: center; color: var(--muted); padding: 4rem 0;">
                     <span style="font-size: 3rem;">🏁</span>
-                    <p style="margin-top: 1rem;">Cliquez sur une course à gauche pour l'éditer.</p>
+                    <p style="margin-top: 1rem;" data-i18n="admin.click_race">Cliquez sur une course à gauche pour l'éditer.</p>
                 </div>
 
                 <div id="admin-editor" style="display: none;">
@@ -174,61 +175,57 @@
                             <p id="edit-date" style="color: var(--muted); font-size: 0.85rem;"></p>
                         </div>
                         <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
-                            <!-- Statut Sprint (caché si pas de sprint) -->
                             <div id="edit-sprint-status-header" style="display: none; min-width: 160px;">
-                                <label style="display: block; font-size: 0.8rem; color: var(--sprint-light); margin-bottom: 0.5rem; font-weight: bold;">⚡ Statut Sprint</label>
+                                <label style="display: block; font-size: 0.8rem; color: var(--sprint-light); margin-bottom: 0.5rem; font-weight: bold;" data-i18n="admin.sprint_status">⚡ Statut Sprint</label>
                                 <select id="edit-sprint-status" style="background: var(--card2); color: var(--text); border: 1px solid rgba(124,58,237,0.5); padding: 0.6rem 1rem; border-radius: 8px; width: 100%; outline: none;">
-                                    <option value="upcoming">À venir</option>
-                                    <option value="next">Prochain</option>
-                                    <option value="completed">✓ Terminé</option>
-                                    <option value="cancelled">✕ Annulé</option>
+                                    <option value="upcoming" data-i18n="admin.upcoming">À venir</option>
+                                    <option value="next" data-i18n="admin.next_m">Prochain</option>
+                                    <option value="completed" data-i18n="admin.completed_m">✓ Terminé</option>
+                                    <option value="cancelled" data-i18n="admin.cancelled_m">✕ Annulé</option>
                                 </select>
                             </div>
-                            <!-- Statut Course Dimanche -->
                             <div style="min-width: 160px;">
-                                <label style="display: block; font-size: 0.8rem; color: var(--red); margin-bottom: 0.5rem; font-weight: bold;">🏁 Statut Course</label>
+                                <label style="display: block; font-size: 0.8rem; color: var(--red); margin-bottom: 0.5rem; font-weight: bold;" data-i18n="admin.race_status">🏁 Statut Course</label>
                                 <select id="edit-status" style="background: var(--card2); color: var(--text); border: 1px solid rgba(225,6,0,0.5); padding: 0.6rem 1rem; border-radius: 8px; width: 100%; outline: none;">
-                                    <option value="upcoming">À venir</option>
-                                    <option value="next">Prochaine</option>
-                                    <option value="completed">✓ Terminée</option>
-                                    <option value="cancelled">✕ Annulée</option>
+                                    <option value="upcoming" data-i18n="admin.upcoming">À venir</option>
+                                    <option value="next" data-i18n="admin.next_f">Prochaine</option>
+                                    <option value="completed" data-i18n="admin.completed_f">✓ Terminée</option>
+                                    <option value="cancelled" data-i18n="admin.cancelled_f">✕ Annulée</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
                     <div id="edit-sprint-section" style="display: none; margin-bottom: 2.5rem;">
-                        <h3 style="color: var(--sprint-light); margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">⚡ Résultats Sprint</h3>
+                        <h3 style="color: var(--sprint-light); margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;" data-i18n="admin.sprint_results">⚡ Résultats Sprint</h3>
                         <div id="edit-sprint-rows"></div>
-                        <button onclick="addAdminRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne au Sprint</button>
+                        <button onclick="addAdminRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;" data-i18n="admin.add_row_sprint">+ Ajouter une ligne au Sprint</button>
                     </div>
 
-                    <!-- Qualifications Sprint (uniquement si sprint weekend) -->
                     <div id="edit-sprint-quali-section" style="display: none; margin-bottom: 2.5rem;">
-                        <h3 style="color: var(--sprint-light); margin-bottom: 0.3rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; opacity:0.8;">⚡ Qualifications Sprint <span style="font-size:0.7rem; color:var(--muted); font-weight:400;">(anti-spoil)</span></h3>
-                        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1rem;">Les résultats seront cachés derrière un bouton anti-spoil dans la modal publique.</p>
+                        <h3 style="color: var(--sprint-light); margin-bottom: 0.3rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; opacity:0.8;"><span data-i18n="admin.sprint_quali">⚡ Qualifications Sprint</span> <span style="font-size:0.7rem; color:var(--muted); font-weight:400;" data-i18n="admin.anti_spoil">(anti-spoil)</span></h3>
+                        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1rem;" data-i18n="admin.anti_spoil_info">Les résultats seront cachés derrière un bouton anti-spoil dans la modal publique.</p>
                         <div id="edit-sprint-quali-rows"></div>
-                        <button onclick="addAdminQualiRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed rgba(124,58,237,0.4); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne (Quali Sprint)</button>
+                        <button onclick="addAdminQualiRow('sprint')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed rgba(124,58,237,0.4); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;" data-i18n="admin.add_row_sprint_quali">+ Ajouter une ligne (Quali Sprint)</button>
                     </div>
 
-                    <!-- Qualifications Course -->
                     <div style="margin-bottom: 2.5rem;">
-                        <h3 style="color: var(--muted); margin-bottom: 0.3rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">🔵 Qualifications Course <span style="font-size:0.7rem; color:var(--muted); font-weight:400;">(anti-spoil)</span></h3>
-                        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1rem;">Les résultats seront cachés derrière un bouton anti-spoil dans la modal publique.</p>
+                        <h3 style="color: var(--muted); margin-bottom: 0.3rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;"><span data-i18n="admin.race_quali">🔵 Qualifications Course</span> <span style="font-size:0.7rem; color:var(--muted); font-weight:400;" data-i18n="admin.anti_spoil">(anti-spoil)</span></h3>
+                        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:1rem;" data-i18n="admin.anti_spoil_info">Les résultats seront cachés derrière un bouton anti-spoil dans la modal publique.</p>
                         <div id="edit-race-quali-rows"></div>
-                        <button onclick="addAdminQualiRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed rgba(59,130,246,0.4); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne (Quali Course)</button>
+                        <button onclick="addAdminQualiRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed rgba(59,130,246,0.4); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;" data-i18n="admin.add_row_race_quali">+ Ajouter une ligne (Quali Course)</button>
                     </div>
 
                     <div>
-                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">🏆 Résultats de la Course</h3>
+                        <h3 style="margin-bottom: 1rem; font-size: 1rem;" data-i18n="admin.race_results">🏆 Résultats de la Course</h3>
                         <div id="edit-race-rows"></div>
-                        <button onclick="addAdminRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;">+ Ajouter une ligne à la Course</button>
+                        <button onclick="addAdminRow('race')" style="margin-top: 1rem; width: 100%; padding: 0.75rem; background: var(--card2); border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; transition: 0.2s;" data-i18n="admin.add_row_race">+ Ajouter une ligne à la Course</button>
                     </div>
 
                     <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <button onclick="saveAdminResults()" style="background: var(--red); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: bold; cursor: pointer;">💾 Sauvegarder</button>
-                        <button id="btn-auto-import" onclick="autoImportResults()" style="background: transparent; color: var(--sprint-light); border: 1px solid rgba(124,58,237,0.5); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🤖 Import auto (API)</button>
-                        <button onclick="clearAdminResults()" style="background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">🗑️ Tout effacer</button>
+                        <button onclick="saveAdminResults()" style="background: var(--red); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: bold; cursor: pointer;" data-i18n="admin.save">💾 Sauvegarder</button>
+                        <button id="btn-auto-import" onclick="autoImportResults()" style="background: transparent; color: var(--sprint-light); border: 1px solid rgba(124,58,237,0.5); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;" data-i18n="admin.auto_import">🤖 Import auto (API)</button>
+                        <button onclick="clearAdminResults()" style="background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;" data-i18n="admin.clear_all">🗑️ Tout effacer</button>
                     </div>
                 </div>
             </div>
@@ -244,11 +241,11 @@
 
 <div id="admin-login-overlay" class="modal-overlay">
     <div class="modal" style="max-width: 350px; padding: 2.5rem; text-align: center; border-top: 3px solid var(--red);">
-        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Administration</h2>
-        <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Accès réservé</p>
-        <input type="email" id="admin-email" placeholder="Email" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 0.75rem; outline: none;">
-        <input type="password" id="admin-pwd" placeholder="Mot de passe" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 1rem; outline: none;">
-        <button onclick="loginAdmin()" style="width: 100%; background: var(--red); color: white; border: none; padding: 0.85rem; border-radius: 8px; font-weight: bold; cursor: pointer;">Connexion</button>
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;" data-i18n="admin.login_title">Administration</h2>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem;" data-i18n="admin.access_reserved">Accès réservé</p>
+        <input type="email" id="admin-email" data-i18n-placeholder="admin.email" placeholder="Email" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 0.75rem; outline: none;">
+        <input type="password" id="admin-pwd" data-i18n-placeholder="admin.password" placeholder="Mot de passe" style="width: 100%; padding: 0.75rem 1rem; background: var(--card2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; margin-bottom: 1rem; outline: none;">
+        <button onclick="loginAdmin()" style="width: 100%; background: var(--red); color: white; border: none; padding: 0.85rem; border-radius: 8px; font-weight: bold; cursor: pointer;" data-i18n="admin.connect">Connexion</button>
         <p id="admin-error" style="color: var(--red); font-size: 0.85rem; margin-top: 1rem; display: none;"></p>
     </div>
 </div>
@@ -256,17 +253,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="i18n.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 
-<button id="btn-toggle-admin" onclick="showAdminLogin()" style="position:fixed;bottom:20px;right:20px;background:#111;border:1px solid #333;color:#555;padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;cursor:pointer;z-index:9999;">Admin</button>
+<button id="btn-toggle-admin" onclick="showAdminLogin()" style="position:fixed;bottom:20px;right:20px;background:#111;border:1px solid #333;color:#555;padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;cursor:pointer;z-index:9999;" data-i18n="admin.admin_btn">Admin</button>
 
 <footer class="site-footer">
     <div class="footer-content">
-        <div class="footer-brand">F1 2026 Race Hub</div>
-        <p class="footer-disclaimer">This site is an independent, fan-made project and is not affiliated with, endorsed by, or sponsored by Formula 1™, Formula One Group, Liberty Media, the FIA, or any related entities. All trademarks such as "F1" and "Formula 1" are used solely for descriptive and editorial purposes. Data presented (calendar, standings, results, predictions, etc.) is unofficial and may not reflect real-time updates or accuracy.</p>
-        <div class="footer-apis">Data provided by Jolpica (Ergast), OpenF1 &amp; TheSportsDB</div>
-        <div class="footer-legal-links"><a href="legal.html">Legal Notice</a> · <a href="mailto:fifaseize9@gmail.com?subject=F1%202026%20Race%20Hub%20-%20Legal%20Inquiry">Contact</a></div>
+        <div class="footer-brand" data-i18n="footer.brand">F1 2026 Race Hub</div>
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">This site is an independent, fan-made project and is not affiliated with, endorsed by, or sponsored by Formula 1™, Formula One Group, Liberty Media, the FIA, or any related entities. All trademarks such as "F1" and "Formula 1" are used solely for descriptive and editorial purposes. Data presented (calendar, standings, results, predictions, etc.) is unofficial and may not reflect real-time updates or accuracy.</p>
+        <div class="footer-apis" data-i18n="footer.apis">Data provided by Jolpica (Ergast), OpenF1 &amp; TheSportsDB</div>
+        <div class="footer-legal-links"><a href="legal.html" data-i18n="footer.legal_link">Legal Notice</a> · <a href="mailto:fifaseize9@gmail.com?subject=F1%202026%20Race%20Hub%20-%20Legal%20Inquiry" data-i18n="footer.contact_link">Contact</a></div>
     </div>
 </footer>
 
