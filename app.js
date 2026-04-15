@@ -286,6 +286,9 @@ db.ref('f1_results_2026').on('value', snapshot => {
     updateStats();
     updateCountdown();
     if (isAdmin) renderAdminRaceList();
+
+    // Auto-sync : importer les résultats manquants en arrière-plan
+    autoSyncResults();
 });
 
 // ============================================================
@@ -1989,6 +1992,110 @@ async function autoImportResults() {
 
     if (importedAny) {
         alert(`✅ Import réussi !\n\nN'oubliez pas de cliquer "💾 Sauvegarder" pour enregistrer.${errors.length ? '\n\n⚠️ Certaines données n\'ont pas pu être importées:\n' + errors.join('\n') : ''}`);
+    }
+}
+
+// ============================================================
+// 🔄 AUTO-SYNC — Import automatique au chargement
+// ============================================================
+// Vérifie chaque course passée : si les résultats manquent,
+// tente un import silencieux depuis l'API.
+let autoSyncDone = false;
+
+async function autoSyncResults() {
+    if (autoSyncDone) return;
+    autoSyncDone = true;
+
+    const now = new Date();
+    // Marge : on attend 4h après la course avant d'importer
+    // (les APIs mettent du temps à publier les résultats)
+    const DELAY_MS = 4 * 60 * 60 * 1000;
+
+    const toSync = races.filter(race => {
+        const raceDate = parseFrenchDate(race.dates?.race);
+        if (!raceDate) return false;
+        // Course passée depuis > 4h
+        if (now - raceDate < DELAY_MS) return false;
+        const rs = race.raceStatus || race.status || "upcoming";
+        // Course pas encore marquée "completed" OU résultats manquants
+        return rs !== "completed" || !race.result || !race.result.fullResults || race.result.fullResults.length === 0;
+    });
+
+    if (toSync.length === 0) return;
+
+    console.log(`🔄 Auto-sync: ${toSync.length} course(s) à vérifier...`);
+    let synced = 0;
+
+    for (const race of toSync) {
+        const round = race.round;
+        try {
+            // 1. Résultats Course
+            const raceData = await fetchRaceResults(round);
+            if (raceData.length > 0) {
+                race.result = {
+                    podium:      raceData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
+                    fullResults: raceData
+                };
+                race.raceStatus = "completed";
+                race.status     = "completed";
+                synced++;
+            } else {
+                // Pas encore de résultats disponibles sur l'API
+                continue;
+            }
+
+            // 2. Qualifications Course
+            try {
+                const qualiData = await fetchQualifying(round);
+                if (qualiData.length > 0) race.qualiResults = qualiData;
+            } catch (e) { /* silencieux */ }
+
+            // 3. Sprint (si applicable)
+            if (race.sprint) {
+                try {
+                    const sprintData = await fetchSprintResults(round);
+                    if (sprintData.length > 0) {
+                        race.sprintResult = {
+                            podium:      sprintData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
+                            fullResults: sprintData
+                        };
+                        race.sprintStatus = "completed";
+                    }
+                } catch (e) { /* silencieux */ }
+            }
+
+            // 4. Essais Libres (OpenF1)
+            try {
+                const countryName = race.country;
+                if (race.sprint) {
+                    const fp1 = await fetchPracticeResults("Practice 1", countryName);
+                    if (fp1.length > 0) race.fp1Results = fp1;
+                } else {
+                    for (const [key, sessionName] of [["fp1Results", "Practice 1"], ["fp2Results", "Practice 2"], ["fp3Results", "Practice 3"]]) {
+                        try {
+                            const fpData = await fetchPracticeResults(sessionName, countryName);
+                            if (fpData.length > 0) race[key] = fpData;
+                        } catch (e) { /* silencieux */ }
+                    }
+                }
+            } catch (e) { /* silencieux */ }
+
+        } catch (e) {
+            console.warn(`Auto-sync R${round}: ${e.message}`);
+        }
+    }
+
+    if (synced > 0) {
+        console.log(`✅ Auto-sync: ${synced} course(s) importée(s)`);
+        saveToFirebase();
+        renderAllRaces();
+        renderStandings();
+        renderTimeline();
+        renderSprintView();
+        renderPalmares();
+        renderPredictions();
+        updateStats();
+        if (isAdmin) renderAdminRaceList();
     }
 }
 
