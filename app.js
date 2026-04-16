@@ -1051,13 +1051,23 @@ function openDriverProfile(driverName) {
     const statCard = (num, label) => `<div class="profile-stat"><span class="profile-stat-num">${num}</span><span class="profile-stat-lbl">${label}</span></div>`;
 
     // Comparaison ligne par ligne
+    // v1/v2 : valeurs numériques (ou null) ; display1/display2 : affichage HTML
     const compareRow = (label, v1, v2, higherIsBetter = true) => {
-        const win = higherIsBetter ? (v1 > v2 ? 1 : v1 < v2 ? 2 : 0) : (v1 < v2 ? 1 : v1 > v2 ? 2 : 0);
+        const has1 = v1 !== null && v1 !== undefined;
+        const has2 = v2 !== null && v2 !== undefined;
+        let win = 0;
+        if (has1 && has2) {
+            if (higherIsBetter) win = v1 > v2 ? 1 : v1 < v2 ? 2 : 0;
+            else                win = v1 < v2 ? 1 : v1 > v2 ? 2 : 0;
+        } else if (has1) win = 1;
+        else if (has2) win = 2;
+        const d1 = has1 ? v1 : "—";
+        const d2 = has2 ? v2 : "—";
         return `
             <div class="profile-compare-row">
-                <span class="profile-compare-val ${win === 1 ? 'win' : ''}">${v1}</span>
+                <span class="profile-compare-val ${win === 1 ? 'win' : ''}">${d1}</span>
                 <span class="profile-compare-label">${label}</span>
-                <span class="profile-compare-val ${win === 2 ? 'win' : ''}">${v2}</span>
+                <span class="profile-compare-val ${win === 2 ? 'win' : ''}">${d2}</span>
             </div>`;
     };
 
@@ -1106,7 +1116,7 @@ function openDriverProfile(driverName) {
                     ${compareRow(t("stats.radar_wins"),      stats.wins,        teammateStats.wins)}
                     ${compareRow(t("stats.radar_podiums"),   stats.podiums,     teammateStats.podiums)}
                     ${compareRow(t("stats.radar_poles"),     stats.poles,       teammateStats.poles)}
-                    ${compareRow(t("profile.best_finish"),   stats.bestFinish !== null ? stats.bestFinish : 99, teammateStats.bestFinish !== null ? teammateStats.bestFinish : 99, false)}
+                    ${compareRow(t("profile.best_finish"),   stats.bestFinish, teammateStats.bestFinish, false)}
                 </div>
             </div>
         ` : ""}
@@ -1129,12 +1139,13 @@ function openDriverProfile(driverName) {
             </div>
         </div>
 
+        ${(typeof driverApiIds !== "undefined" && driverApiIds[driverName]) ? `
         <div class="profile-section career-section-wrap">
             <button class="career-btn" onclick="this.style.display='none'; loadDriverCareer('${driverName.replace(/'/g, "\\'")}')">
                 📜 ${t("career.open_btn")}
             </button>
             <div id="career-section" class="career-section"></div>
-        </div>
+        </div>` : ""}
     `;
 
     document.getElementById("profile-modal").classList.add("open");
@@ -1272,6 +1283,8 @@ function openTeamProfile(teamName) {
 
 function closeProfileModal() {
     document.getElementById("profile-modal")?.classList.remove("open");
+    // Abort toute requête carrière en cours
+    if (careerAbortController) { careerAbortController.abort(); careerAbortController = null; }
 }
 
 // ============================================================
@@ -1279,13 +1292,27 @@ function closeProfileModal() {
 // ============================================================
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
 const careerCache = {};
+let careerAbortController = null;
 
-async function fetchDriverCareer(apiId) {
+// Formatte "YYYY-MM-DD" → date locale selon la langue courante
+function formatDateOfBirth(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    const locale = (typeof currentLang !== "undefined" && currentLang === "en") ? "en-US" : "fr-FR";
+    try {
+        return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+    } catch (e) {
+        return iso;
+    }
+}
+
+async function fetchDriverCareer(apiId, signal) {
     if (careerCache[apiId]) return careerCache[apiId];
 
     const [standingsRes, resultsRes] = await Promise.all([
-        fetch(`${JOLPICA_BASE}/drivers/${apiId}/driverStandings.json?limit=100`),
-        fetch(`${JOLPICA_BASE}/drivers/${apiId}/results.json?limit=2000`)
+        fetch(`${JOLPICA_BASE}/drivers/${apiId}/driverStandings.json?limit=100`, { signal }),
+        fetch(`${JOLPICA_BASE}/drivers/${apiId}/results.json?limit=2000`,         { signal })
     ]);
     const standingsJson = await standingsRes.json();
     const resultsJson   = await resultsRes.json();
@@ -1358,13 +1385,33 @@ async function loadDriverCareer(driverName) {
         return;
     }
 
+    // Annule une requête en cours (si l'utilisateur a cliqué sur un autre pilote entre temps)
+    if (careerAbortController) careerAbortController.abort();
+    careerAbortController = new AbortController();
+    const signal = careerAbortController.signal;
+
     section.innerHTML = `<div class="career-loader"><div class="spinner"></div><p>${t("career.loading")}</p></div>`;
 
     let data;
     try {
-        data = await fetchDriverCareer(apiId);
+        data = await fetchDriverCareer(apiId, signal);
     } catch (e) {
+        if (e.name === "AbortError") return; // ignore silently
         section.innerHTML = `<div class="no-data-box"><div style="font-size:2rem">⚠️</div><p>${t("career.error")}</p></div>`;
+        return;
+    }
+
+    // Si la modale a été fermée entre temps, ne rien afficher
+    if (!document.getElementById("career-section")) return;
+
+    // Cas rookie : aucune saison antérieure
+    if (data.seasons.length === 0 && data.starts === 0) {
+        section.innerHTML = `
+            <div class="no-data-box" style="gap:0.5rem">
+                <div style="font-size:2.5rem">🌱</div>
+                <p style="font-weight:700;margin:0">${t("career.rookie_title")}</p>
+                <p style="color:var(--muted);font-size:0.85rem;margin:0">${t("career.rookie_subtitle")}</p>
+            </div>`;
         return;
     }
 
@@ -1390,7 +1437,7 @@ async function loadDriverCareer(driverName) {
     section.innerHTML = `
         <div class="career-header">
             <h3 class="profile-section-title">📜 ${t("career.title")}${yearsLabel ? " · " + yearsLabel : ""}</h3>
-            ${data.driverInfo?.dateOfBirth ? `<div class="career-meta">${t("career.born")} ${data.driverInfo.dateOfBirth}${data.driverInfo.nationality ? " · " + data.driverInfo.nationality : ""}</div>` : ""}
+            ${data.driverInfo?.dateOfBirth ? `<div class="career-meta">${t("career.born")} ${formatDateOfBirth(data.driverInfo.dateOfBirth)}${data.driverInfo.nationality ? " · " + data.driverInfo.nationality : ""}</div>` : ""}
         </div>
 
         <div class="profile-stats-grid">
