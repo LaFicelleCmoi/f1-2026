@@ -79,25 +79,31 @@ const teamAliases = {
     "Andretti":          "Cadillac"
 };
 
-// Légendes F1 — pilotes historiques (driverId = identifiant API Jolpica/Ergast)
-const legends = [
-    { id: "michael_schumacher", name: "Michael Schumacher", flag: "🇩🇪", years: "1991 — 2012", era: "#a00" },
-    { id: "senna",              name: "Ayrton Senna",       flag: "🇧🇷", years: "1984 — 1994", era: "#ffd700" },
-    { id: "prost",              name: "Alain Prost",        flag: "🇫🇷", years: "1980 — 1993", era: "#003da5" },
-    { id: "lauda",              name: "Niki Lauda",         flag: "🇦🇹", years: "1971 — 1985", era: "#e10600" },
-    { id: "fangio",             name: "Juan Manuel Fangio", flag: "🇦🇷", years: "1950 — 1958", era: "#75aadb" },
-    { id: "clark",              name: "Jim Clark",          flag: "🇬🇧", years: "1960 — 1968", era: "#006400" },
-    { id: "stewart",            name: "Jackie Stewart",     flag: "🇬🇧", years: "1965 — 1973", era: "#005eb8" },
-    { id: "piquet",             name: "Nelson Piquet",      flag: "🇧🇷", years: "1978 — 1991", era: "#009c3b" },
-    { id: "mansell",            name: "Nigel Mansell",      flag: "🇬🇧", years: "1980 — 1995", era: "#c8102e" },
-    { id: "hakkinen",           name: "Mika Häkkinen",      flag: "🇫🇮", years: "1991 — 2001", era: "#003580" },
-    { id: "vettel",             name: "Sebastian Vettel",   flag: "🇩🇪", years: "2007 — 2022", era: "#0600ef" },
-    { id: "raikkonen",          name: "Kimi Räikkönen",     flag: "🇫🇮", years: "2001 — 2021", era: "#990000" },
-    { id: "button",             name: "Jenson Button",      flag: "🇬🇧", years: "2000 — 2017", era: "#ff8000" },
-    { id: "rosberg",            name: "Nico Rosberg",       flag: "🇩🇪", years: "2006 — 2016", era: "#27f4d2" },
-    { id: "webber",             name: "Mark Webber",        flag: "🇦🇺", years: "2002 — 2013", era: "#00843d" },
-    { id: "massa",              name: "Felipe Massa",       flag: "🇧🇷", years: "2002 — 2017", era: "#dc143c" }
-];
+// Mapping pilote actuel → identifiant API Jolpica/Ergast (pour stats carrière)
+const driverApiIds = {
+    "Lando Norris":            "norris",
+    "Oscar Piastri":           "piastri",
+    "George Russell":          "russell",
+    "Andrea Kimi Antonelli":   "antonelli",
+    "Max Verstappen":          "max_verstappen",
+    "Isack Hadjar":            "hadjar",
+    "Charles Leclerc":         "leclerc",
+    "Lewis Hamilton":          "hamilton",
+    "Carlos Sainz":            "sainz",
+    "Alex Albon":              "albon",
+    "Liam Lawson":             "lawson",
+    "Arvid Lindblad":          "lindblad",
+    "Fernando Alonso":         "alonso",
+    "Lance Stroll":            "stroll",
+    "Esteban Ocon":            "ocon",
+    "Oliver Bearman":          "bearman",
+    "Nico Hülkenberg":         "hulkenberg",
+    "Gabriel Bortoleto":       "bortoleto",
+    "Pierre Gasly":            "gasly",
+    "Franco Colapinto":        "colapinto",
+    "Sergio Pérez":            "perez",
+    "Valtteri Bottas":         "bottas"
+};
 
 const constructors = [
     { team: "McLaren", flag: "🇬🇧" },
