@@ -1085,6 +1085,9 @@ function openDriverProfile(driverName) {
             </tr>`;
     }).join("") : `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">${t("profile.no_history")}</td></tr>`;
 
+    const safeName = driverName.replace(/'/g, "\\'");
+    const hasApi   = (typeof driverApiIds !== "undefined" && driverApiIds[driverName]);
+
     content.innerHTML = `
         <button class="modal-close" onclick="closeProfileModal()">✕</button>
         <div class="profile-header" style="--team-color:${color}">
@@ -1098,6 +1101,14 @@ function openDriverProfile(driverName) {
                 </div>
             </div>
         </div>
+
+        ${hasApi ? `
+        <div class="profile-section career-section-wrap career-section-top">
+            <button id="career-btn" class="career-btn" onclick="loadDriverCareer('${safeName}')">
+                📜 ${t("career.open_btn")}
+            </button>
+            <div id="career-section" class="career-section"></div>
+        </div>` : ""}
 
         <div class="profile-stats-grid">
             ${statCard(stats.totalPoints, t("standings.points"))}
@@ -1138,14 +1149,6 @@ function openDriverProfile(driverName) {
                 </table>
             </div>
         </div>
-
-        ${(typeof driverApiIds !== "undefined" && driverApiIds[driverName]) ? `
-        <div class="profile-section career-section-wrap">
-            <button class="career-btn" onclick="this.style.display='none'; loadDriverCareer('${driverName.replace(/'/g, "\\'")}')">
-                📜 ${t("career.open_btn")}
-            </button>
-            <div id="career-section" class="career-section"></div>
-        </div>` : ""}
     `;
 
     document.getElementById("profile-modal").classList.add("open");
@@ -1310,60 +1313,81 @@ function formatDateOfBirth(iso) {
 async function fetchDriverCareer(apiId, signal) {
     if (careerCache[apiId]) return careerCache[apiId];
 
-    const [standingsRes, resultsRes] = await Promise.all([
-        fetch(`${JOLPICA_BASE}/drivers/${apiId}/driverStandings.json?limit=100`, { signal }),
-        fetch(`${JOLPICA_BASE}/drivers/${apiId}/results.json?limit=2000`,         { signal })
-    ]);
-    const standingsJson = await standingsRes.json();
-    const resultsJson   = await resultsRes.json();
+    // ── 1. Info pilote (nom, DOB, nationalité) ──
+    const infoRes = await fetch(`${JOLPICA_BASE}/drivers/${apiId}.json`, { signal });
+    const infoJson = await infoRes.json();
+    const driverInfo = infoJson?.MRData?.DriverTable?.Drivers?.[0] || null;
 
-    const standingsLists = standingsJson?.MRData?.StandingsTable?.StandingsLists || [];
-    const apiRaces       = resultsJson?.MRData?.RaceTable?.Races || [];
-    const driverInfo     = standingsLists[0]?.DriverStandings?.[0]?.Driver
-                        || apiRaces[0]?.Results?.[0]?.Driver
-                        || null;
+    // ── 2. Total poles (count only, single call) ──
+    let poles = 0;
+    try {
+        const polesRes  = await fetch(`${JOLPICA_BASE}/drivers/${apiId}/qualifying/1.json?limit=1`, { signal });
+        const polesJson = await polesRes.json();
+        poles = parseInt(polesJson?.MRData?.total) || 0;
+    } catch (e) { if (e.name === "AbortError") throw e; }
 
-    let championships = 0, totalPoints = 0, totalWins = 0;
-    const seasons = standingsLists.map(s => {
-        const ds = s.DriverStandings[0];
-        if (!ds) return null;
-        const pos  = parseInt(ds.position);
-        const pts  = parseFloat(ds.points);
-        const wins = parseInt(ds.wins);
-        if (pos === 1) championships++;
-        totalPoints += pts;
-        totalWins   += wins;
-        return {
-            season: s.season,
-            pos,
-            pts,
-            wins,
-            team: ds.Constructors?.[0]?.name || "-"
-        };
-    }).filter(Boolean);
+    // ── 3. Récupérer tous les résultats de carrière (paginé, 100/page, max 20 pages) ──
+    const PAGE = 100;
+    const MAX_PAGES = 20; // plafond : 2000 courses (largement suffisant)
+    let allRaces = [];
+    let total = 0;
+    for (let page = 0; page < MAX_PAGES; page++) {
+        const offset = page * PAGE;
+        const res  = await fetch(`${JOLPICA_BASE}/drivers/${apiId}/results.json?limit=${PAGE}&offset=${offset}`, { signal });
+        const json = await res.json();
+        const mr   = json?.MRData;
+        if (!mr) break;
+        const pageRaces = mr.RaceTable?.Races || [];
+        allRaces = allRaces.concat(pageRaces);
+        total = parseInt(mr.total) || 0;
+        if (allRaces.length >= total || pageRaces.length === 0) break;
+    }
 
-    let podiums = 0, poles = 0, starts = 0, bestFinish = null;
-    apiRaces.forEach(r => {
+    // ── 4. Agrégat global + par saison ──
+    let wins = 0, podiums = 0, starts = 0, bestFinish = null, totalPoints = 0;
+    const seasonsMap = {}; // season → { wins, podiums, pts, races, teams:Set }
+
+    allRaces.forEach(r => {
         const res = r.Results?.[0];
         if (!res) return;
         starts++;
         const pos  = parseInt(res.position);
-        const grid = parseInt(res.grid);
+        const pts  = parseFloat(res.points) || 0;
+        const team = r.Results?.[0]?.Constructor?.name || "-";
+        const season = r.season;
+
+        totalPoints += pts;
         if (!isNaN(pos)) {
-            if (pos <= 3) podiums++;
+            if (pos === 1) wins++;
+            if (pos <= 3)  podiums++;
             if (bestFinish === null || pos < bestFinish) bestFinish = pos;
         }
-        if (grid === 1) poles++;
+
+        if (!seasonsMap[season]) seasonsMap[season] = { season, wins: 0, podiums: 0, pts: 0, races: 0, teams: new Set() };
+        const S = seasonsMap[season];
+        S.races++;
+        S.pts += pts;
+        if (pos === 1) S.wins++;
+        if (pos <= 3)  S.podiums++;
+        if (team && team !== "-") S.teams.add(team);
     });
+
+    const seasons = Object.values(seasonsMap).map(s => ({
+        season: s.season,
+        wins: s.wins,
+        podiums: s.podiums,
+        pts: Math.round(s.pts * 10) / 10,
+        races: s.races,
+        team: Array.from(s.teams).join(" / ") || "-"
+    }));
 
     const firstSeason = seasons.length ? seasons.reduce((a, s) => Math.min(a, parseInt(s.season)), Infinity) : null;
     const lastSeason  = seasons.length ? seasons.reduce((a, s) => Math.max(a, parseInt(s.season)), 0) : null;
 
     const data = {
         driverInfo,
-        championships,
-        totalPoints,
-        totalWins,
+        totalPoints: Math.round(totalPoints * 10) / 10,
+        totalWins: wins,
         podiums,
         poles,
         starts,
@@ -1379,13 +1403,18 @@ async function fetchDriverCareer(apiId, signal) {
 async function loadDriverCareer(driverName) {
     const apiId = (typeof driverApiIds !== "undefined") ? driverApiIds[driverName] : null;
     const section = document.getElementById("career-section");
+    const btn     = document.getElementById("career-btn");
     if (!section) return;
     if (!apiId) {
         section.innerHTML = `<div class="no-data-box"><div style="font-size:2rem">⚠️</div><p>${t("career.not_available")}</p></div>`;
+        if (btn) btn.style.display = "none";
         return;
     }
 
-    // Annule une requête en cours (si l'utilisateur a cliqué sur un autre pilote entre temps)
+    // Masquer le bouton pendant le chargement
+    if (btn) btn.style.display = "none";
+
+    // Annule une requête en cours
     if (careerAbortController) careerAbortController.abort();
     careerAbortController = new AbortController();
     const signal = careerAbortController.signal;
@@ -1419,13 +1448,12 @@ async function loadDriverCareer(driverName) {
 
     const topSeasons = [...data.seasons].sort((a, b) => b.pts - a.pts).slice(0, 5);
     const seasonRows = [...data.seasons].sort((a, b) => parseInt(b.season) - parseInt(a.season)).map(s => {
-        const posMedal = s.pos === 1 ? '🥇' : s.pos === 2 ? '🥈' : s.pos === 3 ? '🥉' : `P${s.pos}`;
         return `
             <tr>
                 <td class="profile-hist-round">${s.season}</td>
                 <td style="color:var(--muted);font-size:0.82rem">${s.team}</td>
-                <td style="font-weight:800">${posMedal}</td>
-                <td style="text-align:right">${s.wins}</td>
+                <td style="text-align:center">${s.wins}</td>
+                <td style="text-align:center">${s.podiums}</td>
                 <td class="profile-hist-pts">${s.pts}</td>
             </tr>`;
     }).join("");
@@ -1441,11 +1469,11 @@ async function loadDriverCareer(driverName) {
         </div>
 
         <div class="profile-stats-grid">
-            ${statCard(data.championships, t("career.titles"))}
             ${statCard(data.totalWins, t("stats.radar_wins"))}
             ${statCard(data.podiums, t("stats.radar_podiums"))}
             ${statCard(data.poles, t("stats.radar_poles"))}
             ${statCard(data.starts, t("career.starts"))}
+            ${statCard(data.bestFinish !== null ? "P" + data.bestFinish : "—", t("profile.best_finish"))}
             ${statCard(Math.round(data.totalPoints), t("standings.points"))}
         </div>
 
@@ -1455,7 +1483,7 @@ async function loadDriverCareer(driverName) {
             ${topSeasons.map(s => `
                 <div class="profile-compare-row">
                     <span class="profile-compare-val" style="text-align:left;color:var(--text)">${s.season} · ${s.team}</span>
-                    <span class="profile-compare-label">P${s.pos} · ${s.wins} 🏆</span>
+                    <span class="profile-compare-label">${s.wins} 🏆 · ${s.podiums} 🥇</span>
                     <span class="profile-compare-val win" style="text-align:right">${s.pts} pts</span>
                 </div>
             `).join("")}
@@ -1468,8 +1496,8 @@ async function loadDriverCareer(driverName) {
                     <tr>
                         <th>${t("career.season")}</th>
                         <th>${t("standings.team")}</th>
-                        <th>${t("standings.pos")}</th>
-                        <th style="text-align:right">${t("stats.radar_wins")}</th>
+                        <th style="text-align:center">🏆</th>
+                        <th style="text-align:center">🥇</th>
                         <th style="text-align:right">${t("standings.points")}</th>
                     </tr>
                 </thead>

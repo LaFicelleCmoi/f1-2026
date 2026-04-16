@@ -3812,7 +3812,13 @@ tr.clickable:hover { background: var(--card2); }
    📜 CARRIÈRE COMPLÈTE (bouton + section fiche pilote)
    ============================================================ */
 .career-section-wrap {
-    padding-top: 0.8rem !important;
+    padding-top: 1rem;
+}
+.career-section-top {
+    /* Positionné en haut : pas de bordure supérieure redondante */
+    padding-top: 1rem;
+    padding-bottom: 0.6rem;
+    background: linear-gradient(180deg, rgba(225, 6, 0, 0.04), transparent);
 }
 .career-btn {
     display: block;
