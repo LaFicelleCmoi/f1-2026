@@ -34,6 +34,7 @@ const translations = {
         "nav.timeline": "📆 Calendrier",
         "nav.sprint": "⚡ Sprint",
         "nav.palmares": "🏅 Palmarès",
+        "nav.legends": "👑 Légendes",
         "nav.stats": "📊 Statistiques",
         "nav.predictions": "🔮 Prédictions",
         "nav.admin": "⚙️ Administration",
@@ -243,6 +244,20 @@ const translations = {
         "profile.race_short": "C",
         "profile.no_history": "Aucune donnée de course pour le moment.",
 
+        // Légendes
+        "legends.title": "👑 Légendes de la F1",
+        "legends.subtitle": "Pilotes mythiques — carrière complète via l'API",
+        "legends.full_stats": "Stats complètes",
+        "legends.loading": "Chargement de la carrière...",
+        "legends.error": "Impossible de charger les données. Réessayez plus tard.",
+        "legends.titles": "Titres",
+        "legends.starts": "Courses",
+        "legends.top_seasons": "Meilleures saisons",
+        "legends.all_seasons": "Toutes les saisons",
+        "legends.season": "Saison",
+        "legends.born": "né le",
+        "legends.source": "Données :",
+
         // Legal page
         "legal.page_title": "Mentions légales — F1 2026 Race Hub",
         "legal.title": "⚖️ Mentions légales & Avertissement",
@@ -375,6 +390,7 @@ const translations = {
         "nav.timeline": "📆 Calendar",
         "nav.sprint": "⚡ Sprint",
         "nav.palmares": "🏅 Honors",
+        "nav.legends": "👑 Legends",
         "nav.stats": "📊 Stats",
         "nav.predictions": "🔮 Predictions",
         "nav.admin": "⚙️ Admin",
@@ -583,6 +599,20 @@ const translations = {
         "profile.quali_short": "Q",
         "profile.race_short": "R",
         "profile.no_history": "No race data yet.",
+
+        // Legends
+        "legends.title": "👑 F1 Legends",
+        "legends.subtitle": "Iconic drivers — full career via the API",
+        "legends.full_stats": "Full stats",
+        "legends.loading": "Loading career data...",
+        "legends.error": "Unable to load data. Try again later.",
+        "legends.titles": "Titles",
+        "legends.starts": "Races",
+        "legends.top_seasons": "Best seasons",
+        "legends.all_seasons": "All seasons",
+        "legends.season": "Season",
+        "legends.born": "born",
+        "legends.source": "Data:",
 
         // Legal page
         "legal.page_title": "Legal Notice — F1 2026 Race Hub",

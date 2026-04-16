@@ -45,6 +45,7 @@
     <button class="nav-tab" data-view="timeline" data-i18n="nav.timeline">📆 Calendrier</button>
     <button class="nav-tab" data-view="sprint" data-i18n="nav.sprint">⚡ Sprint</button>
     <button class="nav-tab" data-view="palmares" data-i18n="nav.palmares">🏅 Palmarès</button>
+    <button class="nav-tab" data-view="legends" data-i18n="nav.legends">👑 Légendes</button>
     <button class="nav-tab" data-view="stats" data-i18n="nav.stats">📊 Statistiques</button>
     <button class="nav-tab" data-view="predictions" data-i18n="nav.predictions">🔮 Prédictions</button>
     <button class="nav-tab" data-view="admin" id="admin-tab" style="display: none;" data-i18n="nav.admin">⚙️ Administration</button>
@@ -139,6 +140,14 @@
             <p data-i18n="palmares.subtitle">Victoires par équipe et pilotes</p>
         </div>
         <div id="palmares-content"></div>
+    </div>
+
+    <div id="view-legends" class="view">
+        <div class="section-header">
+            <h2 data-i18n="legends.title">👑 Légendes de la F1</h2>
+            <p data-i18n="legends.subtitle">Pilotes mythiques — carrière complète via l'API</p>
+        </div>
+        <div id="legends-grid" class="legends-grid"></div>
     </div>
 
     <div id="view-stats" class="view">

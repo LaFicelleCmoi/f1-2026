@@ -1267,6 +1267,220 @@ function closeProfileModal() {
     document.getElementById("profile-modal")?.classList.remove("open");
 }
 
+// ============================================================
+// 👑 LÉGENDES F1 — carrière complète via Jolpica/Ergast
+// ============================================================
+const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
+const legendsCache = {};
+
+function renderLegends() {
+    const grid = document.getElementById("legends-grid");
+    if (!grid || typeof legends === "undefined") return;
+
+    grid.innerHTML = legends.map(l => {
+        const initials = l.name.split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase();
+        return `
+            <div class="legend-card" style="--era-color:${l.era}">
+                <div class="legend-avatar" style="background:linear-gradient(135deg, ${l.era}, ${l.era}88)">
+                    <span class="legend-avatar-initials">${initials}</span>
+                    <span class="legend-avatar-flag">${l.flag}</span>
+                </div>
+                <div class="legend-info">
+                    <div class="legend-name">${l.name}</div>
+                    <div class="legend-years">${l.years}</div>
+                </div>
+                <button class="legend-btn" onclick="openLegendProfile('${l.id}')">
+                    📊 ${t("legends.full_stats")}
+                </button>
+            </div>`;
+    }).join("");
+}
+
+async function fetchLegendCareer(driverId) {
+    if (legendsCache[driverId]) return legendsCache[driverId];
+
+    // 1) Info pilote + standings par saison (avec points + wins par an)
+    const [standingsRes, resultsRes] = await Promise.all([
+        fetch(`${JOLPICA_BASE}/drivers/${driverId}/driverStandings.json?limit=100`),
+        fetch(`${JOLPICA_BASE}/drivers/${driverId}/results.json?limit=2000`)
+    ]);
+    const standingsJson = await standingsRes.json();
+    const resultsJson   = await resultsRes.json();
+
+    const standingsLists = standingsJson?.MRData?.StandingsTable?.StandingsLists || [];
+    const races          = resultsJson?.MRData?.RaceTable?.Races || [];
+    const driverInfo     = standingsLists[0]?.DriverStandings?.[0]?.Driver
+                        || races[0]?.Results?.[0]?.Driver
+                        || null;
+
+    // Agréger stats carrière
+    let championships = 0, totalPoints = 0, totalWins = 0;
+    const seasons = standingsLists.map(s => {
+        const ds = s.DriverStandings[0];
+        if (!ds) return null;
+        const pos  = parseInt(ds.position);
+        const pts  = parseFloat(ds.points);
+        const wins = parseInt(ds.wins);
+        if (pos === 1) championships++;
+        totalPoints += pts;
+        totalWins   += wins;
+        return {
+            season: s.season,
+            pos,
+            pts,
+            wins,
+            team: ds.Constructors?.[0]?.name || "-"
+        };
+    }).filter(Boolean);
+
+    // Podiums + poles depuis results
+    let podiums = 0, poles = 0, starts = 0, bestFinish = null;
+    races.forEach(r => {
+        const res = r.Results?.[0];
+        if (!res) return;
+        starts++;
+        const pos  = parseInt(res.position);
+        const grid = parseInt(res.grid);
+        if (!isNaN(pos)) {
+            if (pos <= 3) podiums++;
+            if (bestFinish === null || pos < bestFinish) bestFinish = pos;
+        }
+        if (grid === 1) poles++;
+    });
+
+    const data = {
+        driverInfo,
+        championships,
+        totalPoints,
+        totalWins,
+        podiums,
+        poles,
+        starts,
+        bestFinish,
+        seasons
+    };
+    legendsCache[driverId] = data;
+    return data;
+}
+
+async function openLegendProfile(driverId) {
+    const legend = legends.find(l => l.id === driverId);
+    if (!legend) return;
+
+    const content = document.getElementById("profile-content");
+    if (!content) return;
+
+    // Loader
+    const color = legend.era;
+    content.innerHTML = `
+        <button class="modal-close" onclick="closeProfileModal()">✕</button>
+        <div class="profile-header" style="--team-color:${color}">
+            <div class="profile-avatar" style="background:linear-gradient(135deg, ${color}, ${color}aa)">
+                <span class="profile-avatar-initials">${legend.name.split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase()}</span>
+                <span class="profile-avatar-flag">${legend.flag}</span>
+            </div>
+            <div class="profile-head-text">
+                <div class="profile-head-rank">👑 ${t("nav.legends")}</div>
+                <h2 class="profile-head-name">${legend.name}</h2>
+                <div class="profile-head-team"><span>${legend.years}</span></div>
+            </div>
+        </div>
+        <div class="profile-section">
+            <div class="legends-loader">
+                <div class="spinner"></div>
+                <p>${t("legends.loading")}</p>
+            </div>
+        </div>
+    `;
+    document.getElementById("profile-modal").classList.add("open");
+
+    let data;
+    try {
+        data = await fetchLegendCareer(driverId);
+    } catch (e) {
+        content.querySelector(".profile-section").innerHTML =
+            `<div class="no-data-box"><div style="font-size:2.5rem">⚠️</div><p>${t("legends.error")}</p></div>`;
+        return;
+    }
+
+    const statCard = (num, label) => `<div class="profile-stat"><span class="profile-stat-num">${num}</span><span class="profile-stat-lbl">${label}</span></div>`;
+
+    // Top 5 saisons par points
+    const topSeasons = [...data.seasons].sort((a, b) => b.pts - a.pts).slice(0, 5);
+
+    // Ligne tableau saison
+    const seasonRows = [...data.seasons].sort((a, b) => parseInt(b.season) - parseInt(a.season)).map(s => {
+        const posMedal = s.pos === 1 ? '🥇' : s.pos === 2 ? '🥈' : s.pos === 3 ? '🥉' : `P${s.pos}`;
+        return `
+            <tr>
+                <td class="profile-hist-round">${s.season}</td>
+                <td style="color:var(--muted);font-size:0.82rem">${s.team}</td>
+                <td style="font-weight:800">${posMedal}</td>
+                <td style="text-align:right">${s.wins}</td>
+                <td class="profile-hist-pts">${s.pts}</td>
+            </tr>`;
+    }).join("");
+
+    content.innerHTML = `
+        <button class="modal-close" onclick="closeProfileModal()">✕</button>
+        <div class="profile-header" style="--team-color:${color}">
+            <div class="profile-avatar" style="background:linear-gradient(135deg, ${color}, ${color}aa)">
+                <span class="profile-avatar-initials">${legend.name.split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase()}</span>
+                <span class="profile-avatar-flag">${legend.flag}</span>
+            </div>
+            <div class="profile-head-text">
+                <div class="profile-head-rank">👑 ${t("nav.legends")}${data.driverInfo?.nationality ? " · " + data.driverInfo.nationality : ""}</div>
+                <h2 class="profile-head-name">${legend.name}</h2>
+                <div class="profile-head-team"><span>${legend.years}${data.driverInfo?.dateOfBirth ? " · " + t("legends.born") + " " + data.driverInfo.dateOfBirth : ""}</span></div>
+            </div>
+        </div>
+
+        <div class="profile-stats-grid">
+            ${statCard(data.championships, t("legends.titles"))}
+            ${statCard(data.totalWins, t("stats.radar_wins"))}
+            ${statCard(data.podiums, t("stats.radar_podiums"))}
+            ${statCard(data.poles, t("stats.radar_poles"))}
+            ${statCard(data.starts, t("legends.starts"))}
+            ${statCard(Math.round(data.totalPoints), t("standings.points"))}
+        </div>
+
+        <div class="profile-section">
+            <h3 class="profile-section-title">🏆 ${t("legends.top_seasons")}</h3>
+            <div class="profile-compare">
+                ${topSeasons.map(s => `
+                    <div class="profile-compare-row">
+                        <span class="profile-compare-val" style="text-align:left;color:var(--text)">${s.season} · ${s.team}</span>
+                        <span class="profile-compare-label">P${s.pos} · ${s.wins} 🏆</span>
+                        <span class="profile-compare-val win" style="text-align:right">${s.pts} pts</span>
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h3 class="profile-section-title">📜 ${t("legends.all_seasons")} (${data.seasons.length})</h3>
+            <div class="profile-history-wrap">
+                <table class="profile-history-table">
+                    <thead>
+                        <tr>
+                            <th>${t("legends.season")}</th>
+                            <th>${t("standings.team")}</th>
+                            <th>${t("standings.pos")}</th>
+                            <th style="text-align:right">${t("stats.radar_wins")}</th>
+                            <th style="text-align:right">${t("standings.points")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${seasonRows}</tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="profile-section legends-credit">
+            <p>${t("legends.source")} <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica F1 API</a></p>
+        </div>
+    `;
+}
+
 function renderStats() {
     if (typeof Chart === "undefined") return;
     const { labels, driverSeries, constructorSeries, completedCount } = computeCumulativePoints();
@@ -2015,6 +2229,7 @@ function switchView(view) {
     // Re-déclencher animation classements à chaque visite de l'onglet
     if (view === "standings") setTimeout(animateStandings, 80);
     if (view === "stats") setTimeout(renderStats, 80);
+    if (view === "legends") setTimeout(renderLegends, 20);
 }
 
 // --------------------------------------------------------
