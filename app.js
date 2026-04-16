@@ -541,12 +541,14 @@ function renderStandings() {
                 const pct = maxDriverPts > 0 ? (d.points / maxDriverPts * 100) : 0;
                 const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
                 const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                const safeName = d.driver.replace(/'/g, "\\'");
+                const safeTeam = d.team.replace(/'/g, "\\'");
                 return `
-                <tr class="standing-row ${posClass}" style="--row-delay:${i * 45}ms">
+                <tr class="standing-row clickable ${posClass}" style="--row-delay:${i * 45}ms" onclick="openDriverProfile('${safeName}')">
                     <td class="standing-pos">${medalIcon || (i + 1)}</td>
                     <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color};box-shadow:0 0 8px ${color}55"></span></td>
                     <td class="standing-driver">${d.flag} ${d.driver}</td>
-                    <td class="standing-team" style="color:${color}">${d.team}</td>
+                    <td class="standing-team" style="color:${color}" onclick="event.stopPropagation(); openTeamProfile('${safeTeam}')">${d.team}</td>
                     <td class="standing-points-cell">
                         <div class="standing-points-bar-wrap">
                             <div class="standing-points-bar" data-pct="${pct}" style="width:0%;background:linear-gradient(90deg,${color}cc,${color});box-shadow:0 0 6px ${color}66"></div>
@@ -565,8 +567,9 @@ function renderStandings() {
                 const pct = maxConstrPts > 0 ? (c.points / maxConstrPts * 100) : 0;
                 const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
                 const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                const safeTeam = c.team.replace(/'/g, "\\'");
                 return `
-                <tr class="standing-row ${posClass}" style="--row-delay:${i * 45}ms">
+                <tr class="standing-row clickable ${posClass}" style="--row-delay:${i * 45}ms" onclick="openTeamProfile('${safeTeam}')">
                     <td class="standing-pos">${medalIcon || (i + 1)}</td>
                     <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color};box-shadow:0 0 8px ${color}55"></span></td>
                     <td class="standing-driver">${c.flag} ${c.team}</td>
@@ -793,7 +796,8 @@ function renderPalmares() {
                 <tbody>
                     ${sortedTeams.map((tm, i) => {
                         const color = teamColors[tm.team] || "#666";
-                        return `<tr>
+                        const safeTeam = tm.team.replace(/'/g, "\\'");
+                        return `<tr class="clickable" onclick="openTeamProfile('${safeTeam}')">
                             <td style="font-weight:800;color:var(--muted)">${i + 1}</td>
                             <td><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:8px;vertical-align:middle"></span>${tm.flag} ${tm.team}</td>
                             <td style="font-weight:800;color:var(--gold)">${tm.wins}</td>
@@ -816,10 +820,12 @@ function renderPalmares() {
                 <tbody>
                     ${sortedDrivers.map((d, i) => {
                         const color = teamColors[d.team] || "#666";
-                        return `<tr>
+                        const safeName = d.driver.replace(/'/g, "\\'");
+                        const safeTeam = d.team.replace(/'/g, "\\'");
+                        return `<tr class="clickable" onclick="openDriverProfile('${safeName}')">
                             <td style="font-weight:800;color:var(--muted)">${i + 1}</td>
                             <td style="font-weight:700">${d.flag} ${d.driver}</td>
-                            <td><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:6px;vertical-align:middle"></span><span style="color:var(--muted);font-size:0.82rem">${d.team}</span></td>
+                            <td onclick="event.stopPropagation(); openTeamProfile('${safeTeam}')"><span style="display:inline-block;width:4px;height:14px;border-radius:2px;background:${color};margin-right:6px;vertical-align:middle"></span><span style="color:var(--muted);font-size:0.82rem">${d.team}</span></td>
                             <td style="font-weight:800;color:var(--gold)">${d.wins}</td>
                             <td style="font-weight:700;color:var(--silver)">${d.podiums}</td>
                             <td style="color:var(--muted)">${d.poles}</td>
@@ -907,6 +913,358 @@ function computeDriverRadar(driverName) {
         }
     });
     return { wins, podiums, poles, top5, top10, sprintWins };
+}
+
+// ============================================================
+// 🏎️ FICHES PILOTE / ÉCURIE
+// ============================================================
+
+// SVG avatar : initiales blanches sur fond couleur équipe
+function makeDriverAvatar(driverName, team, flag) {
+    const color = teamColors[team] || "#666";
+    const initials = driverName.split(" ").filter(s => s[0] && s[0] === s[0].toUpperCase()).slice(0, 2).map(s => s[0]).join("") || driverName.slice(0, 2).toUpperCase();
+    return `
+        <div class="profile-avatar" style="background:linear-gradient(135deg, ${color}, ${color}aa)">
+            <span class="profile-avatar-initials">${initials}</span>
+            <span class="profile-avatar-flag">${flag || ""}</span>
+        </div>`;
+}
+
+// Stats saison complètes pour un pilote
+function computeDriverFullStats(driverName) {
+    let totalPoints = 0, wins = 0, podiums = 0, poles = 0, top5 = 0, top10 = 0,
+        sprintWins = 0, sprintPodiums = 0, sprintPoints = 0, dnf = 0, starts = 0, bestFinish = null;
+    const history = [];
+
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs !== "completed") return;
+
+        const entry  = race.result?.fullResults?.find(e => e.driver === driverName);
+        const qEntry = race.qualiResults?.find(e => e.driver === driverName);
+        const qPos   = qEntry ? qEntry.pos : null;
+        const sEntry = race.sprintResult?.fullResults?.find(e => e.driver === driverName);
+
+        if (entry) {
+            starts++;
+            totalPoints += entry.points || 0;
+            if (entry.pos === 1) wins++;
+            if (entry.pos <= 3) podiums++;
+            if (entry.pos <= 5) top5++;
+            if (entry.pos <= 10) top10++;
+            if (bestFinish === null || entry.pos < bestFinish) bestFinish = entry.pos;
+            // DNF : pos > nombre d'arrivants (estimation : > 20)
+            if (entry.pos > 20) dnf++;
+        }
+        if (race.qualiResults?.[0]?.driver === driverName) poles++;
+        if (sEntry) {
+            sprintPoints += sEntry.points || 0;
+            if (sEntry.pos === 1) sprintWins++;
+            if (sEntry.pos <= 3) sprintPodiums++;
+        }
+
+        if (entry || sEntry) {
+            history.push({
+                round: race.round,
+                flag: race.flag,
+                name: race.name,
+                country: race.country,
+                hasSprint: !!race.sprint,
+                qPos,
+                rPos: entry?.pos,
+                rPts: entry?.points,
+                sPos: sEntry?.pos,
+                sPts: sEntry?.points
+            });
+        }
+    });
+
+    const avgFinish = starts > 0 ? (history.filter(h => h.rPos).reduce((a, h) => a + h.rPos, 0) / starts) : 0;
+
+    return {
+        totalPoints, wins, podiums, poles, top5, top10,
+        sprintWins, sprintPodiums, sprintPoints,
+        dnf, starts, bestFinish, avgFinish,
+        history
+    };
+}
+
+// Classement pilote actuel
+function getDriverRank(driverName) {
+    const scores = drivers.map(d => {
+        let pts = 0;
+        races.forEach(race => {
+            const rs = race.raceStatus || race.status || "upcoming";
+            if (rs === "completed" && race.result?.fullResults) {
+                const e = race.result.fullResults.find(ee => ee.driver === d.driver);
+                if (e) pts += e.points || 0;
+            }
+            if (race.sprintResult?.fullResults) {
+                const se = race.sprintResult.fullResults.find(ee => ee.driver === d.driver);
+                if (se) pts += se.points || 0;
+            }
+        });
+        return { driver: d.driver, pts };
+    }).sort((a, b) => b.pts - a.pts);
+    return scores.findIndex(s => s.driver === driverName) + 1;
+}
+
+// Classement écurie actuel
+function getTeamRank(teamName) {
+    const scores = constructors.map(c => {
+        let pts = 0;
+        races.forEach(race => {
+            const rs = race.raceStatus || race.status || "upcoming";
+            if (rs === "completed" && race.result?.fullResults) {
+                race.result.fullResults.forEach(e => { if (e.team === c.team) pts += e.points || 0; });
+            }
+            if (race.sprintResult?.fullResults) {
+                race.sprintResult.fullResults.forEach(e => { if (e.team === c.team) pts += e.points || 0; });
+            }
+        });
+        return { team: c.team, pts };
+    }).sort((a, b) => b.pts - a.pts);
+    return scores.findIndex(s => s.team === teamName) + 1;
+}
+
+// Pilotes d'une écurie
+function getTeammates(teamName) {
+    return drivers.filter(d => d.team === teamName);
+}
+
+function openDriverProfile(driverName) {
+    const driverObj = drivers.find(d => d.driver === driverName);
+    if (!driverObj) return;
+    const stats = computeDriverFullStats(driverName);
+    const rank  = getDriverRank(driverName);
+    const color = teamColors[driverObj.team] || "#666";
+    const logo  = teamLogos[driverObj.team] || "";
+
+    // Coéquipier
+    const teammates = getTeammates(driverObj.team).filter(d => d.driver !== driverName);
+    const teammate = teammates[0];
+    const teammateStats = teammate ? computeDriverFullStats(teammate.driver) : null;
+
+    const content = document.getElementById("profile-content");
+    if (!content) return;
+
+    const statCard = (num, label) => `<div class="profile-stat"><span class="profile-stat-num">${num}</span><span class="profile-stat-lbl">${label}</span></div>`;
+
+    // Comparaison ligne par ligne
+    const compareRow = (label, v1, v2, higherIsBetter = true) => {
+        const win = higherIsBetter ? (v1 > v2 ? 1 : v1 < v2 ? 2 : 0) : (v1 < v2 ? 1 : v1 > v2 ? 2 : 0);
+        return `
+            <div class="profile-compare-row">
+                <span class="profile-compare-val ${win === 1 ? 'win' : ''}">${v1}</span>
+                <span class="profile-compare-label">${label}</span>
+                <span class="profile-compare-val ${win === 2 ? 'win' : ''}">${v2}</span>
+            </div>`;
+    };
+
+    // Historique course
+    const historyRows = stats.history.length ? stats.history.map(h => {
+        const rPos = h.rPos ? (h.rPos === 1 ? '🥇' : h.rPos === 2 ? '🥈' : h.rPos === 3 ? '🥉' : h.rPos) : "—";
+        const qPos = h.qPos ? `P${h.qPos}` : "—";
+        return `
+            <tr onclick="closeProfileModal(); openModal(${h.round - 1});" style="cursor:pointer">
+                <td class="profile-hist-round">R${h.round}</td>
+                <td>${h.flag} <span style="color:var(--muted)">${h.name}</span></td>
+                <td class="profile-hist-q">${qPos}</td>
+                <td class="profile-hist-r" style="font-weight:800">${rPos}</td>
+                <td class="profile-hist-pts">${(h.rPts || 0) + (h.sPts || 0)}</td>
+            </tr>`;
+    }).join("") : `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted)">${t("profile.no_history")}</td></tr>`;
+
+    content.innerHTML = `
+        <button class="modal-close" onclick="closeProfileModal()">✕</button>
+        <div class="profile-header" style="--team-color:${color}">
+            ${makeDriverAvatar(driverName, driverObj.team, driverObj.flag)}
+            <div class="profile-head-text">
+                <div class="profile-head-rank">#${rank || "-"} · ${t("standings.drivers")}</div>
+                <h2 class="profile-head-name">${driverName}</h2>
+                <div class="profile-head-team">
+                    ${logo ? `<img src="${logo}" alt="${driverObj.team}" onerror="this.style.display='none'">` : ""}
+                    <span>${driverObj.team}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-stats-grid">
+            ${statCard(stats.totalPoints, t("standings.points"))}
+            ${statCard(stats.wins, t("stats.radar_wins"))}
+            ${statCard(stats.podiums, t("stats.radar_podiums"))}
+            ${statCard(stats.poles, t("stats.radar_poles"))}
+            ${statCard(stats.bestFinish !== null ? "P" + stats.bestFinish : "—", t("profile.best_finish"))}
+            ${statCard(stats.starts, t("profile.starts"))}
+        </div>
+
+        ${teammate && teammateStats ? `
+            <div class="profile-section">
+                <h3 class="profile-section-title">⚔️ ${t("profile.vs_teammate")} — ${teammate.flag} ${teammate.driver}</h3>
+                <div class="profile-compare">
+                    ${compareRow(t("standings.points"),      stats.totalPoints, teammateStats.totalPoints)}
+                    ${compareRow(t("stats.radar_wins"),      stats.wins,        teammateStats.wins)}
+                    ${compareRow(t("stats.radar_podiums"),   stats.podiums,     teammateStats.podiums)}
+                    ${compareRow(t("stats.radar_poles"),     stats.poles,       teammateStats.poles)}
+                    ${compareRow(t("profile.best_finish"),   stats.bestFinish !== null ? stats.bestFinish : 99, teammateStats.bestFinish !== null ? teammateStats.bestFinish : 99, false)}
+                </div>
+            </div>
+        ` : ""}
+
+        <div class="profile-section">
+            <h3 class="profile-section-title">📜 ${t("profile.history")}</h3>
+            <div class="profile-history-wrap">
+                <table class="profile-history-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>${t("profile.gp")}</th>
+                            <th>${t("profile.quali_short")}</th>
+                            <th>${t("profile.race_short")}</th>
+                            <th>${t("standings.points")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${historyRows}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("profile-modal").classList.add("open");
+}
+
+function openTeamProfile(teamName) {
+    const teamObj = constructors.find(c => c.team === teamName);
+    if (!teamObj) return;
+    const color = teamColors[teamName] || "#666";
+    const logo  = teamLogos[teamName] || "";
+    const rank  = getTeamRank(teamName);
+    const teamDrivers = getTeammates(teamName);
+
+    // Agréger stats équipe
+    let totalPoints = 0, wins = 0, podiums = 0, poles = 0;
+    const history = [];
+
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs !== "completed") return;
+
+        let racePts = 0, racePos = null;
+        if (race.result?.fullResults) {
+            race.result.fullResults.forEach(e => {
+                if (e.team === teamName) {
+                    totalPoints += e.points || 0;
+                    racePts += e.points || 0;
+                    if (e.pos === 1) wins++;
+                    if (e.pos <= 3) podiums++;
+                    if (racePos === null || e.pos < racePos) racePos = e.pos;
+                }
+            });
+        }
+        let sprintPts = 0;
+        if (race.sprintResult?.fullResults) {
+            race.sprintResult.fullResults.forEach(e => {
+                if (e.team === teamName) {
+                    totalPoints += e.points || 0;
+                    sprintPts += e.points || 0;
+                }
+            });
+        }
+        if (race.qualiResults?.[0]?.team === teamName) poles++;
+
+        history.push({
+            round: race.round,
+            flag: race.flag,
+            name: race.name,
+            racePts,
+            sprintPts,
+            bestPos: racePos
+        });
+    });
+
+    const content = document.getElementById("profile-content");
+    if (!content) return;
+    const statCard = (num, label) => `<div class="profile-stat"><span class="profile-stat-num">${num}</span><span class="profile-stat-lbl">${label}</span></div>`;
+
+    // Carte pilote de l'écurie
+    const lineupCards = teamDrivers.map(d => {
+        const s = computeDriverFullStats(d.driver);
+        const drank = getDriverRank(d.driver);
+        return `
+            <div class="profile-driver-card" onclick="openDriverProfile('${d.driver.replace(/'/g, "\\'")}')">
+                ${makeDriverAvatar(d.driver, d.team, d.flag)}
+                <div class="profile-driver-info">
+                    <div class="profile-driver-name">${d.driver}</div>
+                    <div class="profile-driver-meta">#${drank || "-"} · ${s.totalPoints} ${t("standings.points").toLowerCase()}</div>
+                    <div class="profile-driver-stats">
+                        <span>🏆 ${s.wins}</span>
+                        <span>🥇 ${s.podiums}</span>
+                        <span>⏱️ ${s.poles}</span>
+                    </div>
+                </div>
+            </div>`;
+    }).join("");
+
+    // Historique course équipe
+    const historyRows = history.length ? history.map(h => {
+        const bestPos = h.bestPos ? (h.bestPos === 1 ? '🥇' : h.bestPos === 2 ? '🥈' : h.bestPos === 3 ? '🥉' : 'P' + h.bestPos) : "—";
+        return `
+            <tr onclick="closeProfileModal(); openModal(${h.round - 1});" style="cursor:pointer">
+                <td class="profile-hist-round">R${h.round}</td>
+                <td>${h.flag} <span style="color:var(--muted)">${h.name}</span></td>
+                <td class="profile-hist-r">${bestPos}</td>
+                <td class="profile-hist-pts">${h.racePts + h.sprintPts}</td>
+            </tr>`;
+    }).join("") : `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--muted)">${t("profile.no_history")}</td></tr>`;
+
+    content.innerHTML = `
+        <button class="modal-close" onclick="closeProfileModal()">✕</button>
+        <div class="profile-header profile-header-team" style="--team-color:${color}">
+            <div class="profile-team-logo-box" style="background:${color}22">
+                ${logo ? `<img src="${logo}" alt="${teamName}" class="profile-team-logo" onerror="this.style.display='none'">` : `<span style="font-size:3rem">${teamObj.flag}</span>`}
+            </div>
+            <div class="profile-head-text">
+                <div class="profile-head-rank">#${rank || "-"} · ${t("standings.constructors")}</div>
+                <h2 class="profile-head-name">${teamName}</h2>
+                <div class="profile-head-team"><span>${teamObj.flag}</span></div>
+            </div>
+        </div>
+
+        <div class="profile-stats-grid">
+            ${statCard(totalPoints, t("standings.points"))}
+            ${statCard(wins, t("stats.radar_wins"))}
+            ${statCard(podiums, t("stats.radar_podiums"))}
+            ${statCard(poles, t("stats.radar_poles"))}
+        </div>
+
+        <div class="profile-section">
+            <h3 class="profile-section-title">👥 ${t("profile.lineup")}</h3>
+            <div class="profile-lineup">${lineupCards}</div>
+        </div>
+
+        <div class="profile-section">
+            <h3 class="profile-section-title">📜 ${t("profile.history")}</h3>
+            <div class="profile-history-wrap">
+                <table class="profile-history-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>${t("profile.gp")}</th>
+                            <th>${t("profile.best_finish")}</th>
+                            <th>${t("standings.points")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${historyRows}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("profile-modal").classList.add("open");
+}
+
+function closeProfileModal() {
+    document.getElementById("profile-modal")?.classList.remove("open");
 }
 
 function renderStats() {
@@ -2736,6 +3094,11 @@ window.onload = function () {
 
     document.addEventListener("keydown", e => {
         if (e.key === "Escape") document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
+    });
+
+    // Backdrop click on profile modal
+    document.getElementById("profile-modal")?.addEventListener("click", function (e) {
+        if (e.target === this) closeProfileModal();
     });
 
     // Theme toggle
