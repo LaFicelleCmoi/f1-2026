@@ -3358,25 +3358,14 @@ main {
    ============================================================ */
 #stats-content {
     display: grid;
-    gap: 2rem;
+    gap: 1.5rem;
     grid-template-columns: 1fr;
 }
 .stats-card {
-    background: linear-gradient(180deg, var(--card), var(--card2));
+    background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.5rem 1.8rem 1.8rem;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    position: relative;
-    overflow: hidden;
-}
-.stats-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--red), transparent);
-    opacity: 0.7;
+    border-radius: 14px;
+    padding: 1.3rem 1.5rem 1.5rem;
 }
 .stats-card-header {
     display: flex;
@@ -3439,111 +3428,83 @@ main {
 .stats-chart-wrap {
     position: relative;
     width: 100%;
-    height: 600px;
-    background: radial-gradient(ellipse at center, rgba(225, 6, 0, 0.05), transparent 70%);
-    border-radius: 10px;
-    padding: 0.5rem;
+    height: 480px;
 }
 .stats-chart-radar {
-    height: 540px;
-    max-width: 680px;
+    height: 480px;
+    max-width: 600px;
     margin: 0 auto;
-    background: radial-gradient(ellipse at center, var(--team-color, #e10600)10, transparent 70%);
 }
 
-/* Radar hero card */
+/* Radar hero — épuré */
 .radar-hero {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
-    padding: 1.2rem 1.5rem;
-    margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, var(--team-color, #e10600)22, transparent 70%);
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    background: var(--card2);
     border: 1px solid var(--border);
-    border-left: 5px solid var(--team-color, #e10600);
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22), 0 0 24px var(--team-color, #e10600)20;
+    border-left: 4px solid var(--team-color, #e10600);
+    border-radius: 10px;
     flex-wrap: wrap;
 }
 .radar-hero-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.9rem;
     min-width: 0;
 }
 .radar-hero-flag {
-    font-size: 3rem;
+    font-size: 2.2rem;
     line-height: 1;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
-.radar-hero-names { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.radar-hero-names { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 .radar-hero-driver {
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: 0.3px;
-    line-height: 1.1;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.2;
 }
 .radar-hero-team {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--team-color, var(--muted));
-    font-weight: 700;
-    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.85rem;
 }
-.radar-hero-team img { height: 22px; width: auto; }
 .radar-hero-stats {
-    display: grid;
-    grid-auto-flow: column;
-    gap: 1.3rem;
+    display: flex;
+    gap: 1.5rem;
     align-items: center;
 }
 .radar-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.2rem;
-    min-width: 56px;
+    gap: 0.1rem;
 }
 .radar-stat-num {
-    font-size: 1.3rem;
-    font-weight: 900;
+    font-size: 1.1rem;
+    font-weight: 800;
     color: var(--text);
-    letter-spacing: 0.3px;
     white-space: nowrap;
 }
 .radar-stat-lbl {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: var(--muted);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 @media (max-width: 900px) {
-    .stats-chart-wrap { height: 480px; }
-    .radar-hero { padding: 1rem; gap: 1rem; }
-    .radar-hero-flag { font-size: 2.4rem; }
-    .radar-hero-driver { font-size: 1.2rem; }
-    .radar-hero-stats { gap: 0.9rem; }
-    .radar-stat-num { font-size: 1.1rem; }
+    .stats-chart-wrap { height: 400px; }
 }
 @media (max-width: 640px) {
-    .stats-card { padding: 1rem 1rem 1.2rem; }
-    .stats-card-header h3 { font-size: 1.05rem; }
-    .stats-chart-wrap { height: 400px; padding: 0.2rem; }
-    .stats-chart-radar { height: 400px; }
-    .radar-hero {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .radar-hero-stats {
-        width: 100%;
-        grid-auto-flow: row;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 0.4rem;
-    }
-    .radar-stat-num { font-size: 0.95rem; }
-    .radar-stat-lbl { font-size: 0.6rem; }
+    .stats-card { padding: 1rem; }
+    .stats-card-header h3 { font-size: 1rem; }
+    .stats-chart-wrap { height: 340px; }
+    .stats-chart-radar { height: 360px; }
+    .radar-hero-flag { font-size: 1.8rem; }
+    .radar-hero-driver { font-size: 1rem; }
+    .radar-hero-stats { gap: 1rem; }
 }
