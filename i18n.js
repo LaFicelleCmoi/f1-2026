@@ -232,6 +232,17 @@ const translations = {
         "stats.radar_top10": "Top 10",
         "stats.radar_sprint_wins": "Victoires Sprint",
 
+        // Profile (pilote / écurie)
+        "profile.best_finish": "Meilleur rang",
+        "profile.starts": "Départs",
+        "profile.vs_teammate": "Face au coéquipier",
+        "profile.history": "Historique course par course",
+        "profile.lineup": "Line-up",
+        "profile.gp": "Grand Prix",
+        "profile.quali_short": "Q",
+        "profile.race_short": "C",
+        "profile.no_history": "Aucune donnée de course pour le moment.",
+
         // Legal page
         "legal.page_title": "Mentions légales — F1 2026 Race Hub",
         "legal.title": "⚖️ Mentions légales & Avertissement",
@@ -561,6 +572,17 @@ const translations = {
         "stats.radar_top5": "Top 5",
         "stats.radar_top10": "Top 10",
         "stats.radar_sprint_wins": "Sprint Wins",
+
+        // Profile (driver / team)
+        "profile.best_finish": "Best finish",
+        "profile.starts": "Starts",
+        "profile.vs_teammate": "Teammate battle",
+        "profile.history": "Race by race history",
+        "profile.lineup": "Line-up",
+        "profile.gp": "Grand Prix",
+        "profile.quali_short": "Q",
+        "profile.race_short": "R",
+        "profile.no_history": "No race data yet.",
 
         // Legal page
         "legal.page_title": "Legal Notice — F1 2026 Race Hub",
