@@ -34,6 +34,7 @@ const translations = {
         "nav.timeline": "📆 Calendrier",
         "nav.sprint": "⚡ Sprint",
         "nav.palmares": "🏅 Palmarès",
+        "nav.stats": "📊 Statistiques",
         "nav.predictions": "🔮 Prédictions",
         "nav.admin": "⚙️ Administration",
 
@@ -215,6 +216,22 @@ const translations = {
         "msg.saved": "✅ Sauvegardé !",
         "msg.error": "Une erreur est survenue.",
 
+        // Stats
+        "stats.title": "📊 Statistiques & Graphiques",
+        "stats.subtitle": "Évolution de la saison et performance des pilotes",
+        "stats.empty": "Les graphiques apparaîtront après la première course.",
+        "stats.drivers_evolution": "📈 Évolution — Pilotes",
+        "stats.constructors_evolution": "📈 Évolution — Constructeurs",
+        "stats.driver_radar": "🎯 Radar pilote",
+        "stats.top10": "Top 10",
+        "stats.all": "Tous",
+        "stats.radar_wins": "Victoires",
+        "stats.radar_podiums": "Podiums",
+        "stats.radar_poles": "Poles",
+        "stats.radar_top5": "Top 5",
+        "stats.radar_top10": "Top 10",
+        "stats.radar_sprint_wins": "Victoires Sprint",
+
         // Legal page
         "legal.page_title": "Mentions légales — F1 2026 Race Hub",
         "legal.title": "⚖️ Mentions légales & Avertissement",
@@ -347,6 +364,7 @@ const translations = {
         "nav.timeline": "📆 Calendar",
         "nav.sprint": "⚡ Sprint",
         "nav.palmares": "🏅 Honors",
+        "nav.stats": "📊 Stats",
         "nav.predictions": "🔮 Predictions",
         "nav.admin": "⚙️ Admin",
 
@@ -528,6 +546,22 @@ const translations = {
         "msg.saved": "✅ Saved!",
         "msg.error": "An error occurred.",
 
+        // Stats
+        "stats.title": "📊 Stats & Charts",
+        "stats.subtitle": "Season evolution and driver performance",
+        "stats.empty": "Charts will appear after the first race.",
+        "stats.drivers_evolution": "📈 Evolution — Drivers",
+        "stats.constructors_evolution": "📈 Evolution — Constructors",
+        "stats.driver_radar": "🎯 Driver radar",
+        "stats.top10": "Top 10",
+        "stats.all": "All",
+        "stats.radar_wins": "Wins",
+        "stats.radar_podiums": "Podiums",
+        "stats.radar_poles": "Poles",
+        "stats.radar_top5": "Top 5",
+        "stats.radar_top10": "Top 10",
+        "stats.radar_sprint_wins": "Sprint Wins",
+
         // Legal page
         "legal.page_title": "Legal Notice — F1 2026 Race Hub",
         "legal.title": "⚖️ Legal Notice & Disclaimer",
@@ -688,6 +722,7 @@ function setLang(lang) {
     if (typeof renderTimeline === "function") renderTimeline();
     if (typeof renderSprintView === "function") renderSprintView();
     if (typeof renderPalmares === "function") renderPalmares();
+    if (typeof renderStats === "function" && document.getElementById("view-stats")?.classList.contains("active")) renderStats();
     if (typeof renderPredictions === "function") renderPredictions();
     if (typeof updateCountdown === "function") updateCountdown();
     if (typeof renderAdminRaceList === "function") renderAdminRaceList();

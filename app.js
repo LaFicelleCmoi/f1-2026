@@ -285,6 +285,8 @@ db.ref('f1_results_2026').on('value', snapshot => {
     renderPredictions();
     updateStats();
     updateCountdown();
+    // Stats graphiques : ne s'exécute que si la vue est active (Chart.js a besoin d'un canvas visible)
+    if (document.getElementById("view-stats")?.classList.contains("active")) renderStats();
     if (isAdmin) renderAdminRaceList();
 
     // Auto-sync : importer les résultats manquants en arrière-plan
@@ -837,6 +839,241 @@ function renderPalmares() {
     container.innerHTML = `<div class="palmares-podiums-row">${teamPodiumHTML}${driverPodiumHTML}</div><div class="palmares-tables-row">${teamTableHTML}${driverTableHTML}</div>`;
 }
 
+// ============================================================
+// 📊 STATISTIQUES — Chart.js
+// ============================================================
+let chartDrivers = null;
+let chartConstructors = null;
+let chartRadar = null;
+let statsDriverMode = "top10";
+
+function computeCumulativePoints() {
+    const completed = races.filter(r => {
+        const rs = r.raceStatus || r.status || "upcoming";
+        return rs === "completed" && r.result && r.result.fullResults;
+    }).sort((a, b) => a.round - b.round);
+
+    const driverSeries = {};
+    const constructorSeries = {};
+    drivers.forEach(d => { driverSeries[d.driver] = { team: d.team, values: [] }; });
+    constructors.forEach(c => { constructorSeries[c.team] = { values: [] }; });
+
+    const labels = [];
+    const driverRunning = {};
+    const constructorRunning = {};
+    drivers.forEach(d => driverRunning[d.driver] = 0);
+    constructors.forEach(c => constructorRunning[c.team] = 0);
+
+    completed.forEach(race => {
+        // Cumul course
+        race.result.fullResults.forEach(e => {
+            if (driverRunning[e.driver] !== undefined) driverRunning[e.driver] += e.points || 0;
+            if (constructorRunning[e.team] !== undefined) constructorRunning[e.team] += e.points || 0;
+        });
+        // Cumul sprint (si applicable)
+        const ss = race.sprintStatus || "upcoming";
+        if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
+            race.sprintResult.fullResults.forEach(e => {
+                if (driverRunning[e.driver] !== undefined) driverRunning[e.driver] += e.points || 0;
+                if (constructorRunning[e.team] !== undefined) constructorRunning[e.team] += e.points || 0;
+            });
+        }
+        labels.push(`R${race.round} ${race.flag}`);
+        Object.keys(driverSeries).forEach(d => driverSeries[d].values.push(driverRunning[d]));
+        Object.keys(constructorSeries).forEach(c => constructorSeries[c].values.push(constructorRunning[c]));
+    });
+
+    return { labels, driverSeries, constructorSeries, completedCount: completed.length };
+}
+
+function computeDriverRadar(driverName) {
+    let wins = 0, podiums = 0, poles = 0, top5 = 0, top10 = 0, sprintWins = 0;
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs !== "completed") return;
+        if (race.result && race.result.fullResults) {
+            const entry = race.result.fullResults.find(e => e.driver === driverName);
+            if (entry) {
+                if (entry.pos === 1) wins++;
+                if (entry.pos <= 3) podiums++;
+                if (entry.pos <= 5) top5++;
+                if (entry.pos <= 10) top10++;
+            }
+        }
+        if (race.qualiResults && race.qualiResults[0]?.driver === driverName) poles++;
+        if (race.sprintResult && race.sprintResult.fullResults) {
+            const se = race.sprintResult.fullResults.find(e => e.driver === driverName);
+            if (se && se.pos === 1) sprintWins++;
+        }
+    });
+    return { wins, podiums, poles, top5, top10, sprintWins };
+}
+
+function renderStats() {
+    if (typeof Chart === "undefined") return;
+    const { labels, driverSeries, constructorSeries, completedCount } = computeCumulativePoints();
+
+    const emptyEl = document.getElementById("stats-empty");
+    const contentEl = document.getElementById("stats-content");
+    if (!emptyEl || !contentEl) return;
+
+    if (completedCount === 0) {
+        emptyEl.style.display = "block";
+        contentEl.style.display = "none";
+        return;
+    }
+    emptyEl.style.display = "none";
+    contentEl.style.display = "";
+
+    const textColor   = getComputedStyle(document.documentElement).getPropertyValue("--text").trim()   || "#eee";
+    const mutedColor  = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()  || "#888";
+    const borderColor = getComputedStyle(document.documentElement).getPropertyValue("--border").trim() || "#333";
+
+    const commonOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: { color: textColor, boxWidth: 12, font: { size: 11 } }
+            },
+            tooltip: {
+                backgroundColor: "rgba(0,0,0,0.9)",
+                titleColor: "#fff",
+                bodyColor: "#eee",
+                borderColor: borderColor,
+                borderWidth: 1
+            }
+        },
+        scales: {
+            x: { ticks: { color: mutedColor }, grid: { color: borderColor } },
+            y: { ticks: { color: mutedColor }, grid: { color: borderColor }, beginAtZero: true }
+        }
+    };
+
+    // ── Chart 1 : évolution pilotes ──
+    // Trier par points finaux pour sélectionner le top N
+    const sortedDrivers = Object.entries(driverSeries)
+        .map(([name, s]) => ({ name, team: s.team, values: s.values, last: s.values[s.values.length - 1] || 0 }))
+        .sort((a, b) => b.last - a.last);
+
+    const driversToShow = statsDriverMode === "top10" ? sortedDrivers.slice(0, 10) : sortedDrivers.filter(d => d.last > 0);
+
+    const driverDatasets = driversToShow.map(d => ({
+        label: d.name,
+        data: d.values,
+        borderColor: teamColors[d.team] || "#888",
+        backgroundColor: (teamColors[d.team] || "#888") + "22",
+        borderWidth: 2,
+        tension: 0.25,
+        pointRadius: 2,
+        pointHoverRadius: 5
+    }));
+
+    if (chartDrivers) chartDrivers.destroy();
+    const ctx1 = document.getElementById("chart-drivers");
+    if (ctx1) {
+        chartDrivers = new Chart(ctx1, {
+            type: "line",
+            data: { labels, datasets: driverDatasets },
+            options: commonOpts
+        });
+    }
+
+    // ── Chart 2 : évolution constructeurs ──
+    const sortedConstructors = Object.entries(constructorSeries)
+        .map(([name, s]) => ({ name, values: s.values, last: s.values[s.values.length - 1] || 0 }))
+        .sort((a, b) => b.last - a.last);
+
+    const constructorDatasets = sortedConstructors.filter(c => c.last > 0).map(c => ({
+        label: c.name,
+        data: c.values,
+        borderColor: teamColors[c.name] || "#888",
+        backgroundColor: (teamColors[c.name] || "#888") + "33",
+        borderWidth: 2.5,
+        tension: 0.25,
+        pointRadius: 2,
+        pointHoverRadius: 5,
+        fill: false
+    }));
+
+    if (chartConstructors) chartConstructors.destroy();
+    const ctx2 = document.getElementById("chart-constructors");
+    if (ctx2) {
+        chartConstructors = new Chart(ctx2, {
+            type: "line",
+            data: { labels, datasets: constructorDatasets },
+            options: commonOpts
+        });
+    }
+
+    // ── Chart 3 : radar pilote ──
+    const select = document.getElementById("radar-driver-select");
+    if (select) {
+        // Peupler si vide
+        if (select.options.length === 0) {
+            sortedDrivers.forEach(d => {
+                const opt = document.createElement("option");
+                opt.value = d.name;
+                opt.textContent = `${d.name} — ${d.last} pts`;
+                select.appendChild(opt);
+            });
+            select.addEventListener("change", renderStats);
+        }
+        const selectedDriver = select.value || sortedDrivers[0]?.name;
+        if (selectedDriver) {
+            const r = computeDriverRadar(selectedDriver);
+            const driverObj = drivers.find(d => d.driver === selectedDriver);
+            const color = teamColors[driverObj?.team] || "#e10600";
+            const radarLabels = [
+                t("stats.radar_wins"),
+                t("stats.radar_podiums"),
+                t("stats.radar_poles"),
+                t("stats.radar_top5"),
+                t("stats.radar_top10"),
+                t("stats.radar_sprint_wins")
+            ];
+            if (chartRadar) chartRadar.destroy();
+            const ctx3 = document.getElementById("chart-radar");
+            if (ctx3) {
+                chartRadar = new Chart(ctx3, {
+                    type: "radar",
+                    data: {
+                        labels: radarLabels,
+                        datasets: [{
+                            label: selectedDriver,
+                            data: [r.wins, r.podiums, r.poles, r.top5, r.top10, r.sprintWins],
+                            borderColor: color,
+                            backgroundColor: color + "44",
+                            borderWidth: 2,
+                            pointBackgroundColor: color,
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: textColor } },
+                            tooltip: commonOpts.plugins.tooltip
+                        },
+                        scales: {
+                            r: {
+                                angleLines: { color: borderColor },
+                                grid: { color: borderColor },
+                                pointLabels: { color: textColor, font: { size: 11 } },
+                                ticks: { color: mutedColor, backdropColor: "transparent", stepSize: 1 },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+}
+
 function renderSprintView() {
     const sprintRaces  = races.filter(r => r.sprint);
     const doneSprints  = sprintRaces.filter(r => (r.sprintStatus || "upcoming") === "completed");
@@ -1316,6 +1553,7 @@ function switchView(view) {
     if (activeTab) activeTab.classList.add("active");
     // Re-déclencher animation classements à chaque visite de l'onglet
     if (view === "standings") setTimeout(animateStandings, 80);
+    if (view === "stats") setTimeout(renderStats, 80);
 }
 
 // --------------------------------------------------------
@@ -2430,6 +2668,16 @@ window.onload = function () {
     });
     const searchInput = document.getElementById("filter-search");
     if (searchInput) searchInput.addEventListener("input", e => { activeFilters.search = e.target.value; renderAllRaces(); });
+
+    // Stats — toggle top10 / all (pilotes)
+    document.querySelectorAll(".stats-toggle[data-driver-mode]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".stats-toggle[data-driver-mode]").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            statsDriverMode = btn.dataset.driverMode;
+            renderStats();
+        });
+    });
 
     // Preload TheSportsDB images
     preloadSportsDbImages();
