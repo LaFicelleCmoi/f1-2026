@@ -3358,15 +3358,25 @@ main {
    ============================================================ */
 #stats-content {
     display: grid;
-    gap: 1.5rem;
+    gap: 2rem;
     grid-template-columns: 1fr;
 }
 .stats-card {
-    background: var(--card);
+    background: linear-gradient(180deg, var(--card), var(--card2));
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.2rem 1.4rem 1.4rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+    padding: 1.5rem 1.8rem 1.8rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    position: relative;
+    overflow: hidden;
+}
+.stats-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), transparent);
+    opacity: 0.7;
 }
 .stats-card-header {
     display: flex;
@@ -3374,15 +3384,15 @@ main {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.8rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.7rem;
+    margin-bottom: 1.4rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
 }
 .stats-card-header h3 {
-    font-size: 1.05rem;
-    font-weight: 800;
+    font-size: 1.3rem;
+    font-weight: 900;
     margin: 0;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
 }
 .stats-card-controls {
     display: flex;
@@ -3429,16 +3439,22 @@ main {
 .stats-chart-wrap {
     position: relative;
     width: 100%;
-    height: 360px;
+    height: 560px;
+    background: radial-gradient(ellipse at center, rgba(225, 6, 0, 0.04), transparent 70%);
+    border-radius: 10px;
+    padding: 0.5rem;
 }
 .stats-chart-radar {
-    height: 420px;
-    max-width: 520px;
+    height: 480px;
+    max-width: 620px;
     margin: 0 auto;
 }
+@media (max-width: 900px) {
+    .stats-chart-wrap { height: 440px; }
+}
 @media (max-width: 640px) {
-    .stats-card { padding: 1rem; }
-    .stats-card-header h3 { font-size: 0.95rem; }
-    .stats-chart-wrap { height: 280px; }
-    .stats-chart-radar { height: 340px; }
+    .stats-card { padding: 1rem 1rem 1.2rem; }
+    .stats-card-header h3 { font-size: 1.05rem; }
+    .stats-chart-wrap { height: 380px; padding: 0.2rem; }
+    .stats-chart-radar { height: 360px; }
 }

@@ -929,47 +929,103 @@ function renderStats() {
     const mutedColor  = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()  || "#888";
     const borderColor = getComputedStyle(document.documentElement).getPropertyValue("--border").trim() || "#333";
 
+    // Plugin : dessine le nom du pilote/écurie au bout de chaque ligne
+    const endLabelPlugin = {
+        id: "endLabel",
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((ds, i) => {
+                const meta = chart.getDatasetMeta(i);
+                if (meta.hidden) return;
+                const last = meta.data[meta.data.length - 1];
+                if (!last) return;
+                ctx.save();
+                ctx.fillStyle = ds.borderColor;
+                ctx.font = "700 12px system-ui, sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.shadowColor = "rgba(0,0,0,0.8)";
+                ctx.shadowBlur = 4;
+                ctx.fillText("  " + ds.label, last.x, last.y);
+                ctx.restore();
+            });
+        }
+    };
+
     const commonOpts = {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false },
+        animation: { duration: 900, easing: "easeOutQuart" },
+        layout: { padding: { right: 110, top: 10, bottom: 6 } },
         plugins: {
             legend: {
                 position: "bottom",
-                labels: { color: textColor, boxWidth: 12, font: { size: 11 } }
+                labels: {
+                    color: textColor,
+                    boxWidth: 16,
+                    boxHeight: 3,
+                    padding: 12,
+                    font: { size: 13, weight: "600" },
+                    usePointStyle: true,
+                    pointStyle: "rectRounded"
+                }
             },
             tooltip: {
-                backgroundColor: "rgba(0,0,0,0.9)",
+                backgroundColor: "rgba(15,15,15,0.96)",
                 titleColor: "#fff",
+                titleFont: { size: 13, weight: "700" },
                 bodyColor: "#eee",
-                borderColor: borderColor,
-                borderWidth: 1
+                bodyFont: { size: 12 },
+                borderColor: "rgba(225,6,0,0.6)",
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 8,
+                displayColors: true,
+                boxPadding: 5
             }
         },
         scales: {
-            x: { ticks: { color: mutedColor }, grid: { color: borderColor } },
-            y: { ticks: { color: mutedColor }, grid: { color: borderColor }, beginAtZero: true }
+            x: {
+                ticks: { color: textColor, font: { size: 12, weight: "600" }, maxRotation: 0, autoSkipPadding: 10 },
+                grid:  { color: borderColor + "66", drawTicks: false },
+                border: { color: borderColor }
+            },
+            y: {
+                ticks: { color: textColor, font: { size: 12, weight: "600" }, padding: 6 },
+                grid:  { color: borderColor + "66" },
+                border: { color: borderColor },
+                beginAtZero: true,
+                title: { display: true, text: t("standings.points"), color: mutedColor, font: { size: 12, weight: "700" } }
+            }
         }
     };
 
     // ── Chart 1 : évolution pilotes ──
-    // Trier par points finaux pour sélectionner le top N
     const sortedDrivers = Object.entries(driverSeries)
         .map(([name, s]) => ({ name, team: s.team, values: s.values, last: s.values[s.values.length - 1] || 0 }))
         .sort((a, b) => b.last - a.last);
 
     const driversToShow = statsDriverMode === "top10" ? sortedDrivers.slice(0, 10) : sortedDrivers.filter(d => d.last > 0);
 
-    const driverDatasets = driversToShow.map(d => ({
-        label: d.name,
-        data: d.values,
-        borderColor: teamColors[d.team] || "#888",
-        backgroundColor: (teamColors[d.team] || "#888") + "22",
-        borderWidth: 2,
-        tension: 0.25,
-        pointRadius: 2,
-        pointHoverRadius: 5
-    }));
+    const driverDatasets = driversToShow.map(d => {
+        const color = teamColors[d.team] || "#888";
+        return {
+            label: d.name,
+            data: d.values,
+            borderColor: color,
+            backgroundColor: color + "22",
+            borderWidth: 3.5,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 8,
+            pointBackgroundColor: color,
+            pointBorderColor: "#fff",
+            pointBorderWidth: 1.5,
+            pointHoverBackgroundColor: "#fff",
+            pointHoverBorderColor: color,
+            pointHoverBorderWidth: 3
+        };
+    });
 
     if (chartDrivers) chartDrivers.destroy();
     const ctx1 = document.getElementById("chart-drivers");
@@ -977,7 +1033,8 @@ function renderStats() {
         chartDrivers = new Chart(ctx1, {
             type: "line",
             data: { labels, datasets: driverDatasets },
-            options: commonOpts
+            options: commonOpts,
+            plugins: [endLabelPlugin]
         });
     }
 
@@ -986,17 +1043,26 @@ function renderStats() {
         .map(([name, s]) => ({ name, values: s.values, last: s.values[s.values.length - 1] || 0 }))
         .sort((a, b) => b.last - a.last);
 
-    const constructorDatasets = sortedConstructors.filter(c => c.last > 0).map(c => ({
-        label: c.name,
-        data: c.values,
-        borderColor: teamColors[c.name] || "#888",
-        backgroundColor: (teamColors[c.name] || "#888") + "33",
-        borderWidth: 2.5,
-        tension: 0.25,
-        pointRadius: 2,
-        pointHoverRadius: 5,
-        fill: false
-    }));
+    const constructorDatasets = sortedConstructors.filter(c => c.last > 0).map(c => {
+        const color = teamColors[c.name] || "#888";
+        return {
+            label: c.name,
+            data: c.values,
+            borderColor: color,
+            backgroundColor: color + "2a",
+            borderWidth: 4.5,
+            tension: 0.3,
+            pointRadius: 5,
+            pointHoverRadius: 9,
+            pointBackgroundColor: color,
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: "#fff",
+            pointHoverBorderColor: color,
+            pointHoverBorderWidth: 3,
+            fill: false
+        };
+    });
 
     if (chartConstructors) chartConstructors.destroy();
     const ctx2 = document.getElementById("chart-constructors");
@@ -1004,7 +1070,8 @@ function renderStats() {
         chartConstructors = new Chart(ctx2, {
             type: "line",
             data: { labels, datasets: constructorDatasets },
-            options: commonOpts
+            options: commonOpts,
+            plugins: [endLabelPlugin]
         });
     }
 
