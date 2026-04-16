@@ -45,6 +45,7 @@
     <button class="nav-tab" data-view="timeline" data-i18n="nav.timeline">📆 Calendrier</button>
     <button class="nav-tab" data-view="sprint" data-i18n="nav.sprint">⚡ Sprint</button>
     <button class="nav-tab" data-view="palmares" data-i18n="nav.palmares">🏅 Palmarès</button>
+    <button class="nav-tab" data-view="stats" data-i18n="nav.stats">📊 Statistiques</button>
     <button class="nav-tab" data-view="predictions" data-i18n="nav.predictions">🔮 Prédictions</button>
     <button class="nav-tab" data-view="admin" id="admin-tab" style="display: none;" data-i18n="nav.admin">⚙️ Administration</button>
 </nav>
@@ -138,6 +139,46 @@
             <p data-i18n="palmares.subtitle">Victoires par équipe et pilotes</p>
         </div>
         <div id="palmares-content"></div>
+    </div>
+
+    <div id="view-stats" class="view">
+        <div class="section-header">
+            <h2 data-i18n="stats.title">📊 Statistiques & Graphiques</h2>
+            <p data-i18n="stats.subtitle">Évolution de la saison et performance des pilotes</p>
+        </div>
+        <div id="stats-empty" class="no-data-box" style="display:none">
+            <div style="font-size:3rem">📊</div>
+            <p data-i18n="stats.empty">Les graphiques apparaîtront après la première course.</p>
+        </div>
+        <div id="stats-content">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3 data-i18n="stats.drivers_evolution">📈 Évolution — Pilotes</h3>
+                    <div class="stats-card-controls">
+                        <button class="stats-toggle active" data-driver-mode="top10" data-i18n="stats.top10">Top 10</button>
+                        <button class="stats-toggle" data-driver-mode="all" data-i18n="stats.all">Tous</button>
+                    </div>
+                </div>
+                <div class="stats-chart-wrap"><canvas id="chart-drivers"></canvas></div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3 data-i18n="stats.constructors_evolution">📈 Évolution — Constructeurs</h3>
+                </div>
+                <div class="stats-chart-wrap"><canvas id="chart-constructors"></canvas></div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3 data-i18n="stats.driver_radar">🎯 Radar pilote</h3>
+                    <div class="stats-card-controls">
+                        <select id="radar-driver-select" class="stats-select"></select>
+                    </div>
+                </div>
+                <div class="stats-chart-wrap stats-chart-radar"><canvas id="chart-radar"></canvas></div>
+            </div>
+        </div>
     </div>
 
     <div id="view-predictions" class="view">
@@ -253,6 +294,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="anti-inspect.js"></script>
 <script src="i18n.js"></script>
 <script src="data.js"></script>
