@@ -929,7 +929,7 @@ function renderStats() {
     const mutedColor  = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()  || "#888";
     const borderColor = getComputedStyle(document.documentElement).getPropertyValue("--border").trim() || "#333";
 
-    // Plugin : dessine un badge "Nom — XX pts" au bout de chaque ligne
+    // Plugin simple : nom du pilote au bout de la ligne (texte net sans badge)
     const endLabelPlugin = {
         id: "endLabel",
         afterDatasetsDraw(chart) {
@@ -939,117 +939,55 @@ function renderStats() {
                 if (meta.hidden) return;
                 const last = meta.data[meta.data.length - 1];
                 if (!last) return;
-                const lastVal = ds.data[ds.data.length - 1] || 0;
-                const text = `${ds.label}  ${lastVal}`;
                 ctx.save();
-                ctx.font = "800 12px system-ui, sans-serif";
-                const pad = 6;
-                const w = ctx.measureText(text).width + pad * 2;
-                const h = 20;
-                const x = last.x + 8;
-                const y = last.y - h / 2;
-                // Badge background
-                ctx.fillStyle = ds.borderColor + "ee";
-                ctx.strokeStyle = "rgba(0,0,0,0.5)";
-                ctx.shadowColor = ds.borderColor + "99";
-                ctx.shadowBlur = 8;
-                if (ctx.roundRect) ctx.beginPath(), ctx.roundRect(x, y, w, h, 5), ctx.fill(), ctx.stroke();
-                else ctx.fillRect(x, y, w, h);
-                // Badge text
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = "#fff";
+                ctx.font = "700 12px system-ui, sans-serif";
+                ctx.fillStyle = ds.borderColor;
                 ctx.textBaseline = "middle";
                 ctx.textAlign = "left";
-                ctx.fillText(text, x + pad, y + h / 2 + 1);
+                ctx.fillText(ds.label, last.x + 8, last.y);
                 ctx.restore();
             });
         }
     };
 
-    // Plugin : met en évidence la ligne survolée (estompe les autres)
-    const hoverHighlightPlugin = {
-        id: "hoverHighlight",
-        beforeDatasetsDraw(chart) {
-            const active = chart.tooltip?.getActiveElements?.() || [];
-            if (active.length === 0) return;
-            const activeIdx = active[0].datasetIndex;
-            chart.data.datasets.forEach((ds, i) => {
-                if (i === activeIdx) return;
-                const meta = chart.getDatasetMeta(i);
-                if (meta && meta.controller) meta.controller._dim = true;
-            });
-        },
-        beforeDatasetDraw(chart, args) {
-            const active = chart.tooltip?.getActiveElements?.() || [];
-            if (active.length === 0) return;
-            const activeIdx = active[0].datasetIndex;
-            if (args.index !== activeIdx) {
-                chart.ctx.save();
-                chart.ctx.globalAlpha = 0.18;
-            }
-        },
-        afterDatasetDraw(chart, args) {
-            const active = chart.tooltip?.getActiveElements?.() || [];
-            if (active.length === 0) return;
-            const activeIdx = active[0].datasetIndex;
-            if (args.index !== activeIdx) chart.ctx.restore();
-        }
-    };
-
-    // Génère un gradient vertical pour le fill sous une ligne
-    function makeLineGradient(ctx, chartArea, color) {
-        if (!chartArea) return color + "22";
-        const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-        g.addColorStop(0, color + "55");
-        g.addColorStop(1, color + "00");
-        return g;
-    }
-
     const commonOpts = {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        animation: { duration: 900, easing: "easeOutQuart" },
-        layout: { padding: { right: 110, top: 10, bottom: 6 } },
+        interaction: { mode: "nearest", axis: "x", intersect: false },
+        animation: { duration: 600 },
+        layout: { padding: { right: 120, top: 6, bottom: 4 } },
         plugins: {
             legend: {
                 position: "bottom",
                 labels: {
                     color: textColor,
-                    boxWidth: 16,
-                    boxHeight: 3,
-                    padding: 12,
-                    font: { size: 13, weight: "600" },
+                    boxWidth: 14,
+                    boxHeight: 2,
+                    padding: 10,
+                    font: { size: 12 },
                     usePointStyle: true,
-                    pointStyle: "rectRounded"
+                    pointStyle: "line"
                 }
             },
             tooltip: {
-                backgroundColor: "rgba(15,15,15,0.96)",
+                backgroundColor: "rgba(15,15,15,0.95)",
                 titleColor: "#fff",
-                titleFont: { size: 13, weight: "700" },
                 bodyColor: "#eee",
-                bodyFont: { size: 12 },
-                borderColor: "rgba(225,6,0,0.6)",
-                borderWidth: 1,
-                padding: 10,
-                cornerRadius: 8,
-                displayColors: true,
-                boxPadding: 5
+                padding: 8,
+                cornerRadius: 6
             }
         },
         scales: {
             x: {
-                ticks: { color: textColor, font: { size: 12, weight: "600" }, maxRotation: 0, autoSkipPadding: 10 },
-                grid:  { color: borderColor + "66", drawTicks: false },
+                ticks: { color: mutedColor, font: { size: 11 }, maxRotation: 0, autoSkipPadding: 15 },
+                grid:  { display: false },
                 border: { color: borderColor }
             },
             y: {
-                ticks: { color: textColor, font: { size: 12, weight: "600" }, padding: 6 },
-                grid:  { color: borderColor + "66" },
-                border: { color: borderColor },
-                beginAtZero: true,
-                title: { display: true, text: t("standings.points"), color: mutedColor, font: { size: 12, weight: "700" } }
+                ticks: { color: mutedColor, font: { size: 11 }, padding: 4 },
+                grid:  { color: borderColor + "33" },
+                border: { display: false },
+                beginAtZero: true
             }
         }
     };
@@ -1063,24 +1001,19 @@ function renderStats() {
 
     const driverDatasets = driversToShow.map(d => {
         const color = teamColors[d.team] || "#888";
-        const driverObj = drivers.find(dd => dd.driver === d.name);
-        const flag = driverObj?.flag || "";
         return {
-            label: (flag ? flag + " " : "") + d.name,
+            label: d.name,
             data: d.values,
             borderColor: color,
-            backgroundColor: (ctx) => makeLineGradient(ctx.chart.ctx, ctx.chart.chartArea, color),
-            fill: "origin",
-            borderWidth: 3.5,
-            tension: 0.35,
-            pointRadius: 4,
-            pointHoverRadius: 9,
+            backgroundColor: color,
+            fill: false,
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 3,
+            pointHoverRadius: 7,
             pointBackgroundColor: color,
             pointBorderColor: "#fff",
-            pointBorderWidth: 1.5,
-            pointHoverBackgroundColor: "#fff",
-            pointHoverBorderColor: color,
-            pointHoverBorderWidth: 3,
+            pointBorderWidth: 1,
             borderCapStyle: "round",
             borderJoinStyle: "round"
         };
@@ -1093,7 +1026,7 @@ function renderStats() {
             type: "line",
             data: { labels, datasets: driverDatasets },
             options: commonOpts,
-            plugins: [endLabelPlugin, hoverHighlightPlugin]
+            plugins: [endLabelPlugin]
         });
     }
 
@@ -1108,18 +1041,15 @@ function renderStats() {
             label: c.name,
             data: c.values,
             borderColor: color,
-            backgroundColor: (ctx) => makeLineGradient(ctx.chart.ctx, ctx.chart.chartArea, color),
-            fill: "origin",
-            borderWidth: 4.5,
-            tension: 0.35,
-            pointRadius: 5,
-            pointHoverRadius: 10,
+            backgroundColor: color,
+            fill: false,
+            borderWidth: 3.5,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 8,
             pointBackgroundColor: color,
             pointBorderColor: "#fff",
-            pointBorderWidth: 2,
-            pointHoverBackgroundColor: "#fff",
-            pointHoverBorderColor: color,
-            pointHoverBorderWidth: 3,
+            pointBorderWidth: 1.5,
             borderCapStyle: "round",
             borderJoinStyle: "round"
         };
@@ -1132,7 +1062,7 @@ function renderStats() {
             type: "line",
             data: { labels, datasets: constructorDatasets },
             options: commonOpts,
-            plugins: [endLabelPlugin, hoverHighlightPlugin]
+            plugins: [endLabelPlugin]
         });
     }
 
@@ -1162,7 +1092,7 @@ function renderStats() {
             const totalPts = driverSeries[selectedDriver]?.values.slice(-1)[0] || 0;
             const rank = sortedDrivers.findIndex(d => d.name === selectedDriver) + 1;
 
-            // Hero card au-dessus du radar
+            // Hero card au-dessus du radar (version épurée)
             const hero = document.getElementById("radar-hero");
             if (hero) {
                 hero.style.setProperty("--team-color", color);
@@ -1171,62 +1101,24 @@ function renderStats() {
                         <div class="radar-hero-flag">${flag}</div>
                         <div class="radar-hero-names">
                             <div class="radar-hero-driver">${selectedDriver}</div>
-                            <div class="radar-hero-team">
-                                ${logo ? `<img src="${logo}" alt="${team}" onerror="this.style.display='none'">` : ""}
-                                <span>${team}</span>
-                            </div>
+                            <div class="radar-hero-team">${team}</div>
                         </div>
                     </div>
                     <div class="radar-hero-stats">
                         <div class="radar-stat"><span class="radar-stat-num">#${rank || "-"}</span><span class="radar-stat-lbl">${t("standings.pos")}</span></div>
                         <div class="radar-stat"><span class="radar-stat-num">${totalPts}</span><span class="radar-stat-lbl">${t("standings.points")}</span></div>
-                        <div class="radar-stat"><span class="radar-stat-num">🏆 ${r.wins}</span><span class="radar-stat-lbl">${t("stats.radar_wins")}</span></div>
-                        <div class="radar-stat"><span class="radar-stat-num">🥇 ${r.podiums}</span><span class="radar-stat-lbl">${t("stats.radar_podiums")}</span></div>
-                        <div class="radar-stat"><span class="radar-stat-num">⏱️ ${r.poles}</span><span class="radar-stat-lbl">${t("stats.radar_poles")}</span></div>
                     </div>`;
             }
 
             const radarLabels = [
-                `🏆 ${t("stats.radar_wins")}`,
-                `🥇 ${t("stats.radar_podiums")}`,
-                `⏱️ ${t("stats.radar_poles")}`,
-                `🔵 ${t("stats.radar_top5")}`,
-                `🟢 ${t("stats.radar_top10")}`,
-                `⚡ ${t("stats.radar_sprint_wins")}`
+                t("stats.radar_wins"),
+                t("stats.radar_podiums"),
+                t("stats.radar_poles"),
+                t("stats.radar_top5"),
+                t("stats.radar_top10"),
+                t("stats.radar_sprint_wins")
             ];
             const radarValues = [r.wins, r.podiums, r.poles, r.top5, r.top10, r.sprintWins];
-
-            // Plugin : afficher la valeur numérique sur chaque vertex
-            const radarValuePlugin = {
-                id: "radarValueLabels",
-                afterDatasetsDraw(chart) {
-                    const { ctx, scales: { r: scale } } = chart;
-                    const meta = chart.getDatasetMeta(0);
-                    if (!meta || !meta.data) return;
-                    meta.data.forEach((point, i) => {
-                        const val = chart.data.datasets[0].data[i];
-                        if (val === 0) return;
-                        ctx.save();
-                        ctx.font = "800 13px system-ui, sans-serif";
-                        const txt = String(val);
-                        const w = ctx.measureText(txt).width + 10;
-                        const h = 20;
-                        const x = point.x - w / 2;
-                        const y = point.y - h / 2;
-                        ctx.fillStyle = color;
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 10;
-                        if (ctx.roundRect) ctx.beginPath(), ctx.roundRect(x, y, w, h, 6), ctx.fill();
-                        else ctx.fillRect(x, y, w, h);
-                        ctx.shadowBlur = 0;
-                        ctx.fillStyle = "#fff";
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
-                        ctx.fillText(txt, point.x, point.y + 1);
-                        ctx.restore();
-                    });
-                }
-            };
 
             if (chartRadar) chartRadar.destroy();
             const ctx3 = document.getElementById("chart-radar");
@@ -1237,69 +1129,48 @@ function renderStats() {
                     data: {
                         labels: radarLabels,
                         datasets: [{
-                            label: `${flag} ${selectedDriver}`,
+                            label: selectedDriver,
                             data: radarValues,
                             borderColor: color,
-                            backgroundColor: (ctxObj) => {
-                                const chart = ctxObj.chart;
-                                const { chartArea } = chart;
-                                if (!chartArea) return color + "55";
-                                const cx = (chartArea.left + chartArea.right) / 2;
-                                const cy = (chartArea.top + chartArea.bottom) / 2;
-                                const R = Math.min(chartArea.right - cx, chartArea.bottom - cy);
-                                const g = chart.ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-                                g.addColorStop(0, color + "88");
-                                g.addColorStop(1, color + "22");
-                                return g;
-                            },
-                            borderWidth: 3,
+                            backgroundColor: color + "33",
+                            borderWidth: 2.5,
                             pointBackgroundColor: color,
                             pointBorderColor: "#fff",
-                            pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 8,
+                            pointBorderWidth: 1.5,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
                             fill: true
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: { duration: 900, easing: "easeOutQuart" },
-                        layout: { padding: 12 },
+                        animation: { duration: 700, easing: "easeOutQuart" },
+                        layout: { padding: 10 },
                         plugins: {
-                            legend: {
-                                labels: {
-                                    color: textColor,
-                                    font: { size: 14, weight: "700" },
-                                    boxWidth: 18,
-                                    boxHeight: 3,
-                                    padding: 14,
-                                    usePointStyle: true,
-                                    pointStyle: "rectRounded"
-                                }
-                            },
+                            legend: { display: false },
                             tooltip: commonOpts.plugins.tooltip
                         },
                         scales: {
                             r: {
                                 suggestedMax: radarMax + 1,
-                                angleLines: { color: borderColor + "aa", lineWidth: 1.5 },
-                                grid: { color: borderColor + "66", circular: true },
+                                angleLines: { color: borderColor, lineWidth: 1 },
+                                grid: { color: borderColor, circular: true },
                                 pointLabels: {
                                     color: textColor,
-                                    font: { size: 13, weight: "700" },
-                                    padding: 10
+                                    font: { size: 12, weight: "600" },
+                                    padding: 8
                                 },
                                 ticks: {
-                                    display: false,
-                                    stepSize: 1,
-                                    backdropColor: "transparent"
+                                    color: mutedColor,
+                                    backdropColor: "transparent",
+                                    font: { size: 10 },
+                                    stepSize: 1
                                 },
                                 beginAtZero: true
                             }
                         }
-                    },
-                    plugins: [radarValuePlugin]
+                    }
                 });
             }
         }
