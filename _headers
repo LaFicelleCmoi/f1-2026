@@ -1,0 +1,33 @@
+# Cloudflare Pages / Netlify-compatible headers
+
+# HTML — jamais cacher (pour que les updates apparaissent tout de suite)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+# JS/CSS — cache court (1h) pour laisser respirer les mises à jour
+/*.js
+  Cache-Control: public, max-age=3600
+/*.css
+  Cache-Control: public, max-age=3600
+
+# Icônes & images — cache long (1 semaine)
+/icons/*
+  Cache-Control: public, max-age=604800, immutable
+/logos/*
+  Cache-Control: public, max-age=604800, immutable
+
+# Service Worker — jamais cacher
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+# Manifest
+/manifest.json
+  Cache-Control: public, max-age=3600
