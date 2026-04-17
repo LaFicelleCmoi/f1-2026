@@ -1,0 +1,3 @@
+# Cloudflare Pages / Netlify redirects
+# Toutes les routes inconnues -> index.html (SPA fallback)
+/*    /index.html   200
