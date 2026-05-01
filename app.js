@@ -848,6 +848,7 @@ function renderPalmares() {
 // ============================================================
 // 📊 STATISTIQUES — Chart.js
 // ============================================================
+let radarCompareMode = false;
 let chartDrivers = null;
 let chartConstructors = null;
 let chartRadar = null;
@@ -1666,113 +1667,192 @@ function renderStats() {
         });
     }
 
-    // ── Chart 3 : radar pilote ──
-    const select = document.getElementById("radar-driver-select");
-    if (select) {
-        // Peupler si vide
-        if (select.options.length === 0) {
+    // ── Chart 3 : radar pilote (1 ou 2 pilotes en comparaison) ──
+    const select1 = document.getElementById("radar-driver-select");
+    const select2 = document.getElementById("radar-driver-select-2");
+    if (select1) {
+        // Helpers
+        const populate = (sel) => {
+            if (sel.options.length > 0) return;
             sortedDrivers.forEach(d => {
-                const driverObj = drivers.find(dd => dd.driver === d.name);
-                const flag = driverObj?.flag || "";
+                const dObj = drivers.find(dd => dd.driver === d.name);
+                const flag = dObj?.flag || "";
                 const opt = document.createElement("option");
                 opt.value = d.name;
                 opt.textContent = `${flag} ${d.name} — ${d.last} pts`;
-                select.appendChild(opt);
+                sel.appendChild(opt);
             });
-            select.addEventListener("change", renderStats);
-        }
-        const selectedDriver = select.value || sortedDrivers[0]?.name;
-        if (selectedDriver) {
-            const r = computeDriverRadar(selectedDriver);
-            const driverObj = drivers.find(d => d.driver === selectedDriver);
-            const color = teamColors[driverObj?.team] || "#e10600";
-            const flag = driverObj?.flag || "";
-            const team = driverObj?.team || "";
-            const logo = teamLogos[team] || "";
-            const totalPts = driverSeries[selectedDriver]?.values.slice(-1)[0] || 0;
-            const rank = sortedDrivers.findIndex(d => d.name === selectedDriver) + 1;
+            sel.addEventListener("change", renderStats);
+        };
+        populate(select1);
+        if (select2) populate(select2);
 
-            // Hero card au-dessus du radar (version épurée)
-            const hero = document.getElementById("radar-hero");
-            if (hero) {
-                hero.style.setProperty("--team-color", color);
+        // Pilote 1 (toujours actif)
+        const driver1Name = select1.value || sortedDrivers[0]?.name;
+        if (!driver1Name) return;
+
+        // Pilote 2 (uniquement si compare mode)
+        let driver2Name = null;
+        if (radarCompareMode) {
+            // Force une valeur différente par défaut
+            if (!select2.value || select2.value === driver1Name) {
+                const fallback = sortedDrivers.find(d => d.name !== driver1Name);
+                if (fallback) select2.value = fallback.name;
+            }
+            driver2Name = select2.value;
+        }
+
+        // UI : visibilité des contrôles
+        const vsEl = document.getElementById("radar-vs");
+        if (select2) select2.style.display = radarCompareMode ? "" : "none";
+        if (vsEl)    vsEl.style.display    = radarCompareMode ? "" : "none";
+
+        // Stats des pilotes
+        const buildDriverData = (name) => {
+            const r = computeDriverRadar(name);
+            const dObj = drivers.find(d => d.driver === name);
+            return {
+                name,
+                stats: r,
+                color: teamColors[dObj?.team] || "#e10600",
+                flag: dObj?.flag || "",
+                team: dObj?.team || "",
+                values: [r.wins, r.podiums, r.poles, r.top5, r.top10, r.sprintWins],
+                totalPts: driverSeries[name]?.values.slice(-1)[0] || 0,
+                rank: sortedDrivers.findIndex(d => d.name === name) + 1
+            };
+        };
+        const d1 = buildDriverData(driver1Name);
+        const d2 = driver2Name ? buildDriverData(driver2Name) : null;
+
+        // Hero card
+        const hero = document.getElementById("radar-hero");
+        if (hero) {
+            hero.style.setProperty("--team-color", d1.color);
+            if (d2) {
+                // Comparaison : 2 colonnes côte à côte
+                hero.classList.add("radar-hero--compare");
+                hero.style.setProperty("--team-color-2", d2.color);
+                const heroSide = (d) => `
+                    <div class="radar-hero-side" style="--side-color:${d.color}">
+                        <div class="radar-hero-flag">${d.flag}</div>
+                        <div class="radar-hero-driver">${d.name}</div>
+                        <div class="radar-hero-team">${d.team}</div>
+                        <div class="radar-hero-mini">
+                            <span><b>#${d.rank || "-"}</b> ${t("standings.pos")}</span>
+                            <span><b>${d.totalPts}</b> ${t("standings.points").toLowerCase()}</span>
+                        </div>
+                    </div>`;
+                hero.innerHTML = `
+                    ${heroSide(d1)}
+                    <div class="radar-hero-vs">⚔️</div>
+                    ${heroSide(d2)}`;
+            } else {
+                hero.classList.remove("radar-hero--compare");
                 hero.innerHTML = `
                     <div class="radar-hero-left">
-                        <div class="radar-hero-flag">${flag}</div>
+                        <div class="radar-hero-flag">${d1.flag}</div>
                         <div class="radar-hero-names">
-                            <div class="radar-hero-driver">${selectedDriver}</div>
-                            <div class="radar-hero-team">${team}</div>
+                            <div class="radar-hero-driver">${d1.name}</div>
+                            <div class="radar-hero-team">${d1.team}</div>
                         </div>
                     </div>
                     <div class="radar-hero-stats">
-                        <div class="radar-stat"><span class="radar-stat-num">#${rank || "-"}</span><span class="radar-stat-lbl">${t("standings.pos")}</span></div>
-                        <div class="radar-stat"><span class="radar-stat-num">${totalPts}</span><span class="radar-stat-lbl">${t("standings.points")}</span></div>
+                        <div class="radar-stat"><span class="radar-stat-num">#${d1.rank || "-"}</span><span class="radar-stat-lbl">${t("standings.pos")}</span></div>
+                        <div class="radar-stat"><span class="radar-stat-num">${d1.totalPts}</span><span class="radar-stat-lbl">${t("standings.points")}</span></div>
                     </div>`;
             }
+        }
 
-            const radarLabels = [
-                t("stats.radar_wins"),
-                t("stats.radar_podiums"),
-                t("stats.radar_poles"),
-                t("stats.radar_top5"),
-                t("stats.radar_top10"),
-                t("stats.radar_sprint_wins")
-            ];
-            const radarValues = [r.wins, r.podiums, r.poles, r.top5, r.top10, r.sprintWins];
+        const radarLabels = [
+            t("stats.radar_wins"),
+            t("stats.radar_podiums"),
+            t("stats.radar_poles"),
+            t("stats.radar_top5"),
+            t("stats.radar_top10"),
+            t("stats.radar_sprint_wins")
+        ];
 
-            if (chartRadar) chartRadar.destroy();
-            const ctx3 = document.getElementById("chart-radar");
-            if (ctx3) {
-                const radarMax = Math.max(...radarValues, 1);
-                chartRadar = new Chart(ctx3, {
-                    type: "radar",
-                    data: {
-                        labels: radarLabels,
-                        datasets: [{
-                            label: selectedDriver,
-                            data: radarValues,
-                            borderColor: color,
-                            backgroundColor: color + "33",
-                            borderWidth: 2.5,
-                            pointBackgroundColor: color,
-                            pointBorderColor: "#fff",
-                            pointBorderWidth: 1.5,
-                            pointRadius: 4,
-                            pointHoverRadius: 7,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: { duration: 700, easing: "easeOutQuart" },
-                        layout: { padding: 10 },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: commonOpts.plugins.tooltip
-                        },
-                        scales: {
-                            r: {
-                                suggestedMax: radarMax + 1,
-                                angleLines: { color: borderColor, lineWidth: 1 },
-                                grid: { color: borderColor, circular: true },
-                                pointLabels: {
-                                    color: textColor,
-                                    font: { size: 12, weight: "600" },
-                                    padding: 8
-                                },
-                                ticks: {
-                                    color: mutedColor,
-                                    backdropColor: "transparent",
-                                    font: { size: 10 },
-                                    stepSize: 1
-                                },
-                                beginAtZero: true
+        const datasets = [{
+            label: d1.name,
+            data: d1.values,
+            borderColor: d1.color,
+            backgroundColor: d1.color + (d2 ? "33" : "44"),
+            borderWidth: 2.5,
+            pointBackgroundColor: d1.color,
+            pointBorderColor: "#fff",
+            pointBorderWidth: 1.5,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            fill: true
+        }];
+        if (d2) {
+            datasets.push({
+                label: d2.name,
+                data: d2.values,
+                borderColor: d2.color,
+                backgroundColor: d2.color + "33",
+                borderWidth: 2.5,
+                borderDash: [6, 4], // pointillés pour bien distinguer
+                pointBackgroundColor: d2.color,
+                pointBorderColor: "#fff",
+                pointBorderWidth: 1.5,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true
+            });
+        }
+
+        if (chartRadar) chartRadar.destroy();
+        const ctx3 = document.getElementById("chart-radar");
+        if (ctx3) {
+            const allVals = d2 ? [...d1.values, ...d2.values] : d1.values;
+            const radarMax = Math.max(...allVals, 1);
+            chartRadar = new Chart(ctx3, {
+                type: "radar",
+                data: { labels: radarLabels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 700, easing: "easeOutQuart" },
+                    layout: { padding: 10 },
+                    plugins: {
+                        legend: {
+                            display: !!d2,
+                            position: "bottom",
+                            labels: {
+                                color: textColor,
+                                font: { size: 13, weight: "700" },
+                                boxWidth: 16,
+                                boxHeight: 3,
+                                padding: 12,
+                                usePointStyle: true,
+                                pointStyle: "rectRounded"
                             }
+                        },
+                        tooltip: commonOpts.plugins.tooltip
+                    },
+                    scales: {
+                        r: {
+                            suggestedMax: radarMax + 1,
+                            angleLines: { color: borderColor, lineWidth: 1 },
+                            grid: { color: borderColor, circular: true },
+                            pointLabels: {
+                                color: textColor,
+                                font: { size: 12, weight: "600" },
+                                padding: 8
+                            },
+                            ticks: {
+                                color: mutedColor,
+                                backdropColor: "transparent",
+                                font: { size: 10 },
+                                stepSize: 1
+                            },
+                            beginAtZero: true
                         }
                     }
-                });
-            }
+                }
+            });
         }
     }
 }
@@ -3386,6 +3466,18 @@ window.onload = function () {
             renderStats();
         });
     });
+
+    // Stats — toggle radar single / compare
+    const radarSingle  = document.getElementById("radar-mode-single");
+    const radarCompare = document.getElementById("radar-mode-compare");
+    const setRadarMode = (compare) => {
+        radarCompareMode = compare;
+        radarSingle?.classList.toggle("active", !compare);
+        radarCompare?.classList.toggle("active", compare);
+        renderStats();
+    };
+    radarSingle?.addEventListener("click",  () => setRadarMode(false));
+    radarCompare?.addEventListener("click", () => setRadarMode(true));
 
     // Preload TheSportsDB images
     preloadSportsDbImages();

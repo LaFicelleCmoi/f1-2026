@@ -231,6 +231,8 @@ const translations = {
         "stats.radar_top5": "Top 5",
         "stats.radar_top10": "Top 10",
         "stats.radar_sprint_wins": "Victoires Sprint",
+        "stats.radar_single": "1 pilote",
+        "stats.radar_compare": "⚔️ Comparer",
 
         // Profile (pilote / écurie)
         "profile.best_finish": "Meilleur rang",
@@ -588,6 +590,8 @@ const translations = {
         "stats.radar_top5": "Top 5",
         "stats.radar_top10": "Top 10",
         "stats.radar_sprint_wins": "Sprint Wins",
+        "stats.radar_single": "1 driver",
+        "stats.radar_compare": "⚔️ Compare",
 
         // Profile (driver / team)
         "profile.best_finish": "Best finish",
