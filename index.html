@@ -173,8 +173,14 @@
                 <div class="stats-card-header">
                     <h3 data-i18n="stats.driver_radar">🎯 Radar pilote</h3>
                     <div class="stats-card-controls">
-                        <select id="radar-driver-select" class="stats-select"></select>
+                        <button class="stats-toggle active" id="radar-mode-single" data-i18n="stats.radar_single">1 pilote</button>
+                        <button class="stats-toggle" id="radar-mode-compare" data-i18n="stats.radar_compare">⚔️ Comparer</button>
                     </div>
+                </div>
+                <div class="radar-selectors">
+                    <select id="radar-driver-select" class="stats-select"></select>
+                    <span class="radar-vs" id="radar-vs">VS</span>
+                    <select id="radar-driver-select-2" class="stats-select" style="display:none"></select>
                 </div>
                 <div class="radar-hero" id="radar-hero"></div>
                 <div class="stats-chart-wrap stats-chart-radar"><canvas id="chart-radar"></canvas></div>

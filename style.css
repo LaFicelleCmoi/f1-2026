@@ -3436,6 +3436,95 @@ main {
     margin: 0 auto;
 }
 
+/* Radar — sélecteurs (1 ou 2 pilotes) */
+.radar-selectors {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.radar-selectors .stats-select {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+.radar-vs {
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 0 0.3rem;
+}
+
+/* Hero compare — 2 colonnes */
+.radar-hero--compare {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    border-left: none;
+    overflow: hidden;
+    background: linear-gradient(90deg, var(--team-color)15 0%, transparent 50%, var(--team-color-2)15 100%);
+}
+.radar-hero-side {
+    padding: 1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border-left: 4px solid var(--side-color);
+}
+.radar-hero-side:last-child {
+    text-align: right;
+    align-items: flex-end;
+    border-left: none;
+    border-right: 4px solid var(--side-color);
+}
+.radar-hero-side .radar-hero-flag { font-size: 1.6rem; line-height: 1; }
+.radar-hero-side .radar-hero-driver {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--side-color);
+}
+.radar-hero-side .radar-hero-team {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+.radar-hero-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+}
+.radar-hero-mini b {
+    color: var(--text);
+    font-weight: 800;
+    margin-right: 0.2rem;
+}
+.radar-hero-vs {
+    align-self: center;
+    font-size: 1.6rem;
+    padding: 0 0.5rem;
+    opacity: 0.85;
+}
+
+@media (max-width: 640px) {
+    .radar-hero--compare {
+        grid-template-columns: 1fr;
+    }
+    .radar-hero-side:last-child {
+        text-align: left;
+        align-items: flex-start;
+        border-right: none;
+        border-left: 4px solid var(--side-color);
+    }
+    .radar-hero-vs { padding: 0.4rem 0; }
+}
+
 /* Radar hero — épuré */
 .radar-hero {
     display: flex;
