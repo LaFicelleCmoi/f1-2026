@@ -1,0 +1,120 @@
+name: 📱 Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # bouton "Run workflow" manuel
+
+permissions:
+  contents: write  # pour créer la Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # ──────────────────────────────────────────────────
+      # 1. Préparer le dossier www/ (uniquement les fichiers du site)
+      # ──────────────────────────────────────────────────
+      - name: Stage web app into www/
+        run: |
+          mkdir -p www
+          cp index.html legal.html www/
+          cp app.js data.js i18n.js anti-inspect.js style.css manifest.json sw.js www/
+          cp -r icons logos www/ 2>/dev/null || true
+          ls -la www/
+
+      # ──────────────────────────────────────────────────
+      # 2. Installer Capacitor + Android plugin
+      # ──────────────────────────────────────────────────
+      - name: Install Capacitor
+        run: |
+          npm init -y > /dev/null
+          npm install --save-dev @capacitor/core@^6 @capacitor/cli@^6 @capacitor/android@^6
+
+      # ──────────────────────────────────────────────────
+      # 3. Générer le projet Android
+      # ──────────────────────────────────────────────────
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      # ──────────────────────────────────────────────────
+      # 4. Construire l'APK debug (signé par la clé debug Android)
+      # ──────────────────────────────────────────────────
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -1)
+          echo "Found APK: $APK"
+          # Renommer pour clarté
+          NEW_NAME="f1-2026-race-hub.apk"
+          cp "$APK" "$NEW_NAME"
+          echo "path=$NEW_NAME" >> $GITHUB_OUTPUT
+
+      # ──────────────────────────────────────────────────
+      # 5. Upload comme artifact (téléchargeable depuis l'onglet Actions)
+      # ──────────────────────────────────────────────────
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-2026-race-hub-apk
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 30
+
+      # ──────────────────────────────────────────────────
+      # 6. Créer / mettre à jour une Release "latest" (téléchargement direct)
+      # ──────────────────────────────────────────────────
+      - name: Publish Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: 📱 APK Android (auto-build)
+          body: |
+            ## F1 2026 Race Hub — APK Android
+
+            Build automatique du commit `${{ github.sha }}`
+            Date : ${{ github.event.head_commit.timestamp }}
+
+            ### 📥 Installation
+
+            1. Télécharge `f1-2026-race-hub.apk` ci-dessous
+            2. Sur Android : **Paramètres → Sécurité → Sources inconnues** → autorise ton navigateur
+            3. Ouvre le fichier APK → Installer
+
+            ### ⚠️ Note
+
+            C'est un APK **debug** (signé avec la clé Android par défaut). Suffisant pour usage perso.
+            Pour publier sur Google Play il faudrait un APK **release** avec un keystore custom.
+          files: ${{ steps.apk.outputs.path }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

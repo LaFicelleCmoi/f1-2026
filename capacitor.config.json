@@ -1,0 +1,11 @@
+{
+  "appId": "com.laficellecmoi.f12026",
+  "appName": "F1 2026 Race Hub",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#050505"
+  }
+}
