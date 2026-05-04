@@ -13,6 +13,15 @@
         return;
     }
 
+    // Désactivé dans une PWA / TWA installée (Android APK, iOS standalone, desktop installé)
+    // — la WebView a une chrome différente qui déclenche faussement la détection devtools
+    const isStandalone =
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+        (window.matchMedia && window.matchMedia("(display-mode: minimal-ui)").matches) ||
+        window.navigator.standalone === true ||
+        document.referrer.startsWith("android-app://");
+    if (isStandalone) return;
+
     // ── 1. Bloquer le clic droit ─────────────────────────────
     document.addEventListener("contextmenu", function (e) {
         e.preventDefault();

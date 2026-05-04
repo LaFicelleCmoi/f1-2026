@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Générateur d'icônes — F1 2026</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#0a0a0a; color:#eee; padding:2rem; max-width:760px; margin:auto; }
+  h1 { color:#e10600; }
+  .row { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; margin:1rem 0; padding:1rem; background:#111; border-radius:8px; }
+  canvas { border:1px solid #333; border-radius:8px; }
+  button { background:#e10600; color:white; border:none; padding:0.7rem 1.2rem; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.95rem; }
+  button:hover { background:#b00; }
+  ol { line-height:1.7; }
+  code { background:#222; padding:0.1rem 0.4rem; border-radius:3px; }
+</style>
+</head>
+<body>
+<h1>🏎️ Générateur d'icônes PWA — F1 2026</h1>
+<p>Cet outil génère les 3 PNG nécessaires (192px, 512px any + 512px maskable) depuis le SVG existant.</p>
+<ol>
+  <li>Clique sur chaque bouton de téléchargement ci-dessous</li>
+  <li>Place les 3 fichiers dans <code>icons/</code> du projet</li>
+  <li>Commit + push → ton manifeste est complet</li>
+</ol>
+
+<div class="row">
+  <canvas id="c192" width="192" height="192"></canvas>
+  <div>
+    <h3>icon-192.png</h3>
+    <p>Icône standard 192×192</p>
+    <button onclick="dl('c192','icon-192.png')">⬇ Télécharger</button>
+  </div>
+</div>
+
+<div class="row">
+  <canvas id="c512" width="512" height="512"></canvas>
+  <div>
+    <h3>icon-512.png</h3>
+    <p>Icône standard 512×512</p>
+    <button onclick="dl('c512','icon-512.png')">⬇ Télécharger</button>
+  </div>
+</div>
+
+<div class="row">
+  <canvas id="cmask" width="512" height="512"></canvas>
+  <div>
+    <h3>icon-maskable.png</h3>
+    <p>Icône Android adaptive avec safe zone (le fond est étendu pour le crop)</p>
+    <button onclick="dl('cmask','icon-maskable.png')">⬇ Télécharger</button>
+  </div>
+</div>
+
+<script>
+// Charge le SVG existant et le rend dans chaque canvas
+async function init() {
+    const svg = await fetch('../icons/icon.svg').then(r => r.text()).catch(() => null);
+    if (!svg) { alert("Impossible de charger ../icons/icon.svg — ouvre cette page depuis tools/ via le projet."); return; }
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url  = URL.createObjectURL(blob);
+    const img  = new Image();
+    img.onload = () => {
+        // 192 et 512 standard
+        for (const id of ['c192','c512']) {
+            const c = document.getElementById(id);
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+        }
+        // Maskable 512 : le contenu doit être dans la safe zone (80% central)
+        const cm = document.getElementById('cmask');
+        const ctxm = cm.getContext('2d');
+        ctxm.fillStyle = '#0a0a0a';
+        ctxm.fillRect(0, 0, 512, 512);
+        // safe zone : icône à 70% du canvas
+        const size = 512 * 0.70;
+        const off  = (512 - size) / 2;
+        ctxm.drawImage(img, off, off, size, size);
+        URL.revokeObjectURL(url);
+    };
+    img.src = url;
+}
+function dl(canvasId, filename) {
+    const c = document.getElementById(canvasId);
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png');
+    a.download = filename;
+    a.click();
+}
+init();
+</script>
+</body>
+</html>
