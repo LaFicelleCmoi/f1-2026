@@ -1,0 +1,16 @@
+# Build artifacts (Capacitor APK build)
+node_modules/
+www/
+android/
+package-lock.json
+*.apk
+*.aab
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
