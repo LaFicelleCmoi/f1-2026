@@ -5,7 +5,7 @@
 //   - Static (JS/CSS/icons) : stale-while-revalidate
 //   - APIs externes (Firebase, Jolpica, OpenF1, TheSportsDB) : passthrough
 // ============================================================
-const VERSION = "f1-2026-v3";
+const VERSION = "f1-2026-v4";
 const STATIC_CACHE  = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const HTML_CACHE    = `${VERSION}-html`;
