@@ -203,7 +203,8 @@ const races = [
         round: 4, name: "Grand Prix de Bahreïn", country: "Bahreïn", flag: "🇧🇭",
         circuit: "Bahrain International Circuit", city: "Sakhir",
         dates: { full: "10 – 12 Avril 2026", race: "12 Avril 2026" },
-        sprint: false, status: "upcoming", isNew: false,
+        sprint: false, status: "cancelled", isNew: false,
+        cancelled: true,
         result: null,
         schedule: [
             { day: "Vendredi", name: "Essais Libres 1", time: "13:30", type: "fp" },
@@ -217,7 +218,8 @@ const races = [
         round: 5, name: "Grand Prix d'Arabie Saoudite", country: "Arabie Saoudite", flag: "🇸🇦",
         circuit: "Jeddah Corniche Circuit", city: "Jeddah",
         dates: { full: "17 – 19 Avril 2026", race: "19 Avril 2026" },
-        sprint: false, status: "upcoming", isNew: false,
+        sprint: false, status: "cancelled", isNew: false,
+        cancelled: true,
         result: null,
         schedule: [
             { day: "Vendredi", name: "Essais Libres 1", time: "15:30", type: "fp" },
