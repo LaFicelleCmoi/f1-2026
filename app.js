@@ -263,6 +263,23 @@ db.ref('f1_results_2026').on('value', snapshot => {
                 race.fp1Results        = found.fp1Results        || null;
                 race.fp2Results        = found.fp2Results        || null;
                 race.fp3Results        = found.fp3Results        || null;
+
+                // 🚫 Courses bannies (annulées) : on FORCE l'état annulé et on
+                // efface tous les résultats potentiellement bidons sauvegardés
+                // dans Firebase (Bahreïn et Arabie Saoudite ne sont pas au
+                // calendrier 2026 officiel)
+                if (race.cancelled) {
+                    race.raceStatus = "cancelled";
+                    race.status     = "cancelled";
+                    race.sprintStatus = race.sprint ? "cancelled" : null;
+                    race.result            = null;
+                    race.sprintResult      = null;
+                    race.qualiResults      = null;
+                    race.sprintQualiResults = null;
+                    race.fp1Results        = null;
+                    race.fp2Results        = null;
+                    race.fp3Results        = null;
+                }
                 // Horaires modifiés en admin : on ne prend que les "time" de Firebase,
                 // les jours et noms de sessions restent ceux de data.js (source de vérité)
                 if (found.schedule && race.schedule) {
@@ -3011,6 +3028,13 @@ async function autoImportResults() {
     if (adminCurrentRace === null) return;
     const race  = races[adminCurrentRace];
     const btn   = document.getElementById("btn-auto-import");
+
+    // 🚫 Refus si la course est marquée annulée
+    if (race.cancelled) {
+        alert(`🚫 "${race.name}" est annulée pour 2026 — import API désactivé.`);
+        return;
+    }
+
     if (btn) { btn.disabled = true; btn.textContent = "⏳ Import en cours..."; }
 
     // 🎯 IMPORTANT : on résout le round Jolpica d'après le pays/circuit,
