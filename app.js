@@ -289,8 +289,9 @@ db.ref('f1_results_2026').on('value', snapshot => {
     if (document.getElementById("view-stats")?.classList.contains("active")) renderStats();
     if (isAdmin) renderAdminRaceList();
 
-    // Auto-sync : importer les résultats manquants en arrière-plan
-    autoSyncResults();
+    // ⚠️ Auto-sync DÉSACTIVÉ : il écrasait les résultats manuels au refresh.
+    // L'import doit être 100% manuel via le bouton "Import API" dans l'admin.
+    // autoSyncResults();
 });
 
 // ============================================================
@@ -2750,6 +2751,99 @@ function addAdminQualiRow(type) {
 // 🤖 IMPORT AUTOMATIQUE DEPUIS API F1 (Jolpica / Ergast)
 // ============================================================
 const API_BASE = "https://api.jolpi.ca/ergast/f1/2026";
+
+// ============================================================
+// 🎯 Résolution round local → round API (Jolpica)
+// ============================================================
+// Le calendrier local (data.js) et celui de Jolpica n'ont PAS les
+// mêmes numéros de round (Miami est R6 local, R4 sur Jolpica).
+// On match par pays/circuit pour trouver le bon round API.
+
+let jolpicaCalendarCache = null;
+
+// FR -> EN pour matcher les noms de pays Jolpica
+const countryEnglish = {
+    "Australie": "Australia",
+    "Chine": "China",
+    "Japon": "Japan",
+    "Bahreïn": "Bahrain",
+    "Arabie Saoudite": "Saudi Arabia",
+    "États-Unis": "USA",
+    "Canada": "Canada",
+    "Monaco": "Monaco",
+    "Espagne": "Spain",
+    "Autriche": "Austria",
+    "Royaume-Uni": "UK",
+    "Belgique": "Belgium",
+    "Hongrie": "Hungary",
+    "Pays-Bas": "Netherlands",
+    "Italie": "Italy",
+    "Azerbaïdjan": "Azerbaijan",
+    "Singapour": "Singapore",
+    "Mexique": "Mexico",
+    "Brésil": "Brazil",
+    "Qatar": "Qatar",
+    "Émirats Arabes Unis": "UAE"
+};
+
+async function getJolpicaCalendar() {
+    if (jolpicaCalendarCache) return jolpicaCalendarCache;
+    try {
+        const res = await fetch(`${API_BASE}.json?limit=30`);
+        const json = await res.json();
+        jolpicaCalendarCache = json?.MRData?.RaceTable?.Races || [];
+        return jolpicaCalendarCache;
+    } catch (e) {
+        return [];
+    }
+}
+
+// Trouve le numéro de round Jolpica pour une course locale (Miami, Bahrein, etc.)
+// Match en priorité par circuit puis par pays + nom de ville
+async function resolveJolpicaRound(localRace) {
+    const calendar = await getJolpicaCalendar();
+    if (calendar.length === 0) return null;
+
+    const localCountryEn = countryEnglish[localRace.country] || localRace.country;
+    const localCity      = (localRace.city || "").toLowerCase();
+    const localCircuit   = (localRace.circuit || "").toLowerCase();
+    const localName      = (localRace.name || "").toLowerCase();
+
+    // Score chaque race candidate
+    let best = null;
+    let bestScore = 0;
+    for (const r of calendar) {
+        let score = 0;
+        const apiCountry = r.Circuit?.Location?.country || "";
+        const apiLocality = (r.Circuit?.Location?.locality || "").toLowerCase();
+        const apiCircuitName = (r.Circuit?.circuitName || "").toLowerCase();
+        const apiRaceName = (r.raceName || "").toLowerCase();
+
+        // Pays correspond ?
+        if (apiCountry === localCountryEn) score += 3;
+        if (apiCountry === "USA" && localCountryEn === "USA") {
+            // USA a 3 GP (Miami, Austin, Las Vegas) — matcher par ville
+            if (apiLocality && localCity && (apiLocality.includes(localCity) || localCity.includes(apiLocality))) score += 5;
+            if (apiRaceName.includes("miami") && localName.includes("miami")) score += 5;
+            if (apiRaceName.includes("vegas") && localName.includes("vegas")) score += 5;
+            if (apiRaceName.includes("united states") && (localName.includes("états-unis") || localName.includes("united"))) score += 5;
+        }
+        // Espagne a 2 GP (Barcelone, Madrid) — matcher par ville
+        if (apiCountry === "Spain" && localCountryEn === "Spain") {
+            if (apiLocality && localCity && (apiLocality.includes(localCity) || localCity.includes(apiLocality))) score += 5;
+        }
+        // Circuit name match exact
+        if (apiCircuitName && localCircuit && apiCircuitName === localCircuit) score += 4;
+        if (apiCircuitName && localCircuit && (apiCircuitName.includes(localCircuit.slice(0, 8)) || localCircuit.includes(apiCircuitName.slice(0, 8)))) score += 2;
+
+        if (score > bestScore) { bestScore = score; best = r; }
+    }
+    // Confiance minimum
+    if (best && bestScore >= 3) {
+        return parseInt(best.round);
+    }
+    return null;
+}
 const OPENF1_BASE = "https://api.openf1.org/v1";
 
 function resolveTeam(apiName) {
@@ -2912,17 +3006,39 @@ async function fetchPracticeResults(sessionName, countryName, year = 2026) {
 async function autoImportResults() {
     if (adminCurrentRace === null) return;
     const race  = races[adminCurrentRace];
-    const round = race.round;
     const btn   = document.getElementById("btn-auto-import");
     if (btn) { btn.disabled = true; btn.textContent = "⏳ Import en cours..."; }
+
+    // 🎯 IMPORTANT : on résout le round Jolpica d'après le pays/circuit,
+    // PAS d'après race.round local (les calendriers ne correspondent pas).
+    const apiRound = await resolveJolpicaRound(race);
 
     let importedAny = false;
     const errors = [];
 
+    if (apiRound === null) {
+        // Pas trouvé sur le calendrier API
+        errors.push(`Aucune correspondance trouvée pour "${race.name}" sur l'API`);
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = "❌ Course introuvable sur API";
+            btn.style.background = "#ef4444";
+            btn.style.borderColor = "#ef4444";
+            setTimeout(() => {
+                btn.textContent = t("admin.auto_import");
+                btn.style.background = "";
+                btn.style.borderColor = "";
+            }, 4000);
+        }
+        alert(`⚠️ Aucune course "${race.name}" trouvée sur le calendrier Jolpica 2026.\n\nVérifie que la course existe sur https://api.jolpi.ca/ergast/f1/2026.json ou édite manuellement.`);
+        return;
+    }
+    console.log(`✅ Import: ${race.name} (round local ${race.round}) → API round ${apiRound}`);
+
     try {
         // 1. Résultats Course
         try {
-            const raceData = await fetchRaceResults(round);
+            const raceData = await fetchRaceResults(apiRound);
             if (raceData.length > 0) {
                 renderAdminRows(raceData, "edit-race-rows", "race");
                 document.getElementById("edit-status").value = "completed";
@@ -2932,7 +3048,7 @@ async function autoImportResults() {
 
         // 2. Qualifications Course
         try {
-            const qualiData = await fetchQualifying(round);
+            const qualiData = await fetchQualifying(apiRound);
             if (qualiData.length > 0) {
                 renderAdminQualiRows(qualiData, "edit-race-quali-rows");
                 importedAny = true;
@@ -2942,7 +3058,7 @@ async function autoImportResults() {
         // 3. Sprint (si weekend sprint)
         if (race.sprint) {
             try {
-                const sprintData = await fetchSprintResults(round);
+                const sprintData = await fetchSprintResults(apiRound);
                 if (sprintData.length > 0) {
                     renderAdminRows(sprintData, "edit-sprint-rows", "sprint");
                     document.getElementById("edit-sprint-status").value = "completed";
