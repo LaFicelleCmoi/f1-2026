@@ -248,6 +248,8 @@ auth.onAuthStateChanged(user => {
 db.ref('f1_results_2026').on('value', snapshot => {
     const savedData = snapshot.val();
     if (savedData && Array.isArray(savedData)) {
+        const completedFromFb = savedData.filter(r => r.raceStatus === "completed").map(r => `R${r.round}`).join(", ");
+        console.log(`[Firebase] Loaded ${savedData.length} races. Completed: ${completedFromFb || "(none)"}`);
         races.forEach(race => {
             const found = savedData.find(r => r.round === race.round);
             if (found) {
@@ -298,6 +300,8 @@ db.ref('f1_results_2026').on('value', snapshot => {
 // 💾 SAUVEGARDE FIREBASE (remplace localStorage.setItem)
 // ============================================================
 function saveToFirebase() {
+    const stack = new Error().stack?.split("\n")[2]?.trim() || "?";
+    console.log(`[Firebase] saveToFirebase() called from ${stack}`);
     const toSave = races.map(r => ({
         round:             r.round,
         raceStatus:        r.raceStatus        || "upcoming",
@@ -3221,6 +3225,76 @@ function clearAdminResults() {
     renderAdminRaceList();
     selectAdminRace(adminCurrentRace);
     alert("✅ Course effacée et sauvegardée.");
+}
+
+// ============================================================
+// 💥 RESET COMPLET — bouton panique
+// ============================================================
+// Vide TOUTES les courses dans Firebase + désinscrit le Service Worker
+// + clean tous les caches + recharge la page.
+async function panicResetAll() {
+    if (!isAdmin) { alert("⛔ Réservé admin."); return; }
+    if (!confirm("⚠️ ATTENTION\n\nCeci va :\n• Effacer TOUS les résultats de TOUTES les courses dans Firebase\n• Désinscrire le Service Worker\n• Vider tous les caches du site\n• Recharger la page\n\nTu vas devoir tout réimporter manuellement.\n\nContinuer ?")) return;
+    if (!confirm("Sérieusement, c'est définitif. Cliquer sur OK efface tout.")) return;
+
+    try {
+        console.log("[Panic] Wiping all races...");
+        // 1. Reset toutes les courses en mémoire
+        races.forEach(r => {
+            r.raceStatus         = "upcoming";
+            r.sprintStatus       = r.sprint ? "upcoming" : null;
+            r.status             = "upcoming";
+            r.result             = null;
+            r.sprintResult       = null;
+            r.qualiResults       = null;
+            r.sprintQualiResults = null;
+            r.fp1Results         = null;
+            r.fp2Results         = null;
+            r.fp3Results         = null;
+        });
+
+        // 2. Écraser Firebase
+        console.log("[Panic] Writing reset to Firebase...");
+        await db.ref('f1_results_2026').set(races.map(r => ({
+            round:             r.round,
+            raceStatus:        "upcoming",
+            sprintStatus:      r.sprint ? "upcoming" : null,
+            status:            "upcoming",
+            result:            null,
+            sprintResult:      null,
+            qualiResults:      null,
+            sprintQualiResults: null,
+            fp1Results:        null,
+            fp2Results:        null,
+            fp3Results:        null,
+            schedule:          r.schedule || null
+        })));
+
+        // 3. Désinscrire Service Worker
+        if ("serviceWorker" in navigator) {
+            console.log("[Panic] Unregistering service workers...");
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+        }
+
+        // 4. Vider tous les caches
+        if ("caches" in window) {
+            console.log("[Panic] Clearing caches...");
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+        }
+
+        // 5. Vider localStorage / sessionStorage
+        try { localStorage.clear(); } catch (e) {}
+        try { sessionStorage.clear(); } catch (e) {}
+
+        console.log("[Panic] Done. Reloading...");
+        alert("✅ Tout réinitialisé. La page va se recharger.");
+        location.reload(true);
+    } catch (e) {
+        console.error("[Panic] Error:", e);
+        alert("⚠️ Erreur pendant le reset : " + e.message + "\n\nVérifie la console (F12).");
+    }
 }
 
 // ============================================================
