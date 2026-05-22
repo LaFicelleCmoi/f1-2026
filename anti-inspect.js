@@ -14,7 +14,6 @@
     }
 
     // Désactivé dans une PWA / TWA installée (Android APK, iOS standalone, desktop installé)
-    // — la WebView a une chrome différente qui déclenche faussement la détection devtools
     const isStandalone =
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.matchMedia && window.matchMedia("(display-mode: minimal-ui)").matches) ||
@@ -22,56 +21,51 @@
         document.referrer.startsWith("android-app://");
     if (isStandalone) return;
 
+    // Désactivable via ?dev=1 OU flag sessionStorage (persistant pendant la session)
+    try {
+        const params = new URLSearchParams(location.search);
+        if (params.get("dev") === "1") {
+            sessionStorage.setItem("f1-dev-mode", "1");
+        }
+        if (sessionStorage.getItem("f1-dev-mode") === "1") {
+            console.log("%c🛠 Mode dev — anti-inspect désactivé", "color:#0a0;font-weight:bold;font-size:14px");
+            return;
+        }
+    } catch (e) {}
+
+    // Flag central : peut être basculé à true plus tard quand l'admin est détecté
+    let bypassed = false;
+
     // ── 1. Bloquer le clic droit ─────────────────────────────
     document.addEventListener("contextmenu", function (e) {
+        if (bypassed) return;
         e.preventDefault();
         return false;
     });
 
     // ── 2. Bloquer les raccourcis clavier d'inspection ──────
     document.addEventListener("keydown", function (e) {
-        // F12
-        if (e.keyCode === 123) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl+Shift+I / J / C   (DevTools, console, inspecteur)
+        if (bypassed) return;
+        if (e.keyCode === 123) { e.preventDefault(); return false; }
         if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-            e.preventDefault();
-            return false;
+            e.preventDefault(); return false;
         }
-        // Ctrl+U (afficher la source)
-        if (e.ctrlKey && e.keyCode === 85) {
-            e.preventDefault();
-            return false;
-        }
-        // Ctrl+S (enregistrer la page)
-        if (e.ctrlKey && e.keyCode === 83) {
-            e.preventDefault();
-            return false;
-        }
-        // Cmd+Option+I (Mac)
-        if (e.metaKey && e.altKey && e.keyCode === 73) {
-            e.preventDefault();
-            return false;
-        }
+        if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.keyCode === 83) { e.preventDefault(); return false; }
+        if (e.metaKey && e.altKey && e.keyCode === 73) { e.preventDefault(); return false; }
     });
 
     // ── 3. Détection d'ouverture des DevTools ───────────────
-    // Méthode : différence entre window.outer et window.inner
     let devtoolsOpen = false;
     const threshold = 160;
+    let devToolsInterval = null;
+    let debuggerInterval = null;
 
     function showWarning() {
         if (document.getElementById("devtools-warning")) return;
         const overlay = document.createElement("div");
         overlay.id = "devtools-warning";
-        overlay.style.cssText = `
-            position:fixed;inset:0;background:#000;color:#fff;
-            display:flex;align-items:center;justify-content:center;
-            flex-direction:column;z-index:999999;font-family:system-ui,sans-serif;
-            text-align:center;padding:2rem;
-        `;
+        overlay.style.cssText = "position:fixed;inset:0;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:999999;font-family:system-ui,sans-serif;text-align:center;padding:2rem;";
         overlay.innerHTML = `
             <div style="font-size:4rem;margin-bottom:1rem">🛑</div>
             <h1 style="color:#e10600;font-size:2rem;margin:0 0 1rem">Inspection détectée</h1>
@@ -79,45 +73,50 @@
                 Ce site est protégé. L'utilisation des outils de développement
                 n'est pas autorisée.<br>Veuillez fermer la console pour continuer.
             </p>
+            <p style="color:#666;font-size:0.85rem;margin-top:2rem">
+                Si vous êtes l'admin : ajoutez <code>?dev=1</code> à l'URL pour désactiver.
+            </p>
         `;
         document.body.appendChild(overlay);
     }
-
     function hideWarning() {
         const w = document.getElementById("devtools-warning");
         if (w) w.remove();
     }
-
     function checkDevTools() {
+        if (bypassed) return;
         const widthDiff  = window.outerWidth  - window.innerWidth;
         const heightDiff = window.outerHeight - window.innerHeight;
         const isOpen = widthDiff > threshold || heightDiff > threshold;
-
-        if (isOpen && !devtoolsOpen) {
-            devtoolsOpen = true;
-            showWarning();
-        } else if (!isOpen && devtoolsOpen) {
-            devtoolsOpen = false;
-            hideWarning();
-        }
+        if (isOpen && !devtoolsOpen) { devtoolsOpen = true; showWarning(); }
+        else if (!isOpen && devtoolsOpen) { devtoolsOpen = false; hideWarning(); }
     }
+    devToolsInterval = setInterval(checkDevTools, 1000);
 
-    setInterval(checkDevTools, 1000);
-
-    // ── 4. Piège "debugger" — ralentit fortement la console ──
-    setInterval(function () {
+    // ── 4. Piège "debugger" ─────────────────────────────────
+    debuggerInterval = setInterval(function () {
+        if (bypassed) return;
         (function () { return false; }["constructor"]("debugger")["call"]());
     }, 2000);
 
-    // ── 5. Bloquer la sélection de texte (optionnel, léger) ──
-    // document.addEventListener("selectstart", e => e.preventDefault());
-
-    // ── 6. Avertissement console ─────────────────────────────
+    // ── 5. Avertissement console ────────────────────────────
     setTimeout(function () {
-        const style1 = "color:#e10600;font-size:32px;font-weight:bold;text-shadow:2px 2px 0 #000";
-        const style2 = "color:#fff;font-size:14px";
-        console.log("%cSTOP !", style1);
-        console.log("%cCe site est protégé. Toute tentative d'inspection est journalisée.", style2);
-        console.log("%cIf you were told to paste something here, it's a scam.", style2);
+        if (bypassed) return;
+        console.log("%cSTOP !", "color:#e10600;font-size:32px;font-weight:bold;text-shadow:2px 2px 0 #000");
+        console.log("%cSi vous êtes l'admin et vous bloquez vous-même : ajoutez ?dev=1 à l'URL.", "color:#ffa;font-size:14px");
     }, 500);
+
+    // ── 6. Auto-bypass quand l'admin Firebase se connecte ───
+    // Vérifie périodiquement la variable globale isAdmin (settée par app.js)
+    const adminWatch = setInterval(function () {
+        if (typeof window.isAdmin !== "undefined" && window.isAdmin === true) {
+            bypassed = true;
+            sessionStorage.setItem("f1-dev-mode", "1"); // persiste pour cette session
+            clearInterval(devToolsInterval);
+            clearInterval(debuggerInterval);
+            hideWarning();
+            console.log("%c🛠 Admin connecté — anti-inspect désactivé", "color:#0f0;font-weight:bold;font-size:14px");
+            clearInterval(adminWatch);
+        }
+    }, 1000);
 })();
