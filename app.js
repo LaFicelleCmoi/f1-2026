@@ -384,6 +384,7 @@ function getPodiumColor(pos) {
 
 function getStatusClass(status) {
     if (status === "completed")  return "completed";
+    if (status === "live")       return "live";
     if (status === "next")       return "next";
     if (status === "cancelled")  return "cancelled";
     return "upcoming";
@@ -391,6 +392,7 @@ function getStatusClass(status) {
 
 function getBadgeClass(status) {
     if (status === "completed")  return "badge-done";
+    if (status === "live")       return "badge-live";
     if (status === "next")       return "badge-next";
     if (status === "cancelled")  return "badge-cancelled";
     return "badge-upcoming";
@@ -398,6 +400,7 @@ function getBadgeClass(status) {
 
 function getBadgeLabel(status) {
     if (status === "completed")  return "✓ " + t("status.completed_f");
+    if (status === "live")       return "🔴 " + t("status.live");
     if (status === "next")       return "▶ " + t("status.next_f");
     if (status === "cancelled")  return "✕ " + t("status.cancelled_f");
     return t("status.upcoming");
@@ -2443,12 +2446,13 @@ function renderAdminRaceList() {
             <div style="flex:1">
                 <div style="font-weight:600; font-size:0.9rem">${race.name}</div>
                 <div style="font-size:0.75rem; color:var(--muted); display:flex; gap:0.5rem; margin-top:0.2rem;">
-                    <span>🏁 ${rs === 'completed' ? `<span style="color:var(--green)">${t("admin.completed_m")}</span>` : rs === 'next' ? `<span style="color:var(--red)">${t("admin.next_m")}</span>` : rs === 'cancelled' ? `<span style="color:#ef4444">${t("admin.cancelled_m")}</span>` : t("admin.upcoming")}</span>
-                    ${race.sprint ? `<span>⚡ ${ss === 'completed' ? `<span style="color:var(--green)">${t("admin.completed_m")}</span>` : ss === 'next' ? `<span style="color:var(--sprint-light)">${t("admin.next_m")}</span>` : ss === 'cancelled' ? `<span style="color:#ef4444">${t("admin.cancelled_m")}</span>` : t("admin.upcoming")}</span>` : ''}
+                    <span>🏁 ${rs === 'completed' ? `<span style="color:var(--green)">${t("admin.completed_m")}</span>` : rs === 'live' ? `<span style="color:var(--red);animation:livePulse 1.4s ease-in-out infinite">${t("admin.live")}</span>` : rs === 'next' ? `<span style="color:var(--red)">${t("admin.next_m")}</span>` : rs === 'cancelled' ? `<span style="color:#ef4444">${t("admin.cancelled_m")}</span>` : t("admin.upcoming")}</span>
+                    ${race.sprint ? `<span>⚡ ${ss === 'completed' ? `<span style="color:var(--green)">${t("admin.completed_m")}</span>` : ss === 'live' ? `<span style="color:var(--red);animation:livePulse 1.4s ease-in-out infinite">${t("admin.live")}</span>` : ss === 'next' ? `<span style="color:var(--sprint-light)">${t("admin.next_m")}</span>` : ss === 'cancelled' ? `<span style="color:#ef4444">${t("admin.cancelled_m")}</span>` : t("admin.upcoming")}</span>` : ''}
                 </div>
             </div>
             <span style="width:8px; height:8px; border-radius:50%;
-                background:${rs === 'completed' ? 'var(--green)' : rs === 'next' ? 'var(--red)' : rs === 'cancelled' ? '#ef4444' : 'var(--border)'}">
+                background:${rs === 'completed' ? 'var(--green)' : rs === 'live' ? 'var(--red)' : rs === 'next' ? 'var(--red)' : rs === 'cancelled' ? '#ef4444' : 'var(--border)'};
+                ${rs === 'live' ? 'box-shadow:0 0 8px var(--red);animation:livePulse 1.2s ease-in-out infinite' : ''}">
             </span>`;
         btn.onclick = () => selectAdminRace(index);
         container.appendChild(btn);
