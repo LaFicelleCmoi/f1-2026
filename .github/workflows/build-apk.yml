@@ -60,6 +60,18 @@ jobs:
         run: npx cap sync android
 
       # ──────────────────────────────────────────────────
+      # 3b. Patcher la version Android (run_number unique par build)
+      # ──────────────────────────────────────────────────
+      - name: Bump Android version
+        run: |
+          VC=${{ github.run_number }}
+          VN="1.0.$VC"
+          sed -i "s/versionCode 1$/versionCode $VC/"          android/app/build.gradle || true
+          sed -i "s/versionName \"1.0\"$/versionName \"$VN\"/" android/app/build.gradle || true
+          echo "versionCode=$VC versionName=$VN"
+          grep -E "versionCode|versionName" android/app/build.gradle | head
+
+      # ──────────────────────────────────────────────────
       # 4. Construire l'APK debug (signé par la clé debug Android)
       # ──────────────────────────────────────────────────
       - name: Build debug APK
@@ -96,23 +108,26 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-apk
-          name: 📱 APK Android (auto-build)
+          name: 📱 F1 2026 Race Hub — Build #${{ github.run_number }}
           body: |
-            ## F1 2026 Race Hub — APK Android
+            ## 📱 APK Android — Mise à jour
 
-            Build automatique du commit `${{ github.sha }}`
-            Date : ${{ github.event.head_commit.timestamp }}
+            **Version :** `1.0.${{ github.run_number }}`
+            **Commit :** `${{ github.sha }}`
+            **Date :** ${{ github.event.head_commit.timestamp }}
 
-            ### 📥 Installation
+            ### 📥 Installation / mise à jour
 
-            1. Télécharge `f1-2026-race-hub.apk` ci-dessous
-            2. Sur Android : **Paramètres → Sécurité → Sources inconnues** → autorise ton navigateur
-            3. Ouvre le fichier APK → Installer
+            1. Télécharge **`f1-2026-race-hub.apk`** ci-dessous
+            2. Si tu avais une version précédente : ouvre l'APK → Android te propose **Mettre à jour**
+            3. Sinon : **Paramètres → Sécurité → Sources inconnues** → autorise ton navigateur ou gestionnaire de fichiers
+            4. Ouvre l'APK → Installer
+
+            ### 🔄 Dernier changement
+            > ${{ github.event.head_commit.message }}
 
             ### ⚠️ Note
-
-            C'est un APK **debug** (signé avec la clé Android par défaut). Suffisant pour usage perso.
-            Pour publier sur Google Play il faudrait un APK **release** avec un keystore custom.
+            APK **debug** signé par la clé Android par défaut. Suffisant pour usage perso, pas pour le Play Store.
           files: ${{ steps.apk.outputs.path }}
           draft: false
           prerelease: false
