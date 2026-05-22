@@ -263,23 +263,6 @@ db.ref('f1_results_2026').on('value', snapshot => {
                 race.fp1Results        = found.fp1Results        || null;
                 race.fp2Results        = found.fp2Results        || null;
                 race.fp3Results        = found.fp3Results        || null;
-
-                // 🚫 Courses bannies (annulées) : on FORCE l'état annulé et on
-                // efface tous les résultats potentiellement bidons sauvegardés
-                // dans Firebase (Bahreïn et Arabie Saoudite ne sont pas au
-                // calendrier 2026 officiel)
-                if (race.cancelled) {
-                    race.raceStatus = "cancelled";
-                    race.status     = "cancelled";
-                    race.sprintStatus = race.sprint ? "cancelled" : null;
-                    race.result            = null;
-                    race.sprintResult      = null;
-                    race.qualiResults      = null;
-                    race.sprintQualiResults = null;
-                    race.fp1Results        = null;
-                    race.fp2Results        = null;
-                    race.fp3Results        = null;
-                }
                 // Horaires modifiés en admin : on ne prend que les "time" de Firebase,
                 // les jours et noms de sessions restent ceux de data.js (source de vérité)
                 if (found.schedule && race.schedule) {
@@ -296,6 +279,51 @@ db.ref('f1_results_2026').on('value', snapshot => {
             }
         });
     }
+
+    // 🚫🚫🚫 ENFORCE CANCELLED (toujours, peu importe l'état de Firebase) 🚫🚫🚫
+    // Bahreïn et Arabie Saoudite ne sont PAS au calendrier 2026 officiel.
+    // Quoi que Firebase contienne, on force "cancelled" + on efface les résultats.
+    let needFirebaseCleanup = false;
+    races.forEach(race => {
+        if (race.cancelled) {
+            const wasNotCancelled = race.raceStatus !== "cancelled";
+            race.raceStatus        = "cancelled";
+            race.status            = "cancelled";
+            race.sprintStatus      = race.sprint ? "cancelled" : null;
+            race.result            = null;
+            race.sprintResult      = null;
+            race.qualiResults      = null;
+            race.sprintQualiResults = null;
+            race.fp1Results        = null;
+            race.fp2Results        = null;
+            race.fp3Results        = null;
+            if (wasNotCancelled) {
+                console.log(`[Cancelled] Forcing ${race.name} -> cancelled`);
+                needFirebaseCleanup = true;
+            }
+        }
+    });
+    // Si Firebase avait des données pourries pour ces courses, on les efface
+    // définitivement en base pour ne plus jamais les voir revenir
+    if (needFirebaseCleanup) {
+        console.log("[Cancelled] Cleaning up Firebase to lock in cancelled status");
+        const toSave = races.map(r => ({
+            round:             r.round,
+            raceStatus:        r.raceStatus        || "upcoming",
+            sprintStatus:      r.sprintStatus      || (r.sprint ? "upcoming" : null),
+            status:            r.raceStatus        || "upcoming",
+            result:            r.result            || null,
+            sprintResult:      r.sprintResult      || null,
+            schedule:          r.schedule          || null,
+            qualiResults:      r.qualiResults      || null,
+            sprintQualiResults: r.sprintQualiResults || null,
+            fp1Results:        r.fp1Results        || null,
+            fp2Results:        r.fp2Results        || null,
+            fp3Results:        r.fp3Results        || null
+        }));
+        db.ref('f1_results_2026').set(toSave);
+    }
+
     renderAllRaces();
     renderStandings();
     renderTimeline();
