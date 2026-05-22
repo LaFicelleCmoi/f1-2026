@@ -49,6 +49,7 @@ const translations = {
         "races.filter_completed": "Terminées",
         "races.filter_upcoming": "À venir",
         "races.filter_next": "Prochaine",
+        "races.filter_live": "🔴 Live",
         "races.filter_type": "Type",
         "races.filter_sprint": "⚡ Sprint",
         "races.filter_standard": "Standard",
@@ -128,6 +129,7 @@ const translations = {
         "admin.completed_f": "✓ Terminée",
         "admin.cancelled_m": "✕ Annulé",
         "admin.cancelled_f": "✕ Annulée",
+        "admin.live": "🔴 En cours",
         "admin.sprint_results": "⚡ Résultats Sprint",
         "admin.add_row_sprint": "+ Ajouter une ligne au Sprint",
         "admin.sprint_quali": "⚡ Qualifications Sprint",
@@ -199,6 +201,7 @@ const translations = {
         "status.next_m": "Prochain",
         "status.cancelled_f": "Annulée",
         "status.cancelled_m": "Annulé",
+        "status.live": "EN DIRECT",
 
         // Footer
         "footer.brand": "F1 2026 Race Hub",
@@ -409,6 +412,7 @@ const translations = {
         "races.filter_completed": "Completed",
         "races.filter_upcoming": "Upcoming",
         "races.filter_next": "Next",
+        "races.filter_live": "🔴 Live",
         "races.filter_type": "Type",
         "races.filter_sprint": "⚡ Sprint",
         "races.filter_standard": "Standard",
@@ -487,6 +491,7 @@ const translations = {
         "admin.completed_m": "✓ Completed",
         "admin.completed_f": "✓ Completed",
         "admin.cancelled_m": "✕ Cancelled",
+        "admin.live": "🔴 Live",
         "admin.cancelled_f": "✕ Cancelled",
         "admin.sprint_results": "⚡ Sprint Results",
         "admin.add_row_sprint": "+ Add Sprint row",
@@ -558,6 +563,7 @@ const translations = {
         "status.next_f": "Next",
         "status.next_m": "Next",
         "status.cancelled_f": "Cancelled",
+        "status.live": "LIVE",
         "status.cancelled_m": "Cancelled",
 
         // Footer
