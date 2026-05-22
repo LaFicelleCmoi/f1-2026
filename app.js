@@ -2158,14 +2158,28 @@ function openModal(index) {
     // ── Contenu de chaque onglet ──
     // Helper : tableau d'essais libres (avec temps + écart)
     function buildFPTable(fpData, sessionLabel) {
+        // Filet de sécurité : si les données ont été importées avant le fix OpenF1
+        // et contiennent "null null" / "null", on affiche un placeholder propre
+        const cleanName = (n) => {
+            if (!n) return "—";
+            const s = String(n).trim();
+            if (s === "null null" || s === "null" || s.toLowerCase() === "undefined undefined") return "— (réimporter)";
+            return s;
+        };
+        const cleanTeam = (t) => {
+            if (!t) return "";
+            const s = String(t).trim();
+            if (s === "null" || s.toLowerCase() === "undefined") return "";
+            return s;
+        };
         const tbl = `<table class="full-results-table">
             <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.time")}</th><th>${t("modal.gap")}</th></tr></thead>
             <tbody>
                 ${fpData.map((e, i) => `
                     <tr class="${i < 3 ? 'podium-row-' + (i+1) : ''}">
                         <td class="pos-medal ${getPodiumColor(i+1)}">${i < 3 ? getPodiumIcon(i+1) : i+1}</td>
-                        <td style="font-weight:600">${e.driver}</td>
-                        <td style="color:var(--muted);font-size:0.82rem">${e.team}</td>
+                        <td style="font-weight:600">${cleanName(e.driver)}</td>
+                        <td style="color:var(--muted);font-size:0.82rem">${cleanTeam(e.team)}</td>
                         <td style="color:var(--red);font-weight:700;font-family:monospace">${e.time || '-'}</td>
                         <td style="color:var(--muted);font-family:monospace;font-size:0.8rem">${e.gap || ''}</td>
                     </tr>`).join("")}
