@@ -3023,9 +3023,37 @@ async function fetchPracticeResults(sessionName, countryName, year = 2026) {
         .map(([num, lap]) => {
             const dInfo = driverMap[num];
             if (!dInfo) return null;
-            const fullName = `${dInfo.first_name} ${dInfo.last_name}`;
-            const resolved = resolveDriver(dInfo.first_name, dInfo.last_name);
-            const teamName = resolveTeam(dInfo.team_name || "");
+
+            // OpenF1 a changé sa structure en 2026 : first_name, last_name et
+            // team_name reviennent souvent null. On utilise full_name comme
+            // source de vérité et on parse "Prénom NOM" depuis lui.
+            let firstName = dInfo.first_name;
+            let lastName  = dInfo.last_name;
+            if ((!firstName || !lastName) && dInfo.full_name) {
+                const parts = String(dInfo.full_name).trim().split(/\s+/);
+                if (parts.length >= 2) {
+                    // Le NOM est en MAJUSCULES (ex: "Max VERSTAPPEN") → dernier(s) mot(s)
+                    const lastIdx = parts.findIndex(p => p === p.toUpperCase() && p.length > 1);
+                    if (lastIdx > 0) {
+                        firstName = parts.slice(0, lastIdx).join(" ");
+                        lastName  = parts.slice(lastIdx).join(" ");
+                    } else {
+                        firstName = parts[0];
+                        lastName  = parts.slice(1).join(" ");
+                    }
+                    // Normaliser la casse du nom de famille (Verstappen au lieu de VERSTAPPEN)
+                    if (lastName === lastName.toUpperCase()) {
+                        lastName = lastName.charAt(0) + lastName.slice(1).toLowerCase();
+                    }
+                }
+            }
+            firstName = firstName || "";
+            lastName  = lastName  || "";
+
+            const resolved = resolveDriver(firstName, lastName);
+            // Si l'écurie est null côté API, on récupère celle du pilote dans drivers[]
+            const teamName = resolveTeam(dInfo.team_name || resolved.team || "");
+
             const mins = Math.floor(lap.lap_duration / 60);
             const secs = (lap.lap_duration % 60).toFixed(3);
             const timeStr = mins > 0 ? `${mins}:${secs.padStart(6, '0')}` : secs;
