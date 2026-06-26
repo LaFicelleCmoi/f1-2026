@@ -3097,7 +3097,107 @@ async function fetchPracticeResults(sessionName, countryName, year = 2026) {
     return results;
 }
 
-// Bouton import : remplit le formulaire admin avec les données API
+// ============================================================
+// 🏎️ API ESPN — calendrier + résultats F1 2026
+// ============================================================
+// ESPN fournit en UNE requête tout le calendrier + toutes les
+// sessions (FP1, Sprint Quali, Sprint, Qualifs, Course) avec les
+// noms de pilotes corrects. C'est la source principale d'import.
+const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=2026";
+const ESPN_STANDINGS  = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings?season=2026";
+let espnSeasonCache = null;
+
+async function fetchEspnSeason() {
+    if (espnSeasonCache) return espnSeasonCache;
+    const res = await fetch(ESPN_SCOREBOARD);
+    const json = await res.json();
+    espnSeasonCache = json?.events || [];
+    return espnSeasonCache;
+}
+
+// Mots-clés pays (FR) → fragments présents dans le nom ESPN
+const espnCountryKw = {
+    "Australie": ["austral"], "Chine": ["chinese"], "Japon": ["japan"],
+    "Bahreïn": ["bahrain"], "Arabie Saoudite": ["saudi"],
+    "États-Unis": ["united states", "miami", "vegas", "austin"],
+    "Canada": ["canad"], "Monaco": ["monaco"],
+    "Espagne": ["spanish", "barcelona", "catalu", "madrid"],
+    "Autriche": ["austrian"], "Royaume-Uni": ["british"], "Belgique": ["belgian"],
+    "Hongrie": ["hungarian"], "Pays-Bas": ["dutch"], "Italie": ["italian"],
+    "Azerbaïdjan": ["azerbaijan"], "Singapour": ["singapore"],
+    "Mexique": ["mexico", "mexican"], "Brésil": ["brazil", "paulo", "brazilian"],
+    "Qatar": ["qatar"], "Émirats Arabes Unis": ["abu dhabi"]
+};
+// Mots-clés ville (pour départager les pays à plusieurs GP)
+const espnCityKw = {
+    "Miami Gardens": ["miami"], "Austin": ["united states", "austin"],
+    "Las Vegas": ["vegas"], "Barcelone": ["barcelona", "catalu"],
+    "Madrid": ["spanish", "madrid"]
+};
+
+// Trouve l'événement ESPN correspondant à une course locale
+function findEspnEventForRace(race, events) {
+    let best = null, bestScore = 0;
+    for (const ev of events) {
+        const name = (ev.shortName || ev.name || "").toLowerCase();
+        let score = 0;
+        for (const kw of (espnCountryKw[race.country] || [])) {
+            if (name.includes(kw)) score += 2;
+        }
+        for (const kw of (espnCityKw[race.city] || [])) {
+            if (name.includes(kw)) score += 4;
+        }
+        if (score > bestScore) { bestScore = score; best = ev; }
+    }
+    return bestScore >= 2 ? best : null;
+}
+
+// Résout un nom complet ESPN ("Kimi Antonelli") vers la liste locale
+function resolveDriverByName(fullName) {
+    if (!fullName) return { driver: "", team: "", flag: "" };
+    const clean = fullName.trim();
+    let m = drivers.find(d => d.driver === clean);
+    if (m) return m;
+    const parts = clean.split(/\s+/);
+    const last = parts[parts.length - 1];
+    m = drivers.find(d => d.driver.toLowerCase().includes(last.toLowerCase()));
+    if (m) return m;
+    m = drivers.find(d => parts.some(p => p.length > 2 && d.driver.toLowerCase().includes(p.toLowerCase())));
+    if (m) return m;
+    return { driver: clean, team: "", flag: "" };
+}
+
+// Extrait une session ESPN en liste ordonnée {pos, driver, team, points}
+// kind : "race" | "sprint" | "quali" | "sprintQuali" | "fp"
+function extractEspnSession(competition, kind) {
+    if (!competition || !Array.isArray(competition.competitors)) return [];
+    const sorted = competition.competitors
+        .slice()
+        .sort((a, b) => (a.order || 99) - (b.order || 99));
+    return sorted.map(c => {
+        const name = c.athlete?.displayName || c.athlete?.fullName || "";
+        const resolved = resolveDriverByName(name);
+        const pos = parseInt(c.order) || 0;
+        const entry = { pos, driver: resolved.driver, team: resolved.team };
+        if (kind === "race")   entry.points = pointsSystem[pos - 1] || 0;
+        if (kind === "sprint") entry.points = sprintPoints[pos - 1] || 0;
+        return entry;
+    }).filter(e => e.driver);
+}
+
+// Récupère toutes les sessions d'un événement ESPN
+function getEspnSession(ev, abbr) {
+    return (ev.competitions || []).find(c => (c.type?.abbreviation || "") === abbr) || null;
+}
+
+// Vrai si l'événement a une course terminée (avec un vainqueur)
+function espnRaceHasResults(ev) {
+    const race = getEspnSession(ev, "Race");
+    if (!race) return false;
+    return (race.competitors || []).some(c => c.winner === true);
+}
+
+// Bouton import : remplit le formulaire admin avec les données ESPN
 async function autoImportResults() {
     if (adminCurrentRace === null) return;
     const race  = races[adminCurrentRace];
@@ -3111,95 +3211,88 @@ async function autoImportResults() {
 
     if (btn) { btn.disabled = true; btn.textContent = "⏳ Import en cours..."; }
 
-    // 🎯 IMPORTANT : on résout le round Jolpica d'après le pays/circuit,
-    // PAS d'après race.round local (les calendriers ne correspondent pas).
-    const apiRound = await resolveJolpicaRound(race);
-
     let importedAny = false;
     const errors = [];
 
-    if (apiRound === null) {
-        // Pas trouvé sur le calendrier API
-        errors.push(`Aucune correspondance trouvée pour "${race.name}" sur l'API`);
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = "❌ Course introuvable sur API";
-            btn.style.background = "#ef4444";
-            btn.style.borderColor = "#ef4444";
-            setTimeout(() => {
-                btn.textContent = t("admin.auto_import");
-                btn.style.background = "";
-                btn.style.borderColor = "";
-            }, 4000);
-        }
-        alert(`⚠️ Aucune course "${race.name}" trouvée sur le calendrier Jolpica 2026.\n\nVérifie que la course existe sur https://api.jolpi.ca/ergast/f1/2026.json ou édite manuellement.`);
-        return;
-    }
-    console.log(`✅ Import: ${race.name} (round local ${race.round}) → API round ${apiRound}`);
-
     try {
+        const events = await fetchEspnSeason();
+        const ev = findEspnEventForRace(race, events);
+
+        if (!ev) {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "❌ Course introuvable (ESPN)";
+                btn.style.background = "#ef4444";
+                btn.style.borderColor = "#ef4444";
+                setTimeout(() => {
+                    btn.textContent = t("admin.auto_import");
+                    btn.style.background = "";
+                    btn.style.borderColor = "";
+                }, 4000);
+            }
+            alert(`⚠️ Aucune course "${race.name}" trouvée sur le calendrier ESPN 2026.`);
+            return;
+        }
+        console.log(`✅ Import ESPN: ${race.name} → ${ev.shortName}`);
+
         // 1. Résultats Course
-        try {
-            const raceData = await fetchRaceResults(apiRound);
+        const raceSess = getEspnSession(ev, "Race");
+        if (raceSess && espnRaceHasResults(ev)) {
+            const raceData = extractEspnSession(raceSess, "race");
             if (raceData.length > 0) {
                 renderAdminRows(raceData, "edit-race-rows", "race");
                 document.getElementById("edit-status").value = "completed";
                 importedAny = true;
             }
-        } catch (e) { errors.push("Course: " + e.message); }
+        }
 
         // 2. Qualifications Course
-        try {
-            const qualiData = await fetchQualifying(apiRound);
+        const qualiSess = getEspnSession(ev, "Qual");
+        if (qualiSess) {
+            const qualiData = extractEspnSession(qualiSess, "quali");
             if (qualiData.length > 0) {
                 renderAdminQualiRows(qualiData, "edit-race-quali-rows");
                 importedAny = true;
             }
-        } catch (e) { errors.push("Qualifications: " + e.message); }
+        }
 
-        // 3. Sprint (si weekend sprint)
+        // 3. Sprint (course sprint = "SR")
         if (race.sprint) {
-            try {
-                const sprintData = await fetchSprintResults(apiRound);
+            const srSess = getEspnSession(ev, "SR");
+            if (srSess) {
+                const sprintData = extractEspnSession(srSess, "sprint");
                 if (sprintData.length > 0) {
                     renderAdminRows(sprintData, "edit-sprint-rows", "sprint");
                     document.getElementById("edit-sprint-status").value = "completed";
                     importedAny = true;
                 }
-            } catch (e) { errors.push("Sprint: " + e.message); }
-        }
-
-        // 4. Essais Libres (OpenF1 API) — sauvegarde via saveToFirebase
-        try {
-            const countryName = race.country;
-            if (race.sprint) {
-                // Sprint weekend : EL1 seulement
-                try {
-                    const fp1 = await fetchPracticeResults("Practice 1", countryName);
-                    if (fp1.length > 0) {
-                        race.fp1Results = fp1;
-                        importedAny = true;
-                    }
-                } catch (e) { errors.push("EL1: " + e.message); }
-            } else {
-                // Weekend normal : EL1, EL2, EL3
-                for (const [key, sessionName] of [["fp1Results", "Practice 1"], ["fp2Results", "Practice 2"], ["fp3Results", "Practice 3"]]) {
-                    try {
-                        const fpData = await fetchPracticeResults(sessionName, countryName);
-                        if (fpData.length > 0) {
-                            race[key] = fpData;
-                            importedAny = true;
-                        }
-                    } catch (e) { errors.push(sessionName + ": " + e.message); }
+            }
+            // Qualif sprint = "SS"
+            const ssSess = getEspnSession(ev, "SS");
+            if (ssSess) {
+                const sqData = extractEspnSession(ssSess, "sprintQuali");
+                if (sqData.length > 0) {
+                    renderAdminQualiRows(sqData, "edit-sprint-quali-rows");
+                    importedAny = true;
                 }
             }
-        } catch (e) { errors.push("Essais Libres: " + e.message); }
+        }
+
+        // 4. Essais Libres FP1 (ESPN n'expose que FP1 de façon fiable)
+        const fp1Sess = getEspnSession(ev, "FP1");
+        if (fp1Sess) {
+            const fp1Data = extractEspnSession(fp1Sess, "fp");
+            if (fp1Data.length > 0) {
+                race.fp1Results = fp1Data;
+                importedAny = true;
+            }
+        }
 
     } catch (e) {
-        errors.push("Erreur générale: " + e.message);
+        errors.push("Erreur ESPN: " + e.message);
+        console.error("Import ESPN error:", e);
     }
 
-    // Sauvegarder les EL en base même si l'admin ne clique pas Sauvegarder
     if (importedAny) saveToFirebase();
 
     if (btn) {
@@ -3208,29 +3301,104 @@ async function autoImportResults() {
             btn.textContent = "✅ Importé !";
             btn.style.background = "var(--green)";
             btn.style.borderColor = "var(--green)";
-            setTimeout(() => {
-                btn.textContent = "🤖 Import auto (API)";
-                btn.style.background = "";
-                btn.style.borderColor = "";
-            }, 3000);
         } else {
             btn.textContent = "❌ Aucune donnée trouvée";
             btn.style.background = "#ef4444";
             btn.style.borderColor = "#ef4444";
-            setTimeout(() => {
-                btn.textContent = "🤖 Import auto (API)";
-                btn.style.background = "";
-                btn.style.borderColor = "";
-            }, 3000);
         }
+        setTimeout(() => {
+            btn.textContent = t("admin.auto_import");
+            btn.style.background = "";
+            btn.style.borderColor = "";
+        }, 3000);
     }
 
-    if (errors.length > 0) {
-        console.warn("Import API — erreurs:", errors);
-    }
+    if (errors.length > 0) console.warn("Import ESPN — erreurs:", errors);
 
     if (importedAny) {
-        alert(`✅ Import réussi !\n\nN'oubliez pas de cliquer "💾 Sauvegarder" pour enregistrer.${errors.length ? '\n\n⚠️ Certaines données n\'ont pas pu être importées:\n' + errors.join('\n') : ''}`);
+        alert(`✅ Import ESPN réussi !\n\nN'oubliez pas de cliquer "💾 Sauvegarder" pour enregistrer.`);
+    } else if (errors.length === 0) {
+        alert(`ℹ️ Pas encore de résultats disponibles pour "${race.name}" sur ESPN.`);
+    }
+}
+
+// ============================================================
+// ⚡ SYNC TOUTE LA SAISON depuis ESPN (1 clic)
+// ============================================================
+async function syncAllFromEspn() {
+    if (!isAdmin) { alert("⛔ Réservé admin."); return; }
+    if (!confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va remplir automatiquement tous les résultats des courses terminées (course, qualifs, sprint) et sauvegarder dans Firebase.\n\nLes courses annulées (Bahreïn, Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
+
+    const btn = document.getElementById("btn-sync-all-espn");
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Synchronisation..."; }
+
+    let synced = 0, skipped = 0;
+    try {
+        const events = await fetchEspnSeason();
+
+        races.forEach(race => {
+            if (race.cancelled) { skipped++; return; }
+            const ev = findEspnEventForRace(race, events);
+            if (!ev || !espnRaceHasResults(ev)) { skipped++; return; }
+
+            // Course
+            const raceSess = getEspnSession(ev, "Race");
+            const raceData = raceSess ? extractEspnSession(raceSess, "race") : [];
+            if (raceData.length > 0) {
+                race.result = {
+                    podium:      raceData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
+                    fullResults: raceData
+                };
+                race.raceStatus = "completed";
+                race.status     = "completed";
+            }
+            // Qualif course
+            const qualiSess = getEspnSession(ev, "Qual");
+            const qualiData = qualiSess ? extractEspnSession(qualiSess, "quali") : [];
+            if (qualiData.length > 0) race.qualiResults = qualiData;
+
+            // Sprint
+            if (race.sprint) {
+                const srSess = getEspnSession(ev, "SR");
+                const srData = srSess ? extractEspnSession(srSess, "sprint") : [];
+                if (srData.length > 0) {
+                    race.sprintResult = {
+                        podium:      srData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
+                        fullResults: srData
+                    };
+                    race.sprintStatus = "completed";
+                }
+                const ssSess = getEspnSession(ev, "SS");
+                const ssData = ssSess ? extractEspnSession(ssSess, "sprintQuali") : [];
+                if (ssData.length > 0) race.sprintQualiResults = ssData;
+            }
+            // FP1
+            const fp1Sess = getEspnSession(ev, "FP1");
+            const fp1Data = fp1Sess ? extractEspnSession(fp1Sess, "fp") : [];
+            if (fp1Data.length > 0) race.fp1Results = fp1Data;
+
+            synced++;
+        });
+
+        saveToFirebase();
+        renderAllRaces();
+        renderStandings();
+        renderTimeline();
+        renderSprintView();
+        renderPalmares();
+        renderPredictions();
+        updateStats();
+        renderAdminRaceList();
+
+        alert(`✅ Synchronisation ESPN terminée !\n\n${synced} course(s) importée(s)\n${skipped} ignorée(s) (à venir / annulées)`);
+    } catch (e) {
+        console.error("Sync ESPN error:", e);
+        alert("⚠️ Erreur pendant la synchronisation : " + e.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = t("admin.sync_all_espn");
+        }
     }
 }
 
