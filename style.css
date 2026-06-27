@@ -4096,3 +4096,197 @@ tr.clickable:hover { background: var(--card2); }
     /* Inputs de saisie un peu plus compacts */
     .admin-row input { padding: 0.4rem !important; }
 }
+
+/* ============================================================
+   🗺️ CARTE INFO CIRCUIT (onglet modal)
+   ============================================================ */
+.circuit-info-card { margin-bottom: 1.2rem; }
+.circuit-info-loading { text-align: center; padding: 2rem 0; }
+.circuit-info-loading .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    margin: 0 auto;
+    animation: spin 0.8s linear infinite;
+}
+.circuit-diagram-espn {
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.8rem;
+}
+.circuit-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+    gap: 0.6rem;
+    margin: 1rem 0;
+}
+.circuit-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.5rem;
+    text-align: center;
+}
+.circuit-stat-icon { font-size: 1.1rem; line-height: 1; }
+.circuit-stat-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: 0.2px;
+}
+.circuit-stat-lbl {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+}
+.circuit-record {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: linear-gradient(135deg, rgba(225,6,0,0.12), transparent);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--red);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    margin-top: 0.8rem;
+}
+.circuit-record-icon { font-size: 1.6rem; }
+.circuit-record-time {
+    font-size: 1.3rem;
+    font-weight: 900;
+    font-family: monospace;
+    color: var(--red);
+    line-height: 1.1;
+}
+.circuit-record-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* ============================================================
+   🔥 HEATMAP POINTS PAR GP (onglet Classements)
+   ============================================================ */
+.standings-heatmap-section { margin-top: 2.5rem; }
+.heatmap-header { margin-bottom: 1rem; }
+.heatmap-header h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 0 0.2rem;
+    letter-spacing: 0.3px;
+}
+.heatmap-header p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0;
+}
+.heatmap-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    -webkit-overflow-scrolling: touch;
+}
+.heatmap-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.8rem;
+}
+.heatmap-table th, .heatmap-table td {
+    text-align: center;
+    padding: 0.5rem 0.4rem;
+    white-space: nowrap;
+}
+.heatmap-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--card2);
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    z-index: 1;
+}
+.heat-gp { line-height: 1.1; }
+.heat-gp-r { display: block; font-size: 0.6rem; opacity: 0.7; }
+/* Colonne pilote figée à gauche */
+.heat-driver-h, .heat-driver {
+    position: sticky;
+    left: 0;
+    background: var(--card);
+    text-align: left !important;
+    font-weight: 700;
+    min-width: 130px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1;
+    border-right: 1px solid var(--border);
+}
+.heat-driver-h { background: var(--card2); z-index: 2; }
+.heat-driver span {
+    font-size: 0.78rem;
+}
+.heat-cell {
+    font-weight: 700;
+    color: #fff;
+    min-width: 34px;
+    border-radius: 3px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.heat-empty { color: var(--border); font-weight: 400; }
+.heat-total-h, .heat-total {
+    font-weight: 900;
+    color: var(--red);
+    border-left: 1px solid var(--border);
+    position: sticky;
+    right: 0;
+    background: var(--card);
+}
+.heat-total-h { background: var(--card2); }
+.heatmap-table tbody tr:hover .heat-driver { color: var(--red); }
+
+@media (max-width: 640px) {
+    .heat-driver-h, .heat-driver { min-width: 96px; max-width: 96px; }
+    .heat-driver span { font-size: 0.7rem; }
+    .heatmap-table { font-size: 0.72rem; }
+    .heat-cell { min-width: 28px; padding: 0.4rem 0.25rem; }
+}
+
+/* ============================================================
+   🏳️ BADGES DNF / DSQ dans les tableaux de résultats
+   ============================================================ */
+.result-badge {
+    display: inline-block;
+    margin-left: 0.45rem;
+    padding: 0.08rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.badge-dnf {
+    background: rgba(239, 68, 68, 0.18);
+    color: #ff6b6b;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.badge-dsq {
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffd166;
+    border: 1px solid rgba(255, 209, 102, 0.5);
+}
+/* Lignes DNF/DSQ : pilote légèrement estompé */
+.full-results-table tr.result-row-dnf td:not(.pos-medal),
+.full-results-table tr.result-row-dsq td:not(.pos-medal) {
+    opacity: 0.72;
+}

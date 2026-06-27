@@ -74,6 +74,8 @@ const translations = {
         "standings.driver": "Pilote",
         "standings.team": "Écurie",
         "standings.points": "Points",
+        "standings.heatmap_title": "🔥 Points par Grand Prix",
+        "standings.heatmap_sub": "Points marqués (course + sprint) à chaque GP",
 
         // Timeline
         "timeline.title": "Calendrier Complet",
@@ -177,6 +179,15 @@ const translations = {
         "modal.circuit_poster": "🏁 Affiche du Grand Prix",
         "modal.circuit_preview": "📸 Aperçu",
         "modal.circuit_unavailable": "Images non disponibles pour ce circuit.",
+        "modal.circuit_length": "Longueur",
+        "modal.circuit_laps": "Tours",
+        "modal.circuit_turns": "Virages",
+        "modal.circuit_distance": "Distance",
+        "modal.circuit_direction": "Sens",
+        "modal.circuit_established": "Inauguré",
+        "modal.circuit_clockwise": "Horaire",
+        "modal.circuit_anticlockwise": "Anti-horaire",
+        "modal.circuit_record": "Record du tour",
         "modal.sprint_quali": "Qualifications Sprint",
         "modal.sprint_results": "Résultats Sprint",
         "modal.race_quali": "Qualifications Course",
@@ -203,6 +214,11 @@ const translations = {
         "status.cancelled_f": "Annulée",
         "status.cancelled_m": "Annulé",
         "status.live": "EN DIRECT",
+        "status.dnf": "ABANDON",
+        "status.dnf_full": "Abandon",
+        "status.dsq": "DSQ",
+        "status.dsq_full": "Disqualifié",
+        "status.lap_abbr": "T",
 
         // Footer
         "footer.brand": "F1 2026 Race Hub",
@@ -438,6 +454,8 @@ const translations = {
         "standings.driver": "Driver",
         "standings.team": "Team",
         "standings.points": "Points",
+        "standings.heatmap_title": "🔥 Points per Grand Prix",
+        "standings.heatmap_sub": "Points scored (race + sprint) at each GP",
 
         // Timeline
         "timeline.title": "Full Calendar",
@@ -541,6 +559,15 @@ const translations = {
         "modal.circuit_poster": "🏁 Grand Prix poster",
         "modal.circuit_preview": "📸 Preview",
         "modal.circuit_unavailable": "Images not available for this circuit.",
+        "modal.circuit_length": "Length",
+        "modal.circuit_laps": "Laps",
+        "modal.circuit_turns": "Turns",
+        "modal.circuit_distance": "Distance",
+        "modal.circuit_direction": "Direction",
+        "modal.circuit_established": "Established",
+        "modal.circuit_clockwise": "Clockwise",
+        "modal.circuit_anticlockwise": "Anti-clockwise",
+        "modal.circuit_record": "Lap record",
         "modal.sprint_quali": "Sprint Qualifying",
         "modal.sprint_results": "Sprint Results",
         "modal.race_quali": "Race Qualifying",
@@ -566,6 +593,11 @@ const translations = {
         "status.next_m": "Next",
         "status.cancelled_f": "Cancelled",
         "status.live": "LIVE",
+        "status.dnf": "DNF",
+        "status.dnf_full": "Did not finish",
+        "status.dsq": "DSQ",
+        "status.dsq_full": "Disqualified",
+        "status.lap_abbr": "L",
         "status.cancelled_m": "Cancelled",
 
         // Footer

@@ -406,6 +406,19 @@ function getBadgeLabel(status) {
     return t("status.upcoming");
 }
 
+// Badge DNF/DSQ pour une ligne de résultat (vide si le pilote a terminé)
+function resultStatusBadge(e) {
+    if (!e || !e.status) return "";
+    if (e.status === "dnf") {
+        const lap = e.retiredLap ? ` ${t("status.lap_abbr")}${e.retiredLap}` : "";
+        return `<span class="result-badge badge-dnf" title="${t("status.dnf_full")}">${t("status.dnf")}${lap}</span>`;
+    }
+    if (e.status === "dsq") {
+        return `<span class="result-badge badge-dsq" title="${t("status.dsq_full")}">${t("status.dsq")}</span>`;
+    }
+    return "";
+}
+
 function renderAllRaces() {
     const grid = document.getElementById("races-grid");
     if (!grid) return;
@@ -636,8 +649,79 @@ function renderStandings() {
             }).join("")}
         </tbody>`;
 
+    // Heatmap points par GP
+    renderStandingsHeatmap(sortedDrivers);
+
     // Animation des barres et compteurs
     animateStandings();
+}
+
+// Heatmap : points marqués par chaque pilote à chaque GP (course + sprint)
+function renderStandingsHeatmap(sortedDrivers) {
+    const container = document.getElementById("standings-heatmap");
+    if (!container) return;
+
+    // Courses terminées, dans l'ordre
+    const doneRaces = races
+        .filter(r => {
+            const rs = r.raceStatus || r.status || "upcoming";
+            return rs === "completed" && r.result && r.result.fullResults;
+        })
+        .sort((a, b) => a.round - b.round);
+
+    if (doneRaces.length === 0) { container.innerHTML = ""; return; }
+
+    // points[driver][round] = points course + sprint
+    const pts = {};
+    let maxCell = 1;
+    doneRaces.forEach(race => {
+        (race.result.fullResults || []).forEach(e => {
+            pts[e.driver] = pts[e.driver] || {};
+            pts[e.driver][race.round] = (pts[e.driver][race.round] || 0) + (e.points || 0);
+        });
+        if ((race.sprintStatus === "completed") && race.sprintResult && race.sprintResult.fullResults) {
+            race.sprintResult.fullResults.forEach(e => {
+                pts[e.driver] = pts[e.driver] || {};
+                pts[e.driver][race.round] = (pts[e.driver][race.round] || 0) + (e.points || 0);
+            });
+        }
+    });
+    Object.values(pts).forEach(byRound => Object.values(byRound).forEach(v => { if (v > maxCell) maxCell = v; }));
+
+    // Lignes dans l'ordre du classement, seulement pilotes avec des points
+    const rows = sortedDrivers.filter(d => d.points > 0);
+
+    const headCols = doneRaces.map(r =>
+        `<th class="heat-gp" title="${r.name}">${r.flag}<span class="heat-gp-r">R${r.round}</span></th>`
+    ).join("");
+
+    const bodyRows = rows.map(d => {
+        const cells = doneRaces.map(r => {
+            const v = pts[d.driver]?.[r.round];
+            if (v === undefined) return `<td class="heat-cell heat-empty">·</td>`;
+            const intensity = Math.max(0.12, v / maxCell);
+            const color = teamColors[d.team] || "#888";
+            return `<td class="heat-cell" style="background:${color}${Math.round(intensity*255).toString(16).padStart(2,'0')}" title="${d.driver} · ${r.name}: ${v} pts">${v || ""}</td>`;
+        }).join("");
+        const safeName = d.driver.replace(/'/g, "\\'");
+        return `<tr>
+            <td class="heat-driver clickable" onclick="openDriverProfile('${safeName}')">${d.flag} <span>${d.driver}</span></td>
+            ${cells}
+            <td class="heat-total">${d.points}</td>
+        </tr>`;
+    }).join("");
+
+    container.innerHTML = `
+        <div class="heatmap-header">
+            <h3>${t("standings.heatmap_title")}</h3>
+            <p>${t("standings.heatmap_sub")}</p>
+        </div>
+        <div class="heatmap-scroll">
+            <table class="heatmap-table">
+                <thead><tr><th class="heat-driver-h">${t("standings.driver")}</th>${headCols}<th class="heat-total-h">${t("standings.points")}</th></tr></thead>
+                <tbody>${bodyRows}</tbody>
+            </table>
+        </div>`;
 }
 
 function animateStandings() {
@@ -1002,13 +1086,14 @@ function computeDriverFullStats(driverName) {
         if (entry) {
             starts++;
             totalPoints += entry.points || 0;
-            if (entry.pos === 1) wins++;
-            if (entry.pos <= 3) podiums++;
-            if (entry.pos <= 5) top5++;
-            if (entry.pos <= 10) top10++;
-            if (bestFinish === null || entry.pos < bestFinish) bestFinish = entry.pos;
-            // DNF : pos > nombre d'arrivants (estimation : > 20)
-            if (entry.pos > 20) dnf++;
+            const finished = !entry.status; // status 'dnf'/'dsq' => pas terminé
+            if (finished && entry.pos === 1) wins++;
+            if (finished && entry.pos <= 3) podiums++;
+            if (finished && entry.pos <= 5) top5++;
+            if (finished && entry.pos <= 10) top10++;
+            if (finished && (bestFinish === null || entry.pos < bestFinish)) bestFinish = entry.pos;
+            // DNF/DSQ : statut réel ESPN si dispo, sinon ancienne estimation
+            if (entry.status === "dnf" || entry.status === "dsq" || (!entry.status && entry.pos > 20)) dnf++;
         }
         if (race.qualiResults?.[0]?.driver === driverName) poles++;
         if (sEntry) {
@@ -2133,7 +2218,8 @@ function openModal(index) {
     // ── Onglets disponibles ──
     const tabs = [];
     tabs.push({ id: "info",    icon: "📋", label: t("modal.tab_info") });
-    if (sdbImages && (sdbImages.map || sdbImages.poster)) tabs.push({ id: "circuit", icon: "🗺️", label: t("modal.tab_circuit") });
+    // Onglet circuit toujours présent : infos ESPN (chargées en async) + images TheSportsDB éventuelles
+    tabs.push({ id: "circuit", icon: "🗺️", label: t("modal.tab_circuit") });
 
     // Essais Libres
     if (race.fp1Results?.length > 0) tabs.push({ id: "fp1", icon: "🔧", label: t("modal.tab_fp1") });
@@ -2200,14 +2286,12 @@ function openModal(index) {
                 const mapImg = sdbImages?.map || null;
                 const posterImg = sdbImages?.poster || null;
                 const thumbImg = sdbImages?.thumb || null;
+                // Charge les infos circuit ESPN en async après injection du HTML
+                setTimeout(() => loadCircuitInfo(race), 0);
                 return `<div class="modal-tab-pane circuit-tab">
-                    ${mapImg ? `
-                        <div class="circuit-map-section">
-                            <div class="circuit-map-title">${t("modal.circuit_layout")}</div>
-                            <div class="circuit-map-wrapper">
-                                <img src="${mapImg}" alt="Circuit ${race.name}" class="circuit-map-img" loading="lazy" onerror="this.parentElement.style.display='none'">
-                            </div>
-                        </div>` : ''}
+                    <div id="circuit-info-card" class="circuit-info-card">
+                        <div class="circuit-info-loading"><div class="spinner"></div></div>
+                    </div>
                     ${posterImg ? `
                         <div class="circuit-poster-section">
                             <div class="circuit-map-title">${t("modal.circuit_poster")}</div>
@@ -2222,7 +2306,6 @@ function openModal(index) {
                                 <img src="${thumbImg}" alt="${race.name}" class="circuit-poster-img" loading="lazy" onerror="this.parentElement.style.display='none'">
                             </div>
                         </div>` : ''}
-                    ${!mapImg && !posterImg && !thumbImg ? `<div class="no-data-box"><div style="font-size:3rem">🗺️</div><p>${t("modal.circuit_unavailable")}</p></div>` : ''}
                 </div>`;
             }
             case "fp1": return `<div class="modal-tab-pane">${buildFPTable(race.fp1Results, "Essais Libres 1")}</div>`;
@@ -2236,9 +2319,9 @@ function openModal(index) {
                 const tbl = `<table class="full-results-table">
                     <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.points_abbr")}</th></tr></thead>
                     <tbody>${race.sprintResult.fullResults.map((e,i)=>`
-                        <tr class="${i<3?'podium-row-'+(i+1):''}">
+                        <tr class="${i<3?'podium-row-'+(i+1):''} ${e.status?'result-row-'+e.status:''}">
                             <td class="pos-medal ${getPodiumColor(i+1)}">${i<3?getPodiumIcon(i+1):i+1}</td>
-                            <td style="font-weight:600">${e.driver}</td>
+                            <td style="font-weight:600">${e.driver}${resultStatusBadge(e)}</td>
                             <td style="color:var(--muted);font-size:0.82rem">${e.team}</td>
                             <td class="points-cell">${e.points}</td>
                         </tr>`).join("")}
@@ -2253,9 +2336,9 @@ function openModal(index) {
                 const tbl = `<table class="full-results-table">
                     <thead><tr><th>${t("modal.pos")}</th><th>${t("modal.driver")}</th><th>${t("modal.team")}</th><th>${t("modal.points_abbr")}</th></tr></thead>
                     <tbody>${race.result.fullResults.map((e,i)=>`
-                        <tr class="${i<3?'podium-row-'+(i+1):''}">
+                        <tr class="${i<3?'podium-row-'+(i+1):''} ${e.status?'result-row-'+e.status:''}">
                             <td class="pos-medal ${getPodiumColor(i+1)}">${i<3?getPodiumIcon(i+1):i+1}</td>
-                            <td style="font-weight:600">${e.driver}</td>
+                            <td style="font-weight:600">${e.driver}${resultStatusBadge(e)}</td>
                             <td style="color:var(--muted);font-size:0.82rem">${e.team}</td>
                             <td class="points-cell">${e.points}</td>
                         </tr>`).join("")}
@@ -2703,6 +2786,9 @@ function createAdminRow(data = {}, type = "race") {
     const div = document.createElement("div");
     div.className = "admin-row";
     div.style = "display:grid; grid-template-columns: 50px 1.5fr 1fr 60px 30px; gap:0.5rem; margin-bottom:0.5rem; align-items:center;";
+    // Statut DNF/DSQ préservé sur la ligne (non éditable, mais persisté au save)
+    if (data.status) div.dataset.status = data.status;
+    if (data.retiredLap) div.dataset.retlap = data.retiredLap;
     const maxPts = (type === "sprint") ? 8 : 25;
 
     // POS
@@ -3187,8 +3273,37 @@ function extractEspnSession(competition, kind) {
         const entry = { pos, driver: resolved.driver, team: resolved.team };
         if (kind === "race")   entry.points = pointsSystem[pos - 1] || 0;
         if (kind === "sprint") entry.points = sprintPoints[pos - 1] || 0;
+        // espnId conservé temporairement pour l'enrichissement statut (DNF/DSQ)
+        if (c.id) entry._espnId = String(c.id);
         return entry;
     }).filter(e => e.driver);
+}
+
+// Enrichit des lignes de résultat avec le statut DNF/DSQ + tour d'abandon
+// via l'API core ESPN (1 requête statut par pilote). Modifie les lignes en place.
+async function enrichRowsWithStatus(rows, eventId, competitionId) {
+    if (!rows || rows.length === 0 || !eventId || !competitionId) return rows;
+    const base = `${ESPN_CORE}/events/${eventId}/competitions/${competitionId}/competitors`;
+    await Promise.all(rows.map(async (row) => {
+        if (!row._espnId) return;
+        try {
+            const res = await fetch(`${base}/${row._espnId}/status?lang=en`);
+            if (!res.ok) return;
+            const s = await res.json();
+            const name = s?.type?.name || "";
+            if (name === "STATUS_RETIRED") {
+                row.status = "dnf";
+                const lap = parseInt(s?.period);
+                if (!isNaN(lap) && lap > 0) row.retiredLap = lap;
+            } else if (name === "STATUS_DISQUALIFIED") {
+                row.status = "dsq";
+                row.points = 0; // un DSQ ne marque aucun point
+            }
+        } catch (e) { /* statut indispo : on laisse la ligne telle quelle */ }
+    }));
+    // Nettoyer le champ temporaire
+    rows.forEach(r => { delete r._espnId; });
+    return rows;
 }
 
 // Récupère toutes les sessions d'un événement ESPN
@@ -3201,6 +3316,119 @@ function espnRaceHasResults(ev) {
     const race = getEspnSession(ev, "Race");
     if (!race) return false;
     return (race.competitors || []).some(c => c.winner === true);
+}
+
+// ============================================================
+// 🗺️ Infos circuit ESPN (longueur, virages, record du tour, plan)
+// ============================================================
+const ESPN_CORE = "https://sports.core.api.espn.com/v2/sports/racing/leagues/f1";
+const circuitInfoCache = {};
+
+// Récupère les infos détaillées d'un circuit pour une course locale.
+// Mis en cache (mémoire + sessionStorage). Renvoie null si indispo.
+async function fetchCircuitInfo(race) {
+    const cacheKey = "espn-circuit-" + race.round;
+    if (circuitInfoCache[race.round]) return circuitInfoCache[race.round];
+    try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) { circuitInfoCache[race.round] = JSON.parse(cached); return circuitInfoCache[race.round]; }
+    } catch (e) {}
+
+    try {
+        const events = await fetchEspnSeason();
+        const ev = findEspnEventForRace(race, events);
+        const circuitId = ev?.circuit?.id;
+        if (!circuitId) return null;
+
+        const cRes = await fetch(`${ESPN_CORE}/circuits/${circuitId}`);
+        const c = await cRes.json();
+
+        // Id de la piste (venue) = nom de fichier des diagrammes
+        let trackId = null;
+        const trackRef = c.track?.$ref || "";
+        const tm = trackRef.match(/venues\/(\d+)/);
+        if (tm) trackId = tm[1];
+
+        // Nom du détenteur du record du tour (1 requête, facultatif)
+        let flDriver = null;
+        const flRef = c.fastestLapDriver?.$ref || "";
+        if (flRef) {
+            try {
+                const aRes = await fetch(flRef.replace(/^http:/, "https:"));
+                const a = await aRes.json();
+                flDriver = a.displayName || a.fullName || null;
+            } catch (e) {}
+        }
+
+        const info = {
+            fullName:       c.fullName || race.circuit || "",
+            length:         c.length || null,
+            distance:       c.distance || null,
+            laps:           c.laps || null,
+            turns:          c.turns || null,
+            direction:      c.direction || null,
+            established:    c.established || null,
+            fastestLapTime: c.fastestLapTime || null,
+            fastestLapYear: c.fastestLapYear || null,
+            fastestLapDriver: flDriver,
+            diagram:        trackId ? `https://a.espncdn.com/i/venues/f1/circuit/${trackId}.svg` : null
+        };
+        circuitInfoCache[race.round] = info;
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(info)); } catch (e) {}
+        return info;
+    } catch (e) {
+        console.warn("fetchCircuitInfo error:", e);
+        return null;
+    }
+}
+
+// Remplit le bloc #circuit-info-card (appelé en async après rendu du tab)
+async function loadCircuitInfo(race) {
+    const card = document.getElementById("circuit-info-card");
+    if (!card) return;
+    const info = await fetchCircuitInfo(race);
+    // Si la modale a changé entre-temps, ne rien faire
+    if (!document.getElementById("circuit-info-card")) return;
+    if (!info) { card.style.display = "none"; return; }
+
+    const stat = (icon, label, val) => val ? `
+        <div class="circuit-stat">
+            <span class="circuit-stat-icon">${icon}</span>
+            <span class="circuit-stat-val">${val}</span>
+            <span class="circuit-stat-lbl">${label}</span>
+        </div>` : "";
+
+    const dirLabel = info.direction
+        ? (/anti/i.test(info.direction) ? t("modal.circuit_anticlockwise") : t("modal.circuit_clockwise"))
+        : null;
+
+    const record = info.fastestLapTime ? `
+        <div class="circuit-record">
+            <span class="circuit-record-icon">⏱️</span>
+            <div>
+                <div class="circuit-record-time">${info.fastestLapTime}</div>
+                <div class="circuit-record-meta">${t("modal.circuit_record")}${info.fastestLapDriver ? " — " + info.fastestLapDriver : ""}${info.fastestLapYear ? " (" + info.fastestLapYear + ")" : ""}</div>
+            </div>
+        </div>` : "";
+
+    card.innerHTML = `
+        ${info.diagram ? `
+            <div class="circuit-map-section">
+                <div class="circuit-map-title">${t("modal.circuit_layout")}</div>
+                <div class="circuit-map-wrapper">
+                    <img src="${info.diagram}" alt="${info.fullName}" class="circuit-map-img circuit-diagram-espn" loading="lazy" onerror="this.parentElement.style.display='none'">
+                </div>
+            </div>` : ""}
+        <div class="circuit-stats-grid">
+            ${stat("📏", t("modal.circuit_length"), info.length)}
+            ${stat("🔄", t("modal.circuit_laps"), info.laps)}
+            ${stat("↪️", t("modal.circuit_turns"), info.turns)}
+            ${stat("📐", t("modal.circuit_distance"), info.distance)}
+            ${stat("🧭", t("modal.circuit_direction"), dirLabel)}
+            ${stat("📅", t("modal.circuit_established"), info.established)}
+        </div>
+        ${record}
+    `;
 }
 
 // Bouton import : remplit le formulaire admin avec les données ESPN
@@ -3241,11 +3469,12 @@ async function autoImportResults() {
         }
         console.log(`✅ Import ESPN: ${race.name} → ${ev.shortName}`);
 
-        // 1. Résultats Course
+        // 1. Résultats Course (+ statut DNF/DSQ)
         const raceSess = getEspnSession(ev, "Race");
         if (raceSess && espnRaceHasResults(ev)) {
             const raceData = extractEspnSession(raceSess, "race");
             if (raceData.length > 0) {
+                await enrichRowsWithStatus(raceData, ev.id, raceSess.id);
                 renderAdminRows(raceData, "edit-race-rows", "race");
                 document.getElementById("edit-status").value = "completed";
                 importedAny = true;
@@ -3268,6 +3497,7 @@ async function autoImportResults() {
             if (srSess) {
                 const sprintData = extractEspnSession(srSess, "sprint");
                 if (sprintData.length > 0) {
+                    await enrichRowsWithStatus(sprintData, ev.id, srSess.id);
                     renderAdminRows(sprintData, "edit-sprint-rows", "sprint");
                     document.getElementById("edit-sprint-status").value = "completed";
                     importedAny = true;
@@ -3342,15 +3572,24 @@ async function syncAllFromEspn() {
     try {
         const events = await fetchEspnSeason();
 
-        races.forEach(race => {
-            if (race.cancelled) { skipped++; return; }
-            const ev = findEspnEventForRace(race, events);
-            if (!ev || !espnRaceHasResults(ev)) { skipped++; return; }
+        // Liste des courses à synchroniser
+        const toSync = races.filter(r => !r.cancelled && (() => {
+            const ev = findEspnEventForRace(r, events);
+            return ev && espnRaceHasResults(ev);
+        })());
+        skipped = races.length - toSync.length;
 
-            // Course
+        let done = 0;
+        for (const race of toSync) {
+            done++;
+            if (btn) btn.textContent = `⏳ ${done}/${toSync.length}...`;
+            const ev = findEspnEventForRace(race, events);
+
+            // Course (+ statut DNF/DSQ)
             const raceSess = getEspnSession(ev, "Race");
             const raceData = raceSess ? extractEspnSession(raceSess, "race") : [];
             if (raceData.length > 0) {
+                await enrichRowsWithStatus(raceData, ev.id, raceSess.id);
                 race.result = {
                     podium:      raceData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
                     fullResults: raceData
@@ -3368,6 +3607,7 @@ async function syncAllFromEspn() {
                 const srSess = getEspnSession(ev, "SR");
                 const srData = srSess ? extractEspnSession(srSess, "sprint") : [];
                 if (srData.length > 0) {
+                    await enrichRowsWithStatus(srData, ev.id, srSess.id);
                     race.sprintResult = {
                         podium:      srData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
                         fullResults: srData
@@ -3384,7 +3624,7 @@ async function syncAllFromEspn() {
             if (fp1Data.length > 0) race.fp1Results = fp1Data;
 
             synced++;
-        });
+        }
 
         saveToFirebase();
         renderAllRaces();
@@ -3434,6 +3674,9 @@ function saveAdminResults() {
             if (driver) {
                 const entry = { pos, driver, team };
                 if (points !== undefined) entry.points = points;
+                // Préserver le statut DNF/DSQ stocké sur la ligne
+                if (row.dataset.status) entry.status = row.dataset.status;
+                if (row.dataset.retlap) entry.retiredLap = parseInt(row.dataset.retlap);
                 rows.push(entry);
             }
         });

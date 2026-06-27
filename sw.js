@@ -5,7 +5,7 @@
 //   - Static (JS/CSS/icons) : stale-while-revalidate
 //   - APIs externes (Firebase, Jolpica, OpenF1, TheSportsDB) : passthrough
 // ============================================================
-const VERSION = "f1-2026-v12";
+const VERSION = "f1-2026-v13";
 const STATIC_CACHE  = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const HTML_CACHE    = `${VERSION}-html`;
@@ -58,6 +58,7 @@ self.addEventListener("fetch", (event) => {
         url.host.includes("thesportsdb.com") ||
         url.host.includes("formula1.com") ||
         url.host.includes("espn.com") ||
+        url.host.includes("espncdn.com") ||
         url.host.includes("jsdelivr.net")
     ) {
         return; // laisser le navigateur gérer
