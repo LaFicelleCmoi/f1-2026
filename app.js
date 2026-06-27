@@ -2481,6 +2481,12 @@ function selectAdminRace(index) {
     document.getElementById("admin-no-selection").style.display = "none";
     document.getElementById("admin-editor").style.display       = "block";
 
+    // Sur mobile (layout empilé), faire défiler vers l'éditeur qui est en-dessous de la liste
+    if (window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {
+        const editorCard = document.querySelector(".admin-editor-card");
+        if (editorCard) setTimeout(() => editorCard.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    }
+
     document.getElementById("edit-flag").textContent = race.flag;
     document.getElementById("edit-name").textContent = race.name;
 

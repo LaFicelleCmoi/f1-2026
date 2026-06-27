@@ -4030,3 +4030,69 @@ tr.clickable:hover { background: var(--card2); }
     .profile-compare-row { padding: 0.6rem 0.7rem; gap: 0.5rem; }
     .profile-compare-val { font-size: 0.95rem; }
 }
+
+/* ============================================================
+   ⚙️ ADMIN — layout responsive
+   ============================================================ */
+.admin-layout {
+    display: grid;
+    grid-template-columns: minmax(250px, 300px) 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+.admin-race-list-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    max-height: 700px;
+    overflow-y: auto;
+}
+.admin-editor-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+/* Tablette : on garde 2 colonnes mais plus serré */
+@media (max-width: 1024px) {
+    .admin-layout { grid-template-columns: minmax(200px, 250px) 1fr; gap: 1.2rem; }
+    .admin-editor-card { padding: 1.5rem; }
+}
+
+/* Téléphone : tout en une seule colonne empilée */
+@media (max-width: 768px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .admin-race-list-card {
+        max-height: 38vh;           /* la liste ne mange pas tout l'écran */
+    }
+    .admin-editor-card { padding: 1.1rem; }
+    /* L'éditeur prend toute la largeur, ses contrôles s'empilent */
+    .admin-editor-card .section-header h2 { font-size: 1.2rem; }
+}
+
+@media (max-width: 480px) {
+    .admin-race-list-card { max-height: 40vh; padding: 0.75rem; }
+    .admin-editor-card { padding: 0.85rem; border-radius: 10px; }
+    /* Boutons d'action admin : pleine largeur, empilés */
+    .admin-actions-row { gap: 0.6rem; }
+    .admin-actions-row > button {
+        flex: 1 1 100% !important;
+        margin-left: 0 !important;   /* annule le margin-left:auto du Reset */
+        padding: 0.7rem 1rem !important;
+        font-size: 0.85rem;
+    }
+    /* Lignes de résultats : colonnes resserrées pour tenir sans déborder */
+    .admin-row {
+        grid-template-columns: 38px 1.4fr 1fr 42px 24px !important;
+        gap: 0.35rem !important;
+    }
+    .admin-row input,
+    .admin-row .f1-picker { min-width: 0 !important; font-size: 0.8rem; }
+    /* Inputs de saisie un peu plus compacts */
+    .admin-row input { padding: 0.4rem !important; }
+}
