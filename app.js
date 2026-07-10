@@ -671,37 +671,50 @@ function renderStandingsHeatmap(sortedDrivers) {
 
     if (doneRaces.length === 0) { container.innerHTML = ""; return; }
 
-    // points[driver][round] = points course + sprint
+    // pts[driver][round] = { race: X, sprint: Y } — course et sprint séparés
     const pts = {};
     let maxCell = 1;
+    const ensure = (driver, round) => {
+        pts[driver] = pts[driver] || {};
+        pts[driver][round] = pts[driver][round] || { race: 0, sprint: 0 };
+        return pts[driver][round];
+    };
     doneRaces.forEach(race => {
         (race.result.fullResults || []).forEach(e => {
-            pts[e.driver] = pts[e.driver] || {};
-            pts[e.driver][race.round] = (pts[e.driver][race.round] || 0) + (e.points || 0);
+            ensure(e.driver, race.round).race += (e.points || 0);
         });
         if ((race.sprintStatus === "completed") && race.sprintResult && race.sprintResult.fullResults) {
             race.sprintResult.fullResults.forEach(e => {
-                pts[e.driver] = pts[e.driver] || {};
-                pts[e.driver][race.round] = (pts[e.driver][race.round] || 0) + (e.points || 0);
+                ensure(e.driver, race.round).sprint += (e.points || 0);
             });
         }
     });
-    Object.values(pts).forEach(byRound => Object.values(byRound).forEach(v => { if (v > maxCell) maxCell = v; }));
+    Object.values(pts).forEach(byRound => Object.values(byRound).forEach(c => {
+        const tot = c.race + c.sprint;
+        if (tot > maxCell) maxCell = tot;
+    }));
 
     // Lignes dans l'ordre du classement, seulement pilotes avec des points
     const rows = sortedDrivers.filter(d => d.points > 0);
 
     const headCols = doneRaces.map(r =>
-        `<th class="heat-gp" title="${r.name}">${r.flag}<span class="heat-gp-r">R${r.round}</span></th>`
+        `<th class="heat-gp ${r.sprint ? 'heat-gp-sprint' : ''}" title="${r.name}${r.sprint ? ' (week-end sprint)' : ''}">${r.flag}<span class="heat-gp-r">R${r.round}${r.sprint ? ' ⚡' : ''}</span></th>`
     ).join("");
 
     const bodyRows = rows.map(d => {
+        const color = teamColors[d.team] || "#888";
         const cells = doneRaces.map(r => {
-            const v = pts[d.driver]?.[r.round];
-            if (v === undefined) return `<td class="heat-cell heat-empty">·</td>`;
-            const intensity = Math.max(0.12, v / maxCell);
-            const color = teamColors[d.team] || "#888";
-            return `<td class="heat-cell" style="background:${color}${Math.round(intensity*255).toString(16).padStart(2,'0')}" title="${d.driver} · ${r.name}: ${v} pts">${v || ""}</td>`;
+            const c = pts[d.driver]?.[r.round];
+            if (!c) return `<td class="heat-cell heat-empty">·</td>`;
+            const total = c.race + c.sprint;
+            if (total === 0) return `<td class="heat-cell heat-zero" title="${d.driver} · ${r.name}: 0 pt">0</td>`;
+            const intensity = Math.max(0.12, total / maxCell);
+            const bg = color + Math.round(intensity * 255).toString(16).padStart(2, "0");
+            // Point de course (principal) + points sprint en exposant
+            const raceStr = c.race > 0 ? String(c.race) : (c.sprint > 0 ? "0" : "");
+            const sprintStr = c.sprint > 0 ? `<sup class="heat-sprint">+${c.sprint}⚡</sup>` : "";
+            const tip = `${d.driver} · ${r.name}: ${c.race} (course)${c.sprint > 0 ? " + " + c.sprint + " (sprint)" : ""} = ${total} pts`;
+            return `<td class="heat-cell" style="background:${bg}" title="${tip}">${raceStr}${sprintStr}</td>`;
         }).join("");
         const safeName = d.driver.replace(/'/g, "\\'");
         return `<tr>
@@ -715,6 +728,10 @@ function renderStandingsHeatmap(sortedDrivers) {
         <div class="heatmap-header">
             <h3>${t("standings.heatmap_title")}</h3>
             <p>${t("standings.heatmap_sub")}</p>
+            <div class="heatmap-legend">
+                <span class="heat-legend-item"><b>25</b> ${t("standings.heatmap_race_pts")}</span>
+                <span class="heat-legend-item"><sup class="heat-sprint">+6⚡</sup> ${t("standings.heatmap_sprint_pts")}</span>
+            </div>
         </div>
         <div class="heatmap-scroll">
             <table class="heatmap-table">

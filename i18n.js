@@ -75,7 +75,9 @@ const translations = {
         "standings.team": "Écurie",
         "standings.points": "Points",
         "standings.heatmap_title": "🔥 Points par Grand Prix",
-        "standings.heatmap_sub": "Points marqués (course + sprint) à chaque GP",
+        "standings.heatmap_sub": "Points marqués à chaque GP — les ⚡ marquent les week-ends sprint",
+        "standings.heatmap_race_pts": "points course",
+        "standings.heatmap_sprint_pts": "points sprint",
 
         // Timeline
         "timeline.title": "Calendrier Complet",
@@ -455,7 +457,9 @@ const translations = {
         "standings.team": "Team",
         "standings.points": "Points",
         "standings.heatmap_title": "🔥 Points per Grand Prix",
-        "standings.heatmap_sub": "Points scored (race + sprint) at each GP",
+        "standings.heatmap_sub": "Points scored at each GP — ⚡ marks sprint weekends",
+        "standings.heatmap_race_pts": "race points",
+        "standings.heatmap_sprint_pts": "sprint points",
 
         // Timeline
         "timeline.title": "Full Calendar",

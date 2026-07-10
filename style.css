@@ -4216,6 +4216,30 @@ tr.clickable:hover { background: var(--card2); }
 }
 .heat-gp { line-height: 1.1; }
 .heat-gp-r { display: block; font-size: 0.6rem; opacity: 0.7; }
+.heat-gp-sprint { background: rgba(124, 58, 237, 0.14); }
+.heat-gp-sprint .heat-gp-r { color: var(--sprint-light, #a78bfa); opacity: 0.95; font-weight: 700; }
+
+/* Points sprint en exposant dans les cellules */
+.heat-sprint {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #c4b5fd;
+    margin-left: 1px;
+    top: -0.5em;
+}
+.heat-zero { color: var(--muted); opacity: 0.55; font-weight: 600; }
+
+/* Légende du heatmap */
+.heatmap-legend {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+.heat-legend-item { display: inline-flex; align-items: baseline; gap: 0.3rem; }
+.heat-legend-item b { color: var(--text); }
 /* Colonne pilote figée à gauche */
 .heat-driver-h, .heat-driver {
     position: sticky;
