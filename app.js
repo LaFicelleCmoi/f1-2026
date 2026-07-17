@@ -2158,6 +2158,39 @@ function renderStats() {
     const agg = computeSeasonAggregates();
     const driverTeamColor = (name) => teamColors[(drivers.find(d => d.driver === name) || {}).team] || "#888";
 
+    // Éclaircit (percent>0) ou assombrit (<0) une couleur hex
+    const shadeHex = (hex, percent) => {
+        let h = String(hex).replace("#", "");
+        if (h.length === 3) h = h.split("").map(c => c + c).join("");
+        let r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+        const target = percent < 0 ? 0 : 255;
+        const p = Math.abs(percent) / 100;
+        r = Math.round((target - r) * p + r);
+        g = Math.round((target - g) * p + g);
+        b = Math.round((target - b) * p + b);
+        return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+    };
+
+    // Couleurs distinctes : les coéquipiers (même couleur d'écurie) reçoivent
+    // une nuance décalée, STABLE (basée sur leur rang dans l'écurie) pour être
+    // différenciés dans le donut sans perdre l'identité de l'équipe.
+    const teammateIndex = (name) => {
+        const d = drivers.find(dd => dd.driver === name);
+        if (!d) return 0;
+        const mates = drivers.filter(dd => dd.team === d.team);
+        const i = mates.findIndex(dd => dd.driver === name);
+        return i < 0 ? 0 : i;
+    };
+    const distinctDriverColors = (names) => {
+        const steps = [0, 38, -32, 60]; // pilote 1 = couleur pure, 2 = +clair, 3 = +foncé
+        return names.map(name => {
+            const base = driverTeamColor(name);
+            const idx = teammateIndex(name);
+            const pct = steps[idx] !== undefined ? steps[idx] : 38;
+            return pct === 0 ? base : shadeHex(base, pct);
+        });
+    };
+
     const doughnutOpts = {
         responsive: true,
         maintainAspectRatio: false,
@@ -2185,7 +2218,7 @@ function renderStats() {
                 labels: data.map(x => x[0]),
                 datasets: [{
                     data: data.map(x => x[1]),
-                    backgroundColor: data.map(x => driverTeamColor(x[0])),
+                    backgroundColor: distinctDriverColors(data.map(x => x[0])),
                     borderColor: "#0a0a0a",
                     borderWidth: 2,
                     hoverOffset: 8
