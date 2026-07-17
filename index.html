@@ -1,8 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- L'app gère elle-même FR/EN : on empêche la traduction auto du navigateur
+         (Google Translate déformait "GP"→"médecin généraliste", "Pilotes"→"Chauffeurs"…) -->
+    <meta name="google" content="notranslate">
+    <meta http-equiv="Content-Language" content="fr">
+    <meta name="robots" content="index, follow, notranslate">
     <title data-i18n="meta.title">F1 2026 — Suivi de Saison</title>
     <meta name="description" content="Suivez la saison F1 2026 en temps réel : résultats, classements, calendrier, sprints.">
     <meta name="theme-color" content="#e10600">
