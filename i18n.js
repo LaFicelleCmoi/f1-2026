@@ -258,6 +258,22 @@ const translations = {
         "stats.radar_sprint_wins": "Victoires Sprint",
         "stats.radar_single": "1 pilote",
         "stats.radar_compare": "⚔️ Comparer",
+        "stats.summary_title": "📋 Résumé de la saison",
+        "stats.summary_leader": "Leader du championnat",
+        "stats.summary_constructor": "Leader constructeurs",
+        "stats.summary_season": "Saison",
+        "stats.summary_races_done": "courses disputées",
+        "stats.summary_gap": "d'avance",
+        "stats.summary_tied": "à égalité",
+        "stats.summary_most_wins": "Plus de victoires",
+        "stats.summary_most_podiums": "Plus de podiums",
+        "stats.summary_most_poles": "Plus de poles",
+        "stats.summary_diff_winners": "Vainqueurs différents",
+        "stats.summary_dnfs": "Abandons (total)",
+        "stats.summary_best_climb": "Meilleure remontée",
+        "stats.wins_podiums": "🏆 Victoires & Podiums",
+        "stats.wins_chart": "Victoires",
+        "stats.podiums_chart": "Podiums",
 
         // Profile (pilote / écurie)
         "profile.best_finish": "Meilleur rang",
@@ -269,6 +285,8 @@ const translations = {
         "profile.quali_short": "Q",
         "profile.race_short": "C",
         "profile.no_history": "Aucune donnée de course pour le moment.",
+        "profile.dnf": "Abandons",
+        "profile.avg_pts": "Moy. pts/GP",
 
         // Carrière complète
         "career.open_btn": "📜 Voir la carrière complète",
@@ -642,6 +660,22 @@ const translations = {
         "stats.radar_sprint_wins": "Sprint Wins",
         "stats.radar_single": "1 driver",
         "stats.radar_compare": "⚔️ Compare",
+        "stats.summary_title": "📋 Season summary",
+        "stats.summary_leader": "Championship leader",
+        "stats.summary_constructor": "Constructors leader",
+        "stats.summary_season": "Season",
+        "stats.summary_races_done": "races completed",
+        "stats.summary_gap": "ahead",
+        "stats.summary_tied": "tied",
+        "stats.summary_most_wins": "Most wins",
+        "stats.summary_most_podiums": "Most podiums",
+        "stats.summary_most_poles": "Most poles",
+        "stats.summary_diff_winners": "Different winners",
+        "stats.summary_dnfs": "Retirements (total)",
+        "stats.summary_best_climb": "Best comeback",
+        "stats.wins_podiums": "🏆 Wins & Podiums",
+        "stats.wins_chart": "Wins",
+        "stats.podiums_chart": "Podiums",
 
         // Profile (driver / team)
         "profile.best_finish": "Best finish",
@@ -653,6 +687,8 @@ const translations = {
         "profile.quali_short": "Q",
         "profile.race_short": "R",
         "profile.no_history": "No race data yet.",
+        "profile.dnf": "DNFs",
+        "profile.avg_pts": "Avg pts/GP",
 
         // Full career
         "career.open_btn": "📜 View full F1 career",

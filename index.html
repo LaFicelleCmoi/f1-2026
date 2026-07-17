@@ -153,6 +153,8 @@
             <p data-i18n="stats.empty">Les graphiques apparaîtront après la première course.</p>
         </div>
         <div id="stats-content">
+            <div id="season-summary"></div>
+
             <div class="stats-card">
                 <div class="stats-card-header">
                     <h3 data-i18n="stats.drivers_evolution">📈 Évolution — Pilotes</h3>
@@ -169,6 +171,22 @@
                     <h3 data-i18n="stats.constructors_evolution">📈 Évolution — Constructeurs</h3>
                 </div>
                 <div class="stats-chart-wrap"><canvas id="chart-constructors"></canvas></div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3 data-i18n="stats.wins_podiums">🏆 Victoires & Podiums</h3>
+                </div>
+                <div class="stats-doughnut-row">
+                    <div class="stats-doughnut-block">
+                        <h4 data-i18n="stats.wins_chart">Victoires</h4>
+                        <div class="stats-doughnut-wrap"><canvas id="chart-wins"></canvas></div>
+                    </div>
+                    <div class="stats-doughnut-block">
+                        <h4 data-i18n="stats.podiums_chart">Podiums</h4>
+                        <div class="stats-doughnut-wrap"><canvas id="chart-podiums"></canvas></div>
+                    </div>
+                </div>
             </div>
 
             <div class="stats-card">

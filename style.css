@@ -4330,3 +4330,118 @@ tr.clickable:hover { background: var(--card2); }
     border-radius: 999px;
     margin-bottom: 0.8rem;
 }
+
+/* ============================================================
+   📋 RÉSUMÉ DE LA SAISON (onglet Statistiques)
+   ============================================================ */
+.season-hero {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+.season-lead-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--lead-color, var(--red));
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.season-lead-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+.season-lead-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.season-lead-pts {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--lead-color, var(--red));
+}
+.season-lead-pts span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-left: 0.3rem;
+}
+.season-progress-mini {
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.4rem;
+}
+.season-progress-mini div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), #ff5c57);
+    border-radius: 3px;
+}
+.season-records {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.6rem;
+}
+.season-record {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    text-align: center;
+}
+.season-record-num {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--text);
+    white-space: nowrap;
+}
+.season-record-lbl {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+}
+.season-record-who {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--red);
+}
+
+/* Donuts victoires / podiums */
+.stats-doughnut-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.stats-doughnut-block h4 {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.6rem;
+}
+.stats-doughnut-wrap {
+    position: relative;
+    height: 300px;
+}
+@media (max-width: 640px) {
+    .stats-doughnut-row { grid-template-columns: 1fr; }
+    .stats-doughnut-wrap { height: 250px; }
+    .season-lead-name { font-size: 1rem; }
+    .season-lead-pts { font-size: 1.15rem; }
+}

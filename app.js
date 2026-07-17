@@ -1010,7 +1010,140 @@ let radarCompareMode = false;
 let chartDrivers = null;
 let chartConstructors = null;
 let chartRadar = null;
+let chartWins = null;
+let chartPodiums = null;
 let statsDriverMode = "top10";
+
+// Agrégats de la saison en cours (victoires, podiums, poles, DNF, remontées…)
+// calculés depuis les courses "completed" locales — utilisés par le résumé + donuts
+function computeSeasonAggregates() {
+    const dpts = {}, cpts = {}, wins = {}, podiums = {}, poles = {};
+    let dnfTotal = 0;
+    const winners = new Set();
+    let bestClimb = null; // { driver, gained, flag }
+
+    races.forEach(race => {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs === "completed" && race.result?.fullResults) {
+            race.result.fullResults.forEach(e => {
+                dpts[e.driver] = (dpts[e.driver] || 0) + (e.points || 0);
+                if (e.team) cpts[e.team] = (cpts[e.team] || 0) + (e.points || 0);
+                if (!e.status) {
+                    if (e.pos === 1) { wins[e.driver] = (wins[e.driver] || 0) + 1; winners.add(e.driver); }
+                    if (e.pos <= 3)  podiums[e.driver] = (podiums[e.driver] || 0) + 1;
+                    // Remontée grille (qualif) → arrivée
+                    const q = race.qualiResults?.find(x => x.driver === e.driver);
+                    if (q) {
+                        const gained = q.pos - e.pos;
+                        if (gained > 0 && (!bestClimb || gained > bestClimb.gained)) {
+                            bestClimb = { driver: e.driver, gained, flag: race.flag };
+                        }
+                    }
+                } else {
+                    dnfTotal++;
+                }
+            });
+            if (race.qualiResults?.[0]) {
+                const p = race.qualiResults[0].driver;
+                poles[p] = (poles[p] || 0) + 1;
+            }
+        }
+        if (race.sprintStatus === "completed" && race.sprintResult?.fullResults) {
+            race.sprintResult.fullResults.forEach(e => {
+                dpts[e.driver] = (dpts[e.driver] || 0) + (e.points || 0);
+                if (e.team) cpts[e.team] = (cpts[e.team] || 0) + (e.points || 0);
+            });
+        }
+    });
+
+    const maxEntry = (obj) => {
+        const arr = Object.entries(obj).sort((a, b) => b[1] - a[1]);
+        return arr.length ? { name: arr[0][0], count: arr[0][1] } : null;
+    };
+
+    return {
+        dpts, cpts, wins, podiums, poles,
+        driversSorted: Object.entries(dpts).sort((a, b) => b[1] - a[1]),
+        teamsSorted:   Object.entries(cpts).sort((a, b) => b[1] - a[1]),
+        mostWins:     maxEntry(wins),
+        mostPodiums:  maxEntry(podiums),
+        mostPoles:    maxEntry(poles),
+        differentWinners: winners.size,
+        dnfTotal,
+        bestClimb
+    };
+}
+
+// Résumé de la saison en cours (bloc en tête de l'onglet Statistiques)
+function renderSeasonSummary() {
+    const el = document.getElementById("season-summary");
+    if (!el) return;
+
+    const done = races.filter(r => {
+        const rs = r.raceStatus || r.status || "upcoming";
+        return rs === "completed" && r.result?.fullResults;
+    });
+    if (done.length === 0) { el.innerHTML = ""; return; }
+
+    const agg = computeSeasonAggregates();
+    const totalPlanned = races.filter(r => !r.cancelled).length;
+    const pct = Math.round(done.length / totalPlanned * 100);
+
+    const driverInfo = (name) => drivers.find(d => d.driver === name) || {};
+    const teamInfo   = (name) => constructors.find(c => c.team === name) || {};
+
+    // Leaders + écarts
+    const [d1, d2] = agg.driversSorted;
+    const [t1, t2] = agg.teamsSorted;
+    const dLead = d1 ? { name: d1[0], pts: d1[1], gap: d2 ? d1[1] - d2[1] : null } : null;
+    const tLead = t1 ? { name: t1[0], pts: t1[1], gap: t2 ? t1[1] - t2[1] : null } : null;
+
+    const leadCard = (label, icon, flagOrLogo, name, pts, gap, color) => `
+        <div class="season-lead-card" style="--lead-color:${color}">
+            <div class="season-lead-label">${icon} ${label}</div>
+            <div class="season-lead-name">${flagOrLogo} ${name}</div>
+            <div class="season-lead-pts">${pts} pts
+                ${gap !== null && gap > 0 ? `<span>+${gap} ${t("stats.summary_gap")}</span>` : (gap === 0 ? `<span>${t("stats.summary_tied")}</span>` : "")}
+            </div>
+        </div>`;
+
+    const record = (num, label, who) => `
+        <div class="season-record">
+            <span class="season-record-num">${num}</span>
+            <span class="season-record-lbl">${label}</span>
+            ${who ? `<span class="season-record-who">${who}</span>` : ""}
+        </div>`;
+
+    const shortName = (full) => {
+        const parts = String(full).split(/\s+/);
+        return parts.length > 1 ? parts[parts.length - 1] : full;
+    };
+
+    el.innerHTML = `
+        <div class="stats-card season-summary-card">
+            <div class="stats-card-header">
+                <h3>${t("stats.summary_title")}</h3>
+            </div>
+            <div class="season-hero">
+                ${dLead ? leadCard(t("stats.summary_leader"), "👑", driverInfo(dLead.name).flag || "", dLead.name, dLead.pts, dLead.gap, teamColors[driverInfo(dLead.name).team] || "var(--red)") : ""}
+                ${tLead ? leadCard(t("stats.summary_constructor"), "🏭", teamInfo(tLead.name).flag || "", tLead.name, tLead.pts, tLead.gap, teamColors[tLead.name] || "var(--red)") : ""}
+                <div class="season-lead-card" style="--lead-color:var(--red)">
+                    <div class="season-lead-label">🏁 ${t("stats.summary_season")}</div>
+                    <div class="season-lead-name">${done.length} / ${totalPlanned}</div>
+                    <div class="season-lead-pts">${pct}% <span>${t("stats.summary_races_done")}</span></div>
+                    <div class="season-progress-mini"><div style="width:${pct}%"></div></div>
+                </div>
+            </div>
+            <div class="season-records">
+                ${agg.mostWins ? record("🏆 " + agg.mostWins.count, t("stats.summary_most_wins"), shortName(agg.mostWins.name)) : ""}
+                ${agg.mostPodiums ? record("🥇 " + agg.mostPodiums.count, t("stats.summary_most_podiums"), shortName(agg.mostPodiums.name)) : ""}
+                ${agg.mostPoles ? record("⏱️ " + agg.mostPoles.count, t("stats.summary_most_poles"), shortName(agg.mostPoles.name)) : ""}
+                ${record("🎯 " + agg.differentWinners, t("stats.summary_diff_winners"), null)}
+                ${record("💥 " + agg.dnfTotal, t("stats.summary_dnfs"), null)}
+                ${agg.bestClimb ? record("📈 +" + agg.bestClimb.gained, t("stats.summary_best_climb"), `${shortName(agg.bestClimb.driver)} ${agg.bestClimb.flag}`) : ""}
+            </div>
+        </div>`;
+}
 
 function computeCumulativePoints() {
     const completed = races.filter(r => {
@@ -1277,6 +1410,8 @@ function openDriverProfile(driverName) {
             ${statCard(stats.poles, t("stats.radar_poles"))}
             ${statCard(stats.bestFinish !== null ? "P" + stats.bestFinish : "—", t("profile.best_finish"))}
             ${statCard(stats.starts, t("profile.starts"))}
+            ${statCard(stats.dnf, t("profile.dnf"))}
+            ${statCard(stats.starts > 0 ? (stats.totalPoints / stats.starts).toFixed(1) : "—", t("profile.avg_pts"))}
         </div>
 
         ${teammate && teammateStats ? `
@@ -1288,6 +1423,7 @@ function openDriverProfile(driverName) {
                     ${compareRow(t("stats.radar_podiums"),   stats.podiums,     teammateStats.podiums)}
                     ${compareRow(t("stats.radar_poles"),     stats.poles,       teammateStats.poles)}
                     ${compareRow(t("profile.best_finish"),   stats.bestFinish, teammateStats.bestFinish, false)}
+                    ${compareRow(t("profile.dnf"),           stats.dnf,        teammateStats.dnf, false)}
                 </div>
             </div>
         ` : ""}
@@ -1685,6 +1821,9 @@ function renderStats() {
     emptyEl.style.display = "none";
     contentEl.style.display = "";
 
+    // 📋 Résumé de la saison en tête
+    renderSeasonSummary();
+
     const textColor   = getComputedStyle(document.documentElement).getPropertyValue("--text").trim()   || "#eee";
     const mutedColor  = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()  || "#888";
     const borderColor = getComputedStyle(document.documentElement).getPropertyValue("--border").trim() || "#333";
@@ -2014,6 +2153,50 @@ function renderStats() {
             });
         }
     }
+
+    // ── Charts 4 & 5 : donuts victoires / podiums ──
+    const agg = computeSeasonAggregates();
+    const driverTeamColor = (name) => teamColors[(drivers.find(d => d.driver === name) || {}).team] || "#888";
+
+    const doughnutOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "58%",
+        animation: { duration: 700 },
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 8, usePointStyle: true, pointStyle: "circle" }
+            },
+            tooltip: commonOpts.plugins.tooltip
+        }
+    };
+
+    const makeDoughnut = (canvasId, counts, existing) => {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return existing;
+        if (existing) existing.destroy();
+        const data = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        if (data.length === 0) { ctx.parentElement.parentElement.style.display = "none"; return null; }
+        ctx.parentElement.parentElement.style.display = "";
+        return new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: data.map(x => x[0]),
+                datasets: [{
+                    data: data.map(x => x[1]),
+                    backgroundColor: data.map(x => driverTeamColor(x[0])),
+                    borderColor: "#0a0a0a",
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: doughnutOpts
+        });
+    };
+
+    chartWins    = makeDoughnut("chart-wins", agg.wins, chartWins);
+    chartPodiums = makeDoughnut("chart-podiums", agg.podiums, chartPodiums);
 }
 
 function renderSprintView() {
