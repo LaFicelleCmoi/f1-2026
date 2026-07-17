@@ -5,20 +5,25 @@
 //   - Static (JS/CSS/icons) : stale-while-revalidate
 //   - APIs externes (Firebase, Jolpica, OpenF1, TheSportsDB) : passthrough
 // ============================================================
-const VERSION = "f1-2026-v18";
+const VERSION = "f1-2026-v19";
 const STATIC_CACHE  = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const HTML_CACHE    = `${VERSION}-html`;
 
+// Précache : uniquement le shell. Les JS/CSS sont désormais référencés avec
+// ?v=N dans le HTML (cache-busting) — le cache runtime (stale-while-revalidate)
+// les stocke sous leur URL versionnée au premier chargement, et un changement
+// de version force automatiquement un fetch réseau. Fini les vieux JS servis.
+const ASSET_V = "19"; // garder aligné avec ?v= dans index.html / legal.html
 const PRECACHE = [
     "./",
     "./index.html",
     "./legal.html",
-    "./style.css",
-    "./data.js",
-    "./i18n.js",
-    "./app.js",
-    "./anti-inspect.js",
+    `./style.css?v=${ASSET_V}`,
+    `./data.js?v=${ASSET_V}`,
+    `./i18n.js?v=${ASSET_V}`,
+    `./app.js?v=${ASSET_V}`,
+    `./anti-inspect.js?v=${ASSET_V}`,
     "./manifest.json",
     "./icons/icon.svg"
 ];
