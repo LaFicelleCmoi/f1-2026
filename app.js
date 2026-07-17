@@ -324,6 +324,10 @@ db.ref('f1_results_2026').on('value', snapshot => {
         db.ref('f1_results_2026').set(toSave);
     }
 
+    // 🕐 Horaires ESPN (heure de Paris) : ré-appliqués APRÈS le merge Firebase
+    // pour que la surveillance ESPN reste autoritaire sur les horaires.
+    if (Object.keys(espnScheduleMap).length > 0) applyEspnSchedule();
+
     renderAllRaces();
     renderStandings();
     renderTimeline();
@@ -2296,6 +2300,7 @@ function openModal(index) {
             case "info": return `
                 <div class="modal-tab-pane">
                     <div class="modal-section-title">${t("modal.schedule_title")}${isAdmin ? ` <span style="color:var(--red);font-size:0.75rem;font-weight:normal;">${t("modal.schedule_edit_hint")}</span>` : ''}</div>
+                    ${race._espnTimes ? `<div class="paris-time-badge" title="${t("modal.paris_time_title")}">🇫🇷 ${t("modal.paris_time")}</div>` : ""}
                     <div class="schedule-grid">${scheduleHTML}</div>
                     ${isAdmin ? `<button onclick="saveSchedule(${index})" class="modal-save-btn">${t("admin.save_schedule")}</button>` : ""}
                 </div>`;
@@ -3448,6 +3453,113 @@ async function loadCircuitInfo(race) {
     `;
 }
 
+// ============================================================
+// 🕐 SURVEILLANCE HORAIRES ESPN — heure de Paris
+// ============================================================
+// ESPN donne l'heure UTC de chaque session. On convertit en
+// Europe/Paris (DST automatique via Intl) et on applique aux
+// plannings. Re-vérifié toutes les 6h. ESPN est autoritaire :
+// ré-appliqué après chaque chargement Firebase.
+
+// Map type de session ESPN → nom d'entrée du planning local
+const espnSessionNameMap = {
+    "FP1":  "Essais Libres 1",
+    "FP2":  "Essais Libres 2",
+    "FP3":  "Essais Libres 3",
+    "SS":   "Qualifications Sprint",
+    "SR":   "Sprint",
+    "Qual": "Qualifications",
+    "Race": "Course"
+};
+
+// { round: [ {name, day, time} ] } — construit depuis ESPN
+let espnScheduleMap = {};
+
+// Convertit un ISO UTC en {day: "Dimanche", time: "15:00"} heure de Paris
+function parisDayTime(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return null;
+    try {
+        const fmt = new Intl.DateTimeFormat("fr-FR", {
+            timeZone: "Europe/Paris",
+            weekday: "long", hour: "2-digit", minute: "2-digit", hour12: false
+        });
+        const parts = fmt.formatToParts(d);
+        const get = (type) => (parts.find(p => p.type === type) || {}).value || "";
+        let day = get("weekday");
+        day = day.charAt(0).toUpperCase() + day.slice(1);
+        return { day, time: `${get("hour")}:${get("minute")}` };
+    } catch (e) {
+        return null;
+    }
+}
+
+// Construit la map d'horaires Paris depuis le calendrier ESPN
+async function buildEspnScheduleMap() {
+    const events = await fetchEspnSeason();
+    const map = {};
+    races.forEach(race => {
+        if (race.cancelled) return;
+        const ev = findEspnEventForRace(race, events);
+        if (!ev) return;
+        const sessions = [];
+        (ev.competitions || []).forEach(comp => {
+            const abbr = comp.type?.abbreviation || "";
+            const localName = espnSessionNameMap[abbr];
+            if (!localName || !comp.date) return;
+            const pt = parisDayTime(comp.date);
+            if (!pt) return;
+            sessions.push({ name: localName, day: pt.day, time: pt.time });
+        });
+        if (sessions.length > 0) map[race.round] = sessions;
+    });
+    return map;
+}
+
+// Applique la map ESPN aux plannings en mémoire. Renvoie le nb de changements.
+function applyEspnSchedule() {
+    let changed = 0;
+    Object.keys(espnScheduleMap).forEach(roundStr => {
+        const round = parseInt(roundStr);
+        const race = races.find(r => r.round === round);
+        if (!race || !race.schedule) return;
+        espnScheduleMap[round].forEach(s => {
+            // Match par nom EXACT ("Qualifications" ≠ "Qualifications Sprint")
+            const entry = race.schedule.find(e => e.name === s.name);
+            if (!entry) return;
+            if (entry.time !== s.time || entry.day !== s.day) {
+                entry.time = s.time;
+                entry.day  = s.day;
+                changed++;
+            }
+            race._espnTimes = true;
+        });
+    });
+    return changed;
+}
+
+// Lance la surveillance : fetch initial + re-check toutes les 6h
+async function startEspnScheduleWatch() {
+    const run = async () => {
+        try {
+            espnScheduleMap = await buildEspnScheduleMap();
+            const changed = applyEspnSchedule();
+            if (changed > 0) {
+                console.log(`[ESPN horaires] ${changed} horaire(s) mis à jour (heure de Paris)`);
+                updateCountdown();
+                renderAllRaces();
+                renderTimeline();
+            } else {
+                console.log("[ESPN horaires] plannings à jour");
+            }
+        } catch (e) {
+            console.warn("[ESPN horaires] surveillance échouée:", e.message);
+        }
+    };
+    await run();
+    setInterval(run, 6 * 60 * 60 * 1000); // re-check toutes les 6h
+}
+
 // Bouton import : remplit le formulaire admin avec les données ESPN
 async function autoImportResults() {
     if (adminCurrentRace === null) return;
@@ -4118,6 +4230,9 @@ window.onload = function () {
 
     // Preload TheSportsDB images
     preloadSportsDbImages();
+
+    // 🕐 Surveillance des horaires ESPN (heure de Paris), re-check toutes les 6h
+    startEspnScheduleWatch();
 
     // PWA Service Worker
     if ("serviceWorker" in navigator) {

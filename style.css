@@ -4314,3 +4314,19 @@ tr.clickable:hover { background: var(--card2); }
 .full-results-table tr.result-row-dsq td:not(.pos-medal) {
     opacity: 0.72;
 }
+
+/* 🕐 Badge "Heure de Paris" (onglet Programme) */
+.paris-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(0, 85, 164, 0.15);
+    border: 1px solid rgba(0, 85, 164, 0.45);
+    color: var(--text);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    margin-bottom: 0.8rem;
+}
