@@ -3445,41 +3445,55 @@ async function fetchEspnSeason() {
     return espnSeasonCache;
 }
 
-// Mots-clés pays (FR) → fragments présents dans le nom ESPN
-const espnCountryKw = {
-    "Australie": ["austral"], "Chine": ["chinese"], "Japon": ["japan"],
-    "Bahreïn": ["bahrain"], "Arabie Saoudite": ["saudi"],
-    "États-Unis": ["united states", "miami", "vegas", "austin"],
-    "Canada": ["canad"], "Monaco": ["monaco"],
-    "Espagne": ["spanish", "barcelona", "catalu", "madrid"],
-    "Autriche": ["austrian"], "Royaume-Uni": ["british"], "Belgique": ["belgian"],
-    "Hongrie": ["hungarian"], "Pays-Bas": ["dutch"], "Italie": ["italian"],
-    "Azerbaïdjan": ["azerbaijan"], "Singapour": ["singapore"],
-    "Mexique": ["mexico", "mexican"], "Brésil": ["brazil", "paulo", "brazilian"],
-    "Qatar": ["qatar"], "Émirats Arabes Unis": ["abu dhabi"]
+// Pays local (FR) → pays du circuit ESPN (circuit.address.country).
+// ⚠️ On matche sur le PAYS DU CIRCUIT, pas sur le nom de l'événement :
+// les noms ESPN contiennent des sponsors ("Qatar Airways Australian GP")
+// qui provoquaient de faux positifs (le GP du Qatar récupérait l'Australie).
+const espnCountryMap = {
+    "Australie": "australia", "Chine": "china", "Japon": "japan",
+    "Bahreïn": "bahrain", "Arabie Saoudite": "saudi arabia",
+    "États-Unis": "usa", "Canada": "canada", "Monaco": "monaco",
+    "Espagne": "spain", "Autriche": "austria", "Royaume-Uni": "britain",
+    "Belgique": "belgium", "Hongrie": "hungary", "Pays-Bas": "netherlands",
+    "Italie": "italy", "Azerbaïdjan": "azerbaijan", "Singapour": "singapore",
+    "Mexique": "mexico", "Brésil": "brazil", "Qatar": "qatar",
+    "Émirats Arabes Unis": "united arab emirates"
 };
-// Mots-clés ville (pour départager les pays à plusieurs GP)
+// Indices pour départager les pays à plusieurs GP (USA ×3, Espagne ×2)
 const espnCityKw = {
     "Miami Gardens": ["miami"], "Austin": ["united states", "austin"],
     "Las Vegas": ["vegas"], "Barcelone": ["barcelona", "catalu"],
     "Madrid": ["spanish", "madrid"]
 };
 
-// Trouve l'événement ESPN correspondant à une course locale
+// Trouve l'événement ESPN correspondant à une course locale.
+// Le pays du circuit DOIT correspondre (score minimum 10) — cela élimine
+// toute collision liée aux noms de sponsors.
 function findEspnEventForRace(race, events) {
+    const wantCountry = espnCountryMap[race.country];
+    if (!wantCountry) return null;
+    const localCity = (race.city || "").toLowerCase();
+
     let best = null, bestScore = 0;
     for (const ev of events) {
-        const name = (ev.shortName || ev.name || "").toLowerCase();
-        let score = 0;
-        for (const kw of (espnCountryKw[race.country] || [])) {
-            if (name.includes(kw)) score += 2;
-        }
+        const addr      = ev.circuit?.address || {};
+        const evCountry = (addr.country || "").toLowerCase();
+        const evCity    = (addr.city || "").toLowerCase();
+        const name      = (ev.shortName || ev.name || "").toLowerCase();
+
+        // 1) Le pays du circuit doit matcher — condition obligatoire
+        if (evCountry !== wantCountry) continue;
+        let score = 10;
+
+        // 2) Départage pour les pays à plusieurs GP
         for (const kw of (espnCityKw[race.city] || [])) {
-            if (name.includes(kw)) score += 4;
+            if (name.includes(kw) || evCity.includes(kw)) score += 6;
         }
+        if (localCity && evCity && (evCity.includes(localCity) || localCity.includes(evCity))) score += 6;
+
         if (score > bestScore) { bestScore = score; best = ev; }
     }
-    return bestScore >= 2 ? best : null;
+    return bestScore >= 10 ? best : null;
 }
 
 // Résout un nom complet ESPN ("Kimi Antonelli") vers la liste locale
@@ -3924,6 +3938,27 @@ async function syncAllFromEspn() {
         })());
         skipped = races.length - toSync.length;
 
+        // 🧹 AUTO-NETTOYAGE CHIRURGICAL : une course qui possède des RÉSULTATS
+        // DE COURSE alors qu'ESPN n'a aucun vainqueur = données erronées
+        // (ex. le GP du Qatar qui avait hérité des résultats d'Australie à
+        // cause d'une collision de nom de sponsor).
+        // ⚠️ On n'efface QUE les résultats de course. Les qualifs / essais /
+        // sprint d'un week-end en cours sont légitimes et sont conservés, et
+        // on ne touche jamais à une course marquée "live".
+        let cleaned = 0;
+        races.forEach(race => {
+            if (race.cancelled) return;
+            if (toSync.includes(race)) return;
+            const rs = race.raceStatus || race.status || "upcoming";
+            if (rs === "live") return;                       // week-end en cours : on ne touche à rien
+            if (!(race.result?.fullResults?.length > 0)) return; // pas de faux résultats de course
+            console.warn(`[Sync ESPN] Nettoyage de "${race.name}" : ESPN ne donne aucun vainqueur pour cette course.`);
+            race.result     = null;
+            race.raceStatus = "upcoming";
+            race.status     = "upcoming";
+            cleaned++;
+        });
+
         let done = 0;
         for (const race of toSync) {
             done++;
@@ -3981,7 +4016,7 @@ async function syncAllFromEspn() {
         updateStats();
         renderAdminRaceList();
 
-        alert(`✅ Synchronisation ESPN terminée !\n\n${synced} course(s) importée(s)\n${skipped} ignorée(s) (à venir / annulées)`);
+        alert(`✅ Synchronisation ESPN terminée !\n\n${synced} course(s) importée(s)\n${skipped} ignorée(s) (à venir / annulées)${cleaned > 0 ? `\n🧹 ${cleaned} course(s) nettoyée(s) (données erronées supprimées)` : ""}`);
     } catch (e) {
         console.error("Sync ESPN error:", e);
         alert("⚠️ Erreur pendant la synchronisation : " + e.message);
