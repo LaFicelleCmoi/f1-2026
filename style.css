@@ -4473,3 +4473,177 @@ tr.clickable:hover { background: var(--card2); }
     .season-lead-name { font-size: 1rem; }
     .season-lead-pts { font-size: 1.15rem; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   ✨ VISUAL POLISH PACK — typographie F1, micro-interactions,
+   effets racing. Purement additif : n'altère aucune règle
+   existante, s'appuie sur les variables des deux thèmes.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+    --font-display: 'Titillium Web', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Typographie display (chargée via Google Fonts, fallback propre) ── */
+.f1-logo, .season-title, .nav-tab,
+.section-header h2, .standings-block h3,
+.race-name, .race-round,
+.sg-digit, .sg-session, .sg-gp, .sg-label,
+.podium-driver-name, .podium-position,
+.next-gp-btn, .lang-toggle {
+    font-family: var(--font-display);
+}
+
+/* ── Sélection & scrollbar aux couleurs F1 ── */
+::selection { background: var(--red); color: #fff; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--darker); }
+::-webkit-scrollbar-thumb {
+    background: var(--card2);
+    border-radius: 8px;
+    border: 2px solid var(--darker);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+/* ── Header : balayage lumineux sur la ligne rouge ── */
+header::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -3px;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
+    background-size: 30% 100%;
+    background-repeat: no-repeat;
+    animation: headerSweep 5s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes headerSweep {
+    0%, 100% { background-position: -30% 0; }
+    50%      { background-position: 130% 0; }
+}
+
+/* ── Titres de section : barre rouge inclinée façon F1 ── */
+.section-header h2 {
+    position: relative;
+    display: inline-block;
+    padding-left: 1rem;
+}
+.section-header h2::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.18em;
+    width: 5px; height: 0.9em;
+    background: linear-gradient(180deg, var(--red), #ff4444);
+    transform: skewX(-12deg);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(225,6,0,0.5);
+}
+
+/* ── Onglets nav : lueur sous l'onglet actif ── */
+.nav-tab { position: relative; }
+.nav-tab.active {
+    text-shadow: 0 0 18px rgba(225,6,0,0.55);
+}
+.nav-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 20%; right: 20%; bottom: -1px;
+    height: 8px;
+    background: radial-gradient(ellipse at center, rgba(225,6,0,0.5), transparent 70%);
+    pointer-events: none;
+}
+
+/* ── Cartes de course : reflet balayé au survol + entrée animée ── */
+.race-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -80%;
+    width: 60%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.07), transparent);
+    transform: skewX(-18deg);
+    z-index: 2;
+    pointer-events: none;
+    transition: left 0.6s ease;
+}
+.race-card:hover::before { left: 120%; }
+.race-card:hover {
+    box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 24px rgba(225,6,0,0.12);
+}
+
+@keyframes cardEnter {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.races-grid .race-card { animation: cardEnter 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.races-grid .race-card:nth-child(1)  { animation-delay: 0.02s; }
+.races-grid .race-card:nth-child(2)  { animation-delay: 0.06s; }
+.races-grid .race-card:nth-child(3)  { animation-delay: 0.10s; }
+.races-grid .race-card:nth-child(4)  { animation-delay: 0.14s; }
+.races-grid .race-card:nth-child(5)  { animation-delay: 0.18s; }
+.races-grid .race-card:nth-child(6)  { animation-delay: 0.22s; }
+.races-grid .race-card:nth-child(7)  { animation-delay: 0.26s; }
+.races-grid .race-card:nth-child(8)  { animation-delay: 0.30s; }
+.races-grid .race-card:nth-child(n+9) { animation-delay: 0.34s; }
+/* Préserver le glow permanent de la prochaine course et le flash de ciblage */
+.races-grid .race-card-next {
+    animation: cardEnter 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both,
+               nextCardGlow 2s ease-in-out 0.5s infinite;
+}
+.races-grid .race-card.race-card-flash { animation: cardFlash 1.1s ease-in-out 2; }
+
+/* ── Podium : couronne flottante + reflet sur les piliers ── */
+@keyframes crownFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+}
+.podium-crown { animation: crownFloat 2.4s ease-in-out infinite; display: inline-block; }
+
+.podium-pillar { position: relative; overflow: hidden; }
+.podium-pillar::after {
+    content: "";
+    position: absolute;
+    top: -60%; left: -70%;
+    width: 50%; height: 220%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.10), transparent);
+    transform: skewX(-18deg);
+    animation: pillarShine 3.5s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes pillarShine {
+    0%, 60% { left: -70%; }
+    100%    { left: 170%; }
+}
+
+/* ── Classements : survol de ligne plus vivant ── */
+.standings-table tbody tr { transition: transform 0.18s ease, background 0.18s ease; }
+.standings-table tbody tr:hover { transform: translateX(4px); }
+
+/* ── Boutons : effet d'appui + survol raffiné ── */
+.filter-btn, .next-gp-btn, .lang-toggle, .theme-toggle, .nav-tab {
+    -webkit-tap-highlight-color: transparent;
+}
+.filter-btn:active, .next-gp-btn:active, .lang-toggle:active, .theme-toggle:active {
+    transform: scale(0.94);
+}
+.filter-btn { transition: all 0.18s ease; }
+.filter-btn:hover { transform: translateY(-1px); }
+
+/* ── Modale : flou d'arrière-plan cinématique ── */
+.modal-overlay { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+/* ── Thème : transition douce clair/sombre ── */
+body, header, nav, .race-card, .modal, .standings-table {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Accessibilité : respecter la préférence reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .races-grid .race-card,
+    .races-grid .race-card-next,
+    .podium-crown,
+    .podium-pillar::after,
+    header::after {
+        animation: none !important;
+    }
+    .race-card::before { display: none; }
+}
