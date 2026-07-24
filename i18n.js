@@ -13,6 +13,8 @@ const translations = {
         "header.stat_total": "Total",
         "header.lang_btn": "EN",
         "header.lang_title": "Switch to English",
+        "header.next_gp": "⏱️ Prochain GP",
+        "header.next_gp_title": "Aller au prochain Grand Prix",
 
         // Page title / meta
         "meta.title": "F1 2026 — Suivi de Saison",
@@ -415,6 +417,8 @@ const translations = {
         "header.stat_total": "Total",
         "header.lang_btn": "FR",
         "header.lang_title": "Passer en français",
+        "header.next_gp": "⏱️ Next GP",
+        "header.next_gp_title": "Go to the next Grand Prix",
 
         // Page title / meta
         "meta.title": "F1 2026 — Season Tracker",
