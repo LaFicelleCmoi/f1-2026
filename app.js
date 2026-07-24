@@ -529,7 +529,7 @@ function renderAllRaces() {
         const cardBgImg = cardImages?.thumb || cardImages?.poster || null;
 
         html += `
-            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" onclick="openModal(${index})"${cardBgImg ? ` data-bg="${cardBgImg}"` : ''}>
+            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" id="race-card-${index}" onclick="openModal(${index})"${cardBgImg ? ` data-bg="${cardBgImg}"` : ''}>
                 ${cardBgImg ? `<div class="race-card-bg" style="background-image:url('${cardBgImg}')"></div>` : ''}
                 <div class="race-card-header">
                     <span class="race-round">R${race.round}</span>
@@ -2725,6 +2725,39 @@ function switchView(view) {
     // Re-déclencher animation classements à chaque visite de l'onglet
     if (view === "standings") setTimeout(animateStandings, 80);
     if (view === "stats") setTimeout(renderStats, 80);
+}
+
+// --------------------------------------------------------
+// 🎯 Aller au prochain Grand Prix (onglet Courses)
+// --------------------------------------------------------
+function goToNextRace() {
+    const next = getNextSession();
+    const race = next.race;
+    switchView("races");
+
+    // Saison terminée : pas de prochain GP → on reste en haut de l'onglet Courses
+    if (!race) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+    }
+
+    // Réinitialiser les filtres pour garantir que la carte du prochain GP est visible
+    activeFilters = { status: "all", type: "all", continent: "all", search: "" };
+    document.querySelectorAll("#filter-status .filter-btn, #filter-type .filter-btn, #filter-continent .filter-btn")
+        .forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
+    const searchInput = document.getElementById("filter-search");
+    if (searchInput) searchInput.value = "";
+    renderAllRaces();
+
+    // Cibler la carte, la centrer et la faire clignoter brièvement
+    const index = races.indexOf(race);
+    setTimeout(() => {
+        const card = document.getElementById("race-card-" + index);
+        if (!card) return;
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.add("race-card-flash");
+        setTimeout(() => card.classList.remove("race-card-flash"), 2200);
+    }, 120);
 }
 
 // --------------------------------------------------------
