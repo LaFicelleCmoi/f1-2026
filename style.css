@@ -130,6 +130,34 @@ header {
     color: var(--red);
 }
 
+.next-gp-btn {
+    background: var(--red);
+    border: 1px solid var(--red);
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    transition: all 0.2s;
+    line-height: 1;
+}
+.next-gp-btn:hover {
+    filter: brightness(1.12);
+    box-shadow: 0 0 14px rgba(229,0,0,0.4);
+}
+
+/* Flash temporaire de la carte ciblée par le bouton "Prochain GP" */
+.race-card-flash {
+    animation: cardFlash 1.1s ease-in-out 2;
+}
+@keyframes cardFlash {
+    0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    50%      { box-shadow: 0 0 0 3px var(--red), 0 0 40px rgba(229,0,0,0.5); }
+}
+
 .stats-bar {
     display: flex;
     gap: 1.5rem;
