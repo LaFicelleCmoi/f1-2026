@@ -3591,6 +3591,34 @@ async function enrichRowsWithStatus(rows, eventId, competitionId) {
     return rows;
 }
 
+// Enrichit des lignes d'essais libres avec le meilleur tour, l'écart et le
+// nombre de tours via l'API core ESPN (1 requête stats par pilote, comme
+// enrichRowsWithStatus). Modifie les lignes en place.
+async function enrichRowsWithTimes(rows, eventId, competitionId) {
+    if (!rows || rows.length === 0 || !eventId || !competitionId) return rows;
+    const base = `${ESPN_CORE}/events/${eventId}/competitions/${competitionId}/competitors`;
+    await Promise.all(rows.map(async (row) => {
+        if (!row._espnId) return;
+        try {
+            const res = await fetch(`${base}/${row._espnId}/statistics?lang=en`);
+            if (!res.ok) return;
+            const st = await res.json();
+            const stats = {};
+            (st?.splits?.categories || []).forEach(cat =>
+                (cat.stats || []).forEach(s => { stats[s.name] = s.displayValue; })
+            );
+            // totalTime = meilleur tour du pilote sur la session
+            if (stats.totalTime && stats.totalTime !== "0.000") row.time = stats.totalTime;
+            // behindTime = écart au leader (vide / 0 pour le P1)
+            if (stats.behindTime && row.pos > 1) row.gap = stats.behindTime;
+            const laps = parseInt(stats.lapsCompleted);
+            if (!isNaN(laps) && laps > 0) row.laps = laps;
+        } catch (e) { /* temps indispo : on laisse la ligne telle quelle */ }
+    }));
+    rows.forEach(r => { delete r._espnId; });
+    return rows;
+}
+
 // Récupère toutes les sessions d'un événement ESPN
 function getEspnSession(ev, abbr) {
     return (ev.competitions || []).find(c => (c.type?.abbreviation || "") === abbr) || null;
@@ -3913,6 +3941,7 @@ async function autoImportResults() {
         if (fp1Sess) {
             const fp1Data = extractEspnSession(fp1Sess, "fp");
             if (fp1Data.length > 0) {
+                await enrichRowsWithTimes(fp1Data, ev.id, fp1Sess.id);
                 race.fp1Results = fp1Data;
                 importedAny = true;
             }
@@ -3922,6 +3951,7 @@ async function autoImportResults() {
             if (fp2Sess) {
                 const fp2Data = extractEspnSession(fp2Sess, "fp");
                 if (fp2Data.length > 0) {
+                    await enrichRowsWithTimes(fp2Data, ev.id, fp2Sess.id);
                     race.fp2Results = fp2Data;
                     importedAny = true;
                 }
@@ -3930,6 +3960,7 @@ async function autoImportResults() {
             if (fp3Sess) {
                 const fp3Data = extractEspnSession(fp3Sess, "fp");
                 if (fp3Data.length > 0) {
+                    await enrichRowsWithTimes(fp3Data, ev.id, fp3Sess.id);
                     race.fp3Results = fp3Data;
                     importedAny = true;
                 }
@@ -4054,16 +4085,25 @@ async function syncAllFromEspn() {
             // FP1 (tous les week-ends) + FP2/FP3 (week-ends standards uniquement)
             const fp1Sess = getEspnSession(ev, "FP1");
             const fp1Data = fp1Sess ? extractEspnSession(fp1Sess, "fp") : [];
-            if (fp1Data.length > 0) race.fp1Results = fp1Data;
+            if (fp1Data.length > 0) {
+                await enrichRowsWithTimes(fp1Data, ev.id, fp1Sess.id);
+                race.fp1Results = fp1Data;
+            }
 
             if (!race.sprint) {
                 const fp2Sess = getEspnSession(ev, "FP2");
                 const fp2Data = fp2Sess ? extractEspnSession(fp2Sess, "fp") : [];
-                if (fp2Data.length > 0) race.fp2Results = fp2Data;
+                if (fp2Data.length > 0) {
+                    await enrichRowsWithTimes(fp2Data, ev.id, fp2Sess.id);
+                    race.fp2Results = fp2Data;
+                }
 
                 const fp3Sess = getEspnSession(ev, "FP3");
                 const fp3Data = fp3Sess ? extractEspnSession(fp3Sess, "fp") : [];
-                if (fp3Data.length > 0) race.fp3Results = fp3Data;
+                if (fp3Data.length > 0) {
+                    await enrichRowsWithTimes(fp3Data, ev.id, fp3Sess.id);
+                    race.fp3Results = fp3Data;
+                }
             }
 
             synced++;
