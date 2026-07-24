@@ -4591,22 +4591,45 @@ header::after {
 }
 .races-grid .race-card.race-card-flash { animation: cardFlash 1.1s ease-in-out 2; }
 
-/* ── Podium : reflet sur les piliers ──
-   (la couronne flottante existe déjà plus haut : .podium-crown + crownFloat) */
-.podium-pillar { position: relative; overflow: hidden; }
-.podium-pillar::after {
-    content: "";
-    position: absolute;
-    top: -60%; left: -70%;
-    width: 50%; height: 220%;
-    background: linear-gradient(100deg, transparent, rgba(255,255,255,0.10), transparent);
-    transform: skewX(-18deg);
-    animation: pillarShine 3.5s ease-in-out infinite;
-    pointer-events: none;
+/* ── Podium : chiffres métalliques bien lisibles + accent équipe ──
+   NB : ne PAS redéfinir .podium-pillar::before/::after ici — ces
+   pseudo-éléments sont les lignes de vitesse du design d'origine. */
+.podium-pillar-num { font-family: var(--font-display); }
+
+.podium-p1 .podium-pillar-num {
+    font-size: 3rem;
+    opacity: 0.95;
+    background: linear-gradient(180deg, #fff6c8 0%, var(--gold) 48%, #8a6d00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 14px rgba(255,215,0,0.45));
 }
-@keyframes pillarShine {
-    0%, 60% { left: -70%; }
-    100%    { left: 170%; }
+.podium-p2 .podium-pillar-num {
+    font-size: 2.2rem;
+    opacity: 0.9;
+    background: linear-gradient(180deg, #ffffff 0%, var(--silver) 48%, #63636e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 10px rgba(192,192,192,0.35));
+}
+.podium-p3 .podium-pillar-num {
+    font-size: 2.2rem;
+    opacity: 0.9;
+    background: linear-gradient(180deg, #ffd9ac 0%, var(--bronze) 48%, #6e4218 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 10px rgba(205,127,50,0.35));
+}
+
+/* Liseré couleur équipe au pied du pilier (rappelle la barre du haut) */
+.podium-pillar {
+    box-shadow: inset 0 -16px 26px -20px var(--team-color);
 }
 
 /* ── Classements : survol de ligne plus vivant ── */
@@ -4636,7 +4659,13 @@ body, header, nav, .race-card, .modal, .standings-table {
     .races-grid .race-card,
     .races-grid .race-card-next,
     .podium-crown,
+    .podium-pillar::before,
     .podium-pillar::after,
+    .podium-pillar-num::before,
+    .podium-pillar-num::after,
+    .podium-p1::before,
+    .podium-p2::before,
+    .podium-p3::before,
     header::after {
         animation: none !important;
     }
