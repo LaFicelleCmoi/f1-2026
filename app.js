@@ -3906,13 +3906,33 @@ async function autoImportResults() {
             }
         }
 
-        // 4. Essais Libres FP1 (ESPN n'expose que FP1 de façon fiable)
+        // 4. Essais Libres — FP1 (tous les week-ends), FP2/FP3 (week-ends
+        //    standards uniquement : ESPN ne les expose pas sur les week-ends
+        //    sprint, qui ne comptent qu'un seul essai libre).
         const fp1Sess = getEspnSession(ev, "FP1");
         if (fp1Sess) {
             const fp1Data = extractEspnSession(fp1Sess, "fp");
             if (fp1Data.length > 0) {
                 race.fp1Results = fp1Data;
                 importedAny = true;
+            }
+        }
+        if (!race.sprint) {
+            const fp2Sess = getEspnSession(ev, "FP2");
+            if (fp2Sess) {
+                const fp2Data = extractEspnSession(fp2Sess, "fp");
+                if (fp2Data.length > 0) {
+                    race.fp2Results = fp2Data;
+                    importedAny = true;
+                }
+            }
+            const fp3Sess = getEspnSession(ev, "FP3");
+            if (fp3Sess) {
+                const fp3Data = extractEspnSession(fp3Sess, "fp");
+                if (fp3Data.length > 0) {
+                    race.fp3Results = fp3Data;
+                    importedAny = true;
+                }
             }
         }
 
@@ -4031,10 +4051,20 @@ async function syncAllFromEspn() {
                 const ssData = ssSess ? extractEspnSession(ssSess, "sprintQuali") : [];
                 if (ssData.length > 0) race.sprintQualiResults = ssData;
             }
-            // FP1
+            // FP1 (tous les week-ends) + FP2/FP3 (week-ends standards uniquement)
             const fp1Sess = getEspnSession(ev, "FP1");
             const fp1Data = fp1Sess ? extractEspnSession(fp1Sess, "fp") : [];
             if (fp1Data.length > 0) race.fp1Results = fp1Data;
+
+            if (!race.sprint) {
+                const fp2Sess = getEspnSession(ev, "FP2");
+                const fp2Data = fp2Sess ? extractEspnSession(fp2Sess, "fp") : [];
+                if (fp2Data.length > 0) race.fp2Results = fp2Data;
+
+                const fp3Sess = getEspnSession(ev, "FP3");
+                const fp3Data = fp3Sess ? extractEspnSession(fp3Sess, "fp") : [];
+                if (fp3Data.length > 0) race.fp3Results = fp3Data;
+            }
 
             synced++;
         }
