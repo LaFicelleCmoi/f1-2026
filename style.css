@@ -4553,8 +4553,10 @@ header::after {
     pointer-events: none;
 }
 
-/* ── Cartes de course : reflet balayé au survol + entrée animée ── */
-.race-card::before {
+/* ── Cartes de course : reflet balayé au survol + entrée animée ──
+   ⚠️ Le ::before est déjà pris sur les cartes live (badge 🔴 LIVE) et
+   nouveau circuit (ruban ★) — le reflet est réservé aux autres cartes. */
+.race-card:not(.live):not(.race-status-live):not(.race-card-new)::before {
     content: "";
     position: absolute;
     top: 0; left: -80%;
@@ -4565,7 +4567,7 @@ header::after {
     pointer-events: none;
     transition: left 0.6s ease;
 }
-.race-card:hover::before { left: 120%; }
+.race-card:not(.live):not(.race-status-live):not(.race-card-new):hover::before { left: 120%; }
 .race-card:hover {
     box-shadow: 0 12px 36px rgba(0,0,0,0.45), 0 0 24px rgba(225,6,0,0.12);
 }
@@ -4669,5 +4671,6 @@ body, header, nav, .race-card, .modal, .standings-table {
     header::after {
         animation: none !important;
     }
-    .race-card::before { display: none; }
+    /* ne masquer que le reflet — pas le badge LIVE ni le ruban ★ */
+    .race-card:not(.live):not(.race-status-live):not(.race-card-new)::before { display: none; }
 }
