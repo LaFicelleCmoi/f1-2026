@@ -4591,13 +4591,8 @@ header::after {
 }
 .races-grid .race-card.race-card-flash { animation: cardFlash 1.1s ease-in-out 2; }
 
-/* ── Podium : couronne flottante + reflet sur les piliers ── */
-@keyframes crownFloat {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-4px); }
-}
-.podium-crown { animation: crownFloat 2.4s ease-in-out infinite; display: inline-block; }
-
+/* ── Podium : reflet sur les piliers ──
+   (la couronne flottante existe déjà plus haut : .podium-crown + crownFloat) */
 .podium-pillar { position: relative; overflow: hidden; }
 .podium-pillar::after {
     content: "";
