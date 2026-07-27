@@ -205,6 +205,7 @@ function updateCountdown() {
 let isAdmin = false;
 let adminCurrentRace = null;
 let activeFilters = { status: "all", type: "all", continent: "all", search: "" };
+let autoSyncDone = false; // garde-fou : une seule auto-sync ESPN par chargement de page
 
 // ============================================================
 // 🔐 FIREBASE AUTH
@@ -220,6 +221,15 @@ auth.onAuthStateChanged(user => {
             btnToggle.style.color = "var(--red)";
         }
         renderAdminRaceList();
+        // 🔄 Auto-sync ESPN : dès qu'un admin est connecté (au chargement si la
+        // session persiste, ou juste après login), on remplit automatiquement
+        // Firebase depuis ESPN. Une seule fois par page. Silencieux (pas de
+        // pop-up). Léger délai pour laisser charger le 1er snapshot Firebase
+        // et les horaires ESPN. Les visiteurs anonymes ne déclenchent rien.
+        if (!autoSyncDone) {
+            autoSyncDone = true;
+            setTimeout(() => { syncAllFromEspn(true).catch(e => console.error("[Auto-sync ESPN]", e)); }, 1500);
+        }
     } else {
         if (adminTab) adminTab.style.display = "none";
         if (btnToggle) {
@@ -4004,11 +4014,14 @@ async function autoImportResults() {
 // ============================================================
 // ⚡ SYNC TOUTE LA SAISON depuis ESPN (1 clic)
 // ============================================================
-async function syncAllFromEspn() {
-    if (!isAdmin) { alert("⛔ Réservé admin."); return; }
-    if (!confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va remplir automatiquement tous les résultats des courses terminées (course, qualifs, sprint) et sauvegarder dans Firebase.\n\nLes courses annulées (Bahreïn, Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
+async function syncAllFromEspn(auto = false) {
+    if (!isAdmin) { if (!auto) alert("⛔ Réservé admin."); return; }
+    // En mode auto (déclenché au chargement pour l'admin) : aucune boîte de
+    // dialogue, aucun alert bloquant — tout passe par la console.
+    if (!auto && !confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va remplir automatiquement tous les résultats des courses terminées (course, qualifs, sprint) et sauvegarder dans Firebase.\n\nLes courses annulées (Bahreïn, Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
+    if (auto) console.log("[Auto-sync ESPN] Démarrage (admin connecté)…");
 
-    const btn = document.getElementById("btn-sync-all-espn");
+    const btn = auto ? null : document.getElementById("btn-sync-all-espn");
     if (btn) { btn.disabled = true; btn.textContent = "⏳ Synchronisation..."; }
 
     let synced = 0, skipped = 0;
@@ -4119,10 +4132,12 @@ async function syncAllFromEspn() {
         updateStats();
         renderAdminRaceList();
 
-        alert(`✅ Synchronisation ESPN terminée !\n\n${synced} course(s) importée(s)\n${skipped} ignorée(s) (à venir / annulées)${cleaned > 0 ? `\n🧹 ${cleaned} course(s) nettoyée(s) (données erronées supprimées)` : ""}`);
+        const recap = `${synced} course(s) importée(s), ${skipped} ignorée(s)${cleaned > 0 ? `, ${cleaned} nettoyée(s)` : ""}`;
+        if (auto) console.log(`[Auto-sync ESPN] ✅ Terminé — ${recap}`);
+        else alert(`✅ Synchronisation ESPN terminée !\n\n${synced} course(s) importée(s)\n${skipped} ignorée(s) (à venir / annulées)${cleaned > 0 ? `\n🧹 ${cleaned} course(s) nettoyée(s) (données erronées supprimées)` : ""}`);
     } catch (e) {
         console.error("Sync ESPN error:", e);
-        alert("⚠️ Erreur pendant la synchronisation : " + e.message);
+        if (!auto) alert("⚠️ Erreur pendant la synchronisation : " + e.message);
     } finally {
         if (btn) {
             btn.disabled = false;
