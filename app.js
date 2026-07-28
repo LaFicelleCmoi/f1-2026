@@ -291,7 +291,10 @@ db.ref('f1_results_2026').on('value', snapshot => {
     }
 
     // 🚫🚫🚫 ENFORCE CANCELLED (toujours, peu importe l'état de Firebase) 🚫🚫🚫
-    // Bahreïn et Arabie Saoudite ne sont PAS au calendrier 2026 officiel.
+    // Seule l'Arabie Saoudite reste hors du calendrier 2026. Le GP de Bahreïn
+    // est préservé et hébergé par la Malaisie (circuit de Sepang) — il n'est
+    // donc plus marqué cancelled dans data.js. Le forçage ci-dessous n'agit
+    // que sur les courses ayant cancelled:true.
     // Quoi que Firebase contienne, on force "cancelled" + on efface les résultats.
     let needFirebaseCleanup = false;
     races.forEach(race => {
