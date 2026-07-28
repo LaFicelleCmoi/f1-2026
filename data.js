@@ -201,10 +201,10 @@ const races = [
     },
     {
         round: 4, name: "Grand Prix de Bahreïn", country: "Bahreïn", flag: "🇧🇭",
-        circuit: "Bahrain International Circuit", city: "Sakhir",
-        dates: { full: "10 – 12 Avril 2026", race: "12 Avril 2026" },
-        sprint: false, status: "cancelled", isNew: false,
-        cancelled: true,
+        circuit: "Sepang International Circuit", city: "Sepang (Malaisie) 🇲🇾",
+        dates: { full: "Date à confirmer", race: "" },
+        sprint: false, status: "upcoming", isNew: false,
+        cancelled: false,
         result: null,
         schedule: [
             { day: "Vendredi", name: "Essais Libres 1", time: "13:30", type: "fp" },
