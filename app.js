@@ -205,7 +205,24 @@ function updateCountdown() {
 let isAdmin = false;
 let adminCurrentRace = null;
 let activeFilters = { status: "all", type: "all", continent: "all", search: "" };
-let autoSyncDone = false; // garde-fou : une seule auto-sync ESPN par chargement de page
+// ── Auto-sync ESPN en continu (admin uniquement) ──
+const ESPN_AUTOSYNC_INTERVAL_MS = 3 * 60 * 1000; // ré-interroge ESPN toutes les 3 min
+let espnAutoSyncTimer = null;
+
+function startEspnAutoSync() {
+    if (espnAutoSyncTimer) return; // déjà en route
+    // 1re sync peu après connexion (laisse charger Firebase + horaires ESPN)
+    setTimeout(() => { if (isAdmin) syncAllFromEspn(true).catch(e => console.error("[Auto-sync ESPN]", e)); }, 1500);
+    // puis polling régulier tant que l'admin reste connecté
+    espnAutoSyncTimer = setInterval(() => {
+        if (!isAdmin) { stopEspnAutoSync(); return; }
+        syncAllFromEspn(true).catch(e => console.error("[Auto-sync ESPN]", e));
+    }, ESPN_AUTOSYNC_INTERVAL_MS);
+}
+
+function stopEspnAutoSync() {
+    if (espnAutoSyncTimer) { clearInterval(espnAutoSyncTimer); espnAutoSyncTimer = null; }
+}
 
 // ============================================================
 // 🔐 FIREBASE AUTH
@@ -221,16 +238,13 @@ auth.onAuthStateChanged(user => {
             btnToggle.style.color = "var(--red)";
         }
         renderAdminRaceList();
-        // 🔄 Auto-sync ESPN : dès qu'un admin est connecté (au chargement si la
-        // session persiste, ou juste après login), on remplit automatiquement
-        // Firebase depuis ESPN. Une seule fois par page. Silencieux (pas de
-        // pop-up). Léger délai pour laisser charger le 1er snapshot Firebase
-        // et les horaires ESPN. Les visiteurs anonymes ne déclenchent rien.
-        if (!autoSyncDone) {
-            autoSyncDone = true;
-            setTimeout(() => { syncAllFromEspn(true).catch(e => console.error("[Auto-sync ESPN]", e)); }, 1500);
-        }
+        // 🔄 Auto-sync ESPN en continu : dès qu'un admin est connecté, on lance
+        // une sync immédiate puis un polling régulier qui remplit Firebase dès
+        // qu'ESPN publie de nouvelles données. Silencieux, sans écriture si rien
+        // n'a changé. Les visiteurs anonymes ne déclenchent rien.
+        startEspnAutoSync();
     } else {
+        stopEspnAutoSync();
         if (adminTab) adminTab.style.display = "none";
         if (btnToggle) {
             btnToggle.textContent = t("admin.admin_btn");
@@ -3483,9 +3497,9 @@ const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/racing/f1
 const ESPN_STANDINGS  = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings?season=2026";
 let espnSeasonCache = null;
 
-async function fetchEspnSeason() {
-    if (espnSeasonCache) return espnSeasonCache;
-    const res = await fetch(ESPN_SCOREBOARD);
+async function fetchEspnSeason(force = false) {
+    if (espnSeasonCache && !force) return espnSeasonCache;
+    const res = await fetch(ESPN_SCOREBOARD, force ? { cache: "no-store" } : undefined);
     const json = await res.json();
     espnSeasonCache = json?.events || [];
     return espnSeasonCache;
@@ -4028,8 +4042,17 @@ async function syncAllFromEspn(auto = false) {
     if (btn) { btn.disabled = true; btn.textContent = "⏳ Synchronisation..."; }
 
     let synced = 0, skipped = 0;
+    // Empreinte des résultats avant sync : en mode auto, on n'écrit dans
+    // Firebase (et on ne re-render) que si quelque chose a réellement changé.
+    const snapResults = () => JSON.stringify(races.map(r => [
+        r.raceStatus, r.sprintStatus, r.result, r.sprintResult,
+        r.qualiResults, r.sprintQualiResults, r.fp1Results, r.fp2Results, r.fp3Results
+    ]));
     try {
-        const events = await fetchEspnSeason();
+        // En auto (polling), on force le rafraîchissement du calendrier ESPN
+        // pour capter les nouvelles données dès qu'elles sont publiées.
+        const events = await fetchEspnSeason(auto);
+        const beforeSnap = auto ? snapResults() : null;
 
         // Liste des courses à synchroniser
         const toSync = races.filter(r => !r.cancelled && (() => {
@@ -4125,18 +4148,23 @@ async function syncAllFromEspn(auto = false) {
             synced++;
         }
 
-        saveToFirebase();
-        renderAllRaces();
-        renderStandings();
-        renderTimeline();
-        renderSprintView();
-        renderPalmares();
-        renderPredictions();
-        updateStats();
-        renderAdminRaceList();
+        // En auto : n'écrire/re-render que si un résultat a bougé (évite le
+        // spam d'écritures Firebase toutes les X minutes). En manuel : toujours.
+        const changed = !auto || beforeSnap !== snapResults();
+        if (changed) {
+            saveToFirebase();
+            renderAllRaces();
+            renderStandings();
+            renderTimeline();
+            renderSprintView();
+            renderPalmares();
+            renderPredictions();
+            updateStats();
+            renderAdminRaceList();
+        }
 
         const recap = `${synced} course(s) importée(s), ${skipped} ignorée(s)${cleaned > 0 ? `, ${cleaned} nettoyée(s)` : ""}`;
-        if (auto) console.log(`[Auto-sync ESPN] ✅ Terminé — ${recap}`);
+        if (auto) console.log(changed ? `[Auto-sync ESPN] ✅ Mise à jour — ${recap}` : "[Auto-sync ESPN] Aucun changement (ESPN inchangé)");
         else alert(`✅ Synchronisation ESPN terminée !\n\n${synced} course(s) importée(s)\n${skipped} ignorée(s) (à venir / annulées)${cleaned > 0 ? `\n🧹 ${cleaned} course(s) nettoyée(s) (données erronées supprimées)` : ""}`);
     } catch (e) {
         console.error("Sync ESPN error:", e);
