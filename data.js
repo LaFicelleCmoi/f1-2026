@@ -124,7 +124,7 @@ const sportsDbNames = {
     1: "Australian Grand Prix",
     2: "Chinese Grand Prix",
     3: "Japanese Grand Prix",
-    4: "Bahrain Grand Prix",
+    // 4 : pas d'entrée — les images TheSportsDB montreraient Sakhir, pas Sepang
     5: "Saudi Arabian Grand Prix",
     6: "Miami Grand Prix",
     7: "Canadian Grand Prix",
@@ -149,7 +149,7 @@ const sportsDbNames = {
 
 const countryContinent = {
     "Australie": "Asie-Océanie", "Chine": "Asie-Océanie", "Japon": "Asie-Océanie",
-    "Singapour": "Asie-Océanie", "Bahreïn": "Moyen-Orient", "Arabie Saoudite": "Moyen-Orient",
+    "Singapour": "Asie-Océanie", "Malaisie": "Asie-Océanie", "Bahreïn": "Moyen-Orient", "Arabie Saoudite": "Moyen-Orient",
     "Qatar": "Moyen-Orient", "Émirats Arabes Unis": "Moyen-Orient", "Azerbaïdjan": "Moyen-Orient",
     "États-Unis": "Amériques", "Canada": "Amériques", "Mexique": "Amériques", "Brésil": "Amériques",
     "Monaco": "Europe", "Espagne": "Europe", "Autriche": "Europe", "Royaume-Uni": "Europe",
@@ -197,21 +197,6 @@ const races = [
             { day: "Samedi", name: "Essais Libres 3", time: "03:30", type: "fp" },
             { day: "Samedi", name: "Qualifications", time: "07:00", type: "quali" },
             { day: "Dimanche", name: "Course", time: "06:00", type: "race" }
-        ]
-    },
-    {
-        round: 4, name: "Grand Prix de Bahreïn", country: "Bahreïn", flag: "🇧🇭",
-        circuit: "Sepang International Circuit", city: "Sepang (Malaisie) 🇲🇾",
-        dates: { full: "Date à confirmer", race: "" },
-        sprint: false, status: "upcoming", isNew: false,
-        cancelled: false,
-        result: null,
-        schedule: [
-            { day: "Vendredi", name: "Essais Libres 1", time: "13:30", type: "fp" },
-            { day: "Vendredi", name: "Essais Libres 2", time: "17:00", type: "fp" },
-            { day: "Samedi", name: "Essais Libres 3", time: "13:30", type: "fp" },
-            { day: "Samedi", name: "Qualifications", time: "17:00", type: "quali" },
-            { day: "Dimanche", name: "Course", time: "16:00", type: "race" }
         ]
     },
     {
@@ -398,17 +383,37 @@ const races = [
         ]
     },
     {
+        // GP de Bahreïn délocalisé à Sepang (Malaisie) — annonce F1 du 26 juil. 2026.
+        // round: 4 conservé = index Firebase historique (f1_results_2026[3]).
+        // cancelled:false explicite → écrase l'ancien statut "cancelled" de Firebase.
+        // hostCountry → pays réel du circuit (matching ESPN / continent).
+        round: 4, name: "Grand Prix de Bahreïn en Malaisie", country: "Bahreïn", flag: "🇧🇭",
+        hostCountry: "Malaisie",
+        circuit: "Sepang International Circuit", city: "Sepang (Malaisie) 🇲🇾",
+        dates: { full: "2 – 4 Octobre 2026", race: "4 Octobre 2026" },
+        sprint: false, status: "upcoming", isNew: true,
+        cancelled: false,
+        result: null,
+        schedule: [
+            { day: "Vendredi", name: "Essais Libres 1", time: "06:30", type: "fp" },
+            { day: "Vendredi", name: "Essais Libres 2", time: "10:00", type: "fp" },
+            { day: "Samedi", name: "Essais Libres 3", time: "06:30", type: "fp" },
+            { day: "Samedi", name: "Qualifications", time: "10:00", type: "quali" },
+            { day: "Dimanche", name: "Course", time: "09:00", type: "race" }
+        ]
+    },
+    {
         round: 18, name: "Grand Prix de Singapour", country: "Singapour", flag: "🇸🇬",
         circuit: "Marina Bay Street Circuit", city: "Singapour",
-        dates: { full: "2 – 4 Octobre 2026", race: "4 Octobre 2026" },
+        dates: { full: "9 – 11 Octobre 2026", race: "11 Octobre 2026" },
         sprint: true, status: "upcoming", isNew: false,
         result: null,
         schedule: [
             { day: "Vendredi", name: "Essais Libres 1", time: "10:30", type: "fp" },
             { day: "Vendredi", name: "Qualifications Sprint", time: "14:30", type: "quali" },
-            { day: "Samedi", name: "Sprint", time: "10:00", type: "sprint" },
-            { day: "Samedi", name: "Qualifications", time: "14:00", type: "quali" },
-            { day: "Dimanche", name: "Course", time: "13:00", type: "race" }
+            { day: "Samedi", name: "Sprint", time: "11:00", type: "sprint" },
+            { day: "Samedi", name: "Qualifications", time: "15:00", type: "quali" },
+            { day: "Dimanche", name: "Course", time: "14:00", type: "race" }
         ]
     },
     {
