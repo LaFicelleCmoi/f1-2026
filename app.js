@@ -289,7 +289,9 @@ db.ref('f1_results_2026').on('value', snapshot => {
                 race.fp3Results        = found.fp3Results        || null;
                 // Horaires modifiés en admin : on ne prend que les "time" de Firebase,
                 // les jours et noms de sessions restent ceux de data.js (source de vérité)
-                if (found.schedule && race.schedule) {
+                // (sauf course dé-annulée : ses horaires Firebase sont périmés)
+                const staleUncancelled = race.cancelled === false && found.raceStatus === "cancelled";
+                if (found.schedule && race.schedule && !staleUncancelled) {
                     found.schedule.forEach((fs, i) => {
                         if (race.schedule[i] && fs.time) {
                             race.schedule[i].time = fs.time;
@@ -328,6 +330,18 @@ db.ref('f1_results_2026').on('value', snapshot => {
                 console.log(`[Cancelled] Forcing ${race.name} -> cancelled`);
                 needFirebaseCleanup = true;
             }
+        }
+    });
+    // ✅ Course dé-annulée (cancelled:false explicite dans data.js, ex. Bahreïn
+    // relocalisé à Sepang) : un vieux statut "cancelled" en base est ignoré
+    // et corrigé dans Firebase.
+    races.forEach(race => {
+        if (race.cancelled === false && (race.raceStatus === "cancelled" || race.status === "cancelled")) {
+            race.raceStatus   = "upcoming";
+            race.status       = "upcoming";
+            race.sprintStatus = race.sprint ? "upcoming" : null;
+            console.log(`[Uncancelled] ${race.name} -> upcoming`);
+            needFirebaseCleanup = true;
         }
     });
     // Si Firebase avait des données pourries pour ces courses, on les efface
@@ -461,7 +475,7 @@ function renderAllRaces() {
         if (activeFilters.type === "sprint" && !race.sprint) return false;
         if (activeFilters.type === "standard" && race.sprint) return false;
         if (activeFilters.continent !== "all") {
-            const cont = countryContinent[race.country] || "";
+            const cont = countryContinent[race.hostCountry || race.country] || "";
             if (cont !== activeFilters.continent) return false;
         }
         if (activeFilters.search) {
@@ -697,8 +711,7 @@ function renderStandingsHeatmap(sortedDrivers) {
         .filter(r => {
             const rs = r.raceStatus || r.status || "upcoming";
             return rs === "completed" && r.result && r.result.fullResults;
-        })
-        .sort((a, b) => a.round - b.round);
+        }); // ordre du tableau = chronologique (R4 Malaisie couru en octobre)
 
     if (doneRaces.length === 0) { container.innerHTML = ""; return; }
 
@@ -1176,7 +1189,7 @@ function computeCumulativePoints() {
     const completed = races.filter(r => {
         const rs = r.raceStatus || r.status || "upcoming";
         return rs === "completed" && r.result && r.result.fullResults;
-    }).sort((a, b) => a.round - b.round);
+    }); // ordre du tableau = chronologique (R4 Malaisie couru en octobre)
 
     const driverSeries = {};
     const constructorSeries = {};
@@ -3237,6 +3250,7 @@ const countryEnglish = {
     "Italie": "Italy",
     "Azerbaïdjan": "Azerbaijan",
     "Singapour": "Singapore",
+    "Malaisie": "Malaysia",
     "Mexique": "Mexico",
     "Brésil": "Brazil",
     "Qatar": "Qatar",
@@ -3261,7 +3275,8 @@ async function resolveJolpicaRound(localRace) {
     const calendar = await getJolpicaCalendar();
     if (calendar.length === 0) return null;
 
-    const localCountryEn = countryEnglish[localRace.country] || localRace.country;
+    const localCountry   = localRace.hostCountry || localRace.country;
+    const localCountryEn = countryEnglish[localCountry] || localCountry;
     const localCity      = (localRace.city || "").toLowerCase();
     const localCircuit   = (localRace.circuit || "").toLowerCase();
     const localName      = (localRace.name || "").toLowerCase();
@@ -3516,6 +3531,7 @@ const espnCountryMap = {
     "Espagne": "spain", "Autriche": "austria", "Royaume-Uni": "britain",
     "Belgique": "belgium", "Hongrie": "hungary", "Pays-Bas": "netherlands",
     "Italie": "italy", "Azerbaïdjan": "azerbaijan", "Singapour": "singapore",
+    "Malaisie": "malaysia",
     "Mexique": "mexico", "Brésil": "brazil", "Qatar": "qatar",
     "Émirats Arabes Unis": "united arab emirates"
 };
@@ -3530,7 +3546,8 @@ const espnCityKw = {
 // Le pays du circuit DOIT correspondre (score minimum 10) — cela élimine
 // toute collision liée aux noms de sponsors.
 function findEspnEventForRace(race, events) {
-    const wantCountry = espnCountryMap[race.country];
+    // hostCountry : pays réel du circuit (GP de Bahreïn couru en Malaisie)
+    const wantCountry = espnCountryMap[race.hostCountry || race.country];
     if (!wantCountry) return null;
     const localCity = (race.city || "").toLowerCase();
 
@@ -4035,7 +4052,7 @@ async function syncAllFromEspn(auto = false) {
     if (!isAdmin) { if (!auto) alert("⛔ Réservé admin."); return; }
     // En mode auto (déclenché au chargement pour l'admin) : aucune boîte de
     // dialogue, aucun alert bloquant — tout passe par la console.
-    if (!auto && !confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va remplir automatiquement tous les résultats des courses terminées (course, qualifs, sprint) et sauvegarder dans Firebase.\n\nLes courses annulées (Bahreïn, Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
+    if (!auto && !confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va remplir automatiquement tous les résultats des courses terminées (course, qualifs, sprint) et sauvegarder dans Firebase.\n\nLes courses annulées (Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
     if (auto) console.log("[Auto-sync ESPN] Démarrage (admin connecté)…");
 
     const btn = auto ? null : document.getElementById("btn-sync-all-espn");
