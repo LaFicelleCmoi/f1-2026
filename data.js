@@ -419,7 +419,7 @@ const races = [
     {
         round: 19, name: "Grand Prix des États-Unis", country: "États-Unis", flag: "🇺🇸",
         circuit: "Circuit of the Americas", city: "Austin",
-        dates: { full: "16 – 18 Octobre 2026", race: "18 Octobre 2026" },
+        dates: { full: "23 – 25 Octobre 2026", race: "25 Octobre 2026" },
         sprint: false, status: "upcoming", isNew: false,
         result: null,
         schedule: [
