@@ -4674,3 +4674,90 @@ body, header, nav, .race-card, .modal, .standings-table {
     /* ne masquer que le reflet — pas le badge LIVE ni le ruban ★ */
     .race-card:not(.live):not(.race-status-live):not(.race-card-new)::before { display: none; }
 }
+
+/* ═══════════════════════════════════════════════
+   SÉLECTEUR DE SAISON + bandeau « à confirmer »
+   ═══════════════════════════════════════════════ */
+.season-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 0.2rem 0 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.season-select:hover,
+.season-select:focus-within {
+    border-color: var(--red);
+}
+.season-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23e10600'/%3E%3C/svg%3E") no-repeat right 0.45rem center;
+    border: none;
+    color: var(--red);
+    font: inherit;
+    letter-spacing: inherit;
+    padding: 0.4rem 1.4rem 0.4rem 0.2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+.season-select select:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+.season-select option {
+    background: var(--card);
+    color: var(--text);
+}
+
+.season-notice {
+    margin: 0.75rem auto 0;
+    max-width: calc(1400px - 4rem);
+    width: calc(100% - 4rem);
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+.season-notice[hidden] { display: none; }
+.season-notice strong { color: var(--text); }
+
+.schedule-time.tbc {
+    color: var(--muted);
+    font-style: italic;
+    font-weight: 600;
+}
+
+/* Compte à rebours remplacé par « Prochain GP » quand les horaires sont inconnus */
+.countdown-tbc {
+    display: block;
+    width: 100%;
+    padding: 0.55rem 1rem;
+    text-align: center;
+    color: #ccc;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+.countdown-tbc strong { color: #fff; }
+.countdown-tbc em { color: #999; }
+
+@media (max-width: 768px) {
+    .season-notice { width: calc(100% - 1.5rem); margin-top: 0.5rem; font-size: 0.75rem; }
+}
+@media (max-width: 480px) {
+    .season-select { padding-left: 0.4rem; }
+    .season-select-label { display: none; }
+}
