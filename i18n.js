@@ -6,7 +6,17 @@ const translations = {
     fr: {
         // Header
         "header.title": "F1",
-        "header.subtitle": "Saison 2026",
+        "header.subtitle": "Saison {season}",
+        "season.label": "Saison",
+        "season.select_title": "Changer de saison",
+        "season.notice_title": "Saison {season} — informations à confirmer :",
+        "season.pending_calendar": "calendrier non publié",
+        "season.pending_times": "horaires des sessions",
+        "season.pending_drivers": "pilotes et écuries",
+        "season.no_drivers": "Pilotes et écuries {season} à confirmer — les classements apparaîtront dès l'officialisation du plateau.",
+        "common.tbc": "À confirmer",
+        "common.times_tbc": "horaires à confirmer",
+        "countdown.next_gp_tbc": "Prochain GP :",
         "header.theme_toggle": "Basculer thème clair/sombre",
         "header.stat_completed": "Disputées",
         "header.stat_upcoming": "À venir",
@@ -17,8 +27,8 @@ const translations = {
         "header.next_gp_title": "Aller au prochain Grand Prix",
 
         // Page title / meta
-        "meta.title": "F1 2026 — Suivi de Saison",
-        "meta.description": "Suivez la saison F1 2026 en temps réel : résultats, classements, calendrier, sprints.",
+        "meta.title": "F1 {season} — Suivi de Saison",
+        "meta.description": "Suivez la saison F1 {season} en temps réel : résultats, classements, calendrier, sprints.",
 
         // Countdown
         "countdown.loading": "Chargement du calendrier...",
@@ -42,7 +52,7 @@ const translations = {
 
         // Races view
         "races.title": "Calendrier des Courses",
-        "races.subtitle": "Saison F1 2026 — 24 Grands Prix",
+        "races.subtitle": "Saison F1 {season} — {raceCount} Grands Prix",
         "races.progress_label": "Progression de la saison",
         "races.progress_count": "courses",
         "races.filter_status": "Statut",
@@ -69,7 +79,7 @@ const translations = {
 
         // Standings
         "standings.title": "Classements",
-        "standings.subtitle": "Championnat du Monde F1 2026",
+        "standings.subtitle": "Championnat du Monde F1 {season}",
         "standings.drivers": "🧑‍🚀 Pilotes",
         "standings.constructors": "🏭 Constructeurs",
         "standings.pos": "Pos",
@@ -83,14 +93,14 @@ const translations = {
 
         // Timeline
         "timeline.title": "Calendrier Complet",
-        "timeline.subtitle": "Vue chronologique de la saison 2026",
+        "timeline.subtitle": "Vue chronologique de la saison {season}",
 
         // Sprint
         "sprint.title": "⚡ Weekends Sprint",
         "sprint.subtitle_count": "Sprints disputés",
 
         // Palmarès
-        "palmares.title": "🏅 Palmarès Saison 2026",
+        "palmares.title": "🏅 Palmarès Saison {season}",
         "palmares.subtitle": "Victoires par équipe et pilotes",
         "palmares.top_teams": "🏭 Meilleures Écuries",
         "palmares.top_drivers": "🧑‍🚀 Meilleurs Pilotes",
@@ -296,7 +306,7 @@ const translations = {
         "career.loading": "Chargement de la carrière...",
         "career.error": "Impossible de charger les données. Réessayez plus tard.",
         "career.not_available": "Carrière indisponible pour ce pilote.",
-        "career.rookie_title": "Rookie 2026",
+        "career.rookie_title": "Rookie {season}",
         "career.rookie_subtitle": "Aucune saison F1 antérieure dans les archives.",
         "career.titles": "Titres",
         "career.starts": "Courses",
@@ -410,7 +420,17 @@ const translations = {
     en: {
         // Header
         "header.title": "F1",
-        "header.subtitle": "2026 Season",
+        "header.subtitle": "{season} Season",
+        "season.label": "Season",
+        "season.select_title": "Change season",
+        "season.notice_title": "{season} season — still to be confirmed:",
+        "season.pending_calendar": "calendar not published",
+        "season.pending_times": "session times",
+        "season.pending_drivers": "drivers and teams",
+        "season.no_drivers": "{season} drivers and teams to be confirmed — standings will appear once the grid is official.",
+        "common.tbc": "TBC",
+        "common.times_tbc": "times TBC",
+        "countdown.next_gp_tbc": "Next GP:",
         "header.theme_toggle": "Toggle light/dark theme",
         "header.stat_completed": "Completed",
         "header.stat_upcoming": "Upcoming",
@@ -421,8 +441,8 @@ const translations = {
         "header.next_gp_title": "Go to the next Grand Prix",
 
         // Page title / meta
-        "meta.title": "F1 2026 — Season Tracker",
-        "meta.description": "Follow the F1 2026 season in real time: results, standings, calendar, sprints.",
+        "meta.title": "F1 {season} — Season Tracker",
+        "meta.description": "Follow the F1 {season} season in real time: results, standings, calendar, sprints.",
 
         // Countdown
         "countdown.loading": "Loading calendar...",
@@ -446,7 +466,7 @@ const translations = {
 
         // Races view
         "races.title": "Race Calendar",
-        "races.subtitle": "F1 2026 Season — 24 Grands Prix",
+        "races.subtitle": "F1 {season} Season — {raceCount} Grands Prix",
         "races.progress_label": "Season progress",
         "races.progress_count": "races",
         "races.filter_status": "Status",
@@ -473,7 +493,7 @@ const translations = {
 
         // Standings
         "standings.title": "Standings",
-        "standings.subtitle": "F1 2026 World Championship",
+        "standings.subtitle": "F1 {season} World Championship",
         "standings.drivers": "🧑‍🚀 Drivers",
         "standings.constructors": "🏭 Constructors",
         "standings.pos": "Pos",
@@ -487,14 +507,14 @@ const translations = {
 
         // Timeline
         "timeline.title": "Full Calendar",
-        "timeline.subtitle": "Chronological view of the 2026 season",
+        "timeline.subtitle": "Chronological view of the {season} season",
 
         // Sprint
         "sprint.title": "⚡ Sprint Weekends",
         "sprint.subtitle_count": "Sprints completed",
 
         // Palmarès
-        "palmares.title": "🏅 2026 Season Honors",
+        "palmares.title": "🏅 {season} Season Honors",
         "palmares.subtitle": "Wins by team and driver",
         "palmares.top_teams": "🏭 Top Teams",
         "palmares.top_drivers": "🧑‍🚀 Top Drivers",
@@ -700,7 +720,7 @@ const translations = {
         "career.loading": "Loading career data...",
         "career.error": "Unable to load data. Try again later.",
         "career.not_available": "Career not available for this driver.",
-        "career.rookie_title": "2026 Rookie",
+        "career.rookie_title": "{season} Rookie",
         "career.rookie_subtitle": "No prior F1 season in the archives.",
         "career.titles": "Titles",
         "career.starts": "Races",
@@ -817,10 +837,15 @@ const translations = {
 let currentLang = localStorage.getItem("f1-lang") || "fr";
 
 // Translate a key
-function t(key) {
-    return (translations[currentLang] && translations[currentLang][key]) ||
-           (translations.fr && translations.fr[key]) ||
-           key;
+// Variables {nom} : celles passées en argument, puis celles de la saison
+// active (i18nVars() dans seasons.js — absente sur legal.html).
+function t(key, vars) {
+    const str = (translations[currentLang] && translations[currentLang][key]) ||
+                (translations.fr && translations.fr[key]) ||
+                key;
+    if (str.indexOf("{") === -1) return str;
+    const all = Object.assign({}, typeof i18nVars === "function" ? i18nVars() : {}, vars);
+    return str.replace(/\{(\w+)\}/g, (m, name) => (all[name] !== undefined && all[name] !== "") ? all[name] : m);
 }
 
 // Apply translations to all elements with data-i18n attributes
@@ -874,6 +899,7 @@ function setLang(lang) {
     if (typeof renderPredictions === "function") renderPredictions();
     if (typeof updateCountdown === "function") updateCountdown();
     if (typeof renderAdminRaceList === "function") renderAdminRaceList();
+    if (typeof renderSeasonNotice === "function") renderSeasonNotice();
 }
 
 function toggleLang() {
