@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p www
           cp index.html legal.html www/
-          cp app.js data.js i18n.js anti-inspect.js style.css manifest.json sw.js www/
+          cp app.js seasons.js data.js data-*.js i18n.js anti-inspect.js style.css manifest.json sw.js www/
           cp -r icons logos www/ 2>/dev/null || true
           ls -la www/
 
