@@ -12,6 +12,27 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+// ============================================================
+// 🗓️ DONNÉES DE LA SAISON ACTIVE (choisie dans seasons.js)
+// ============================================================
+// Tout le reste du fichier lit ces constantes : aucune année en dur.
+const SEASON_DATASET = SeasonManager.data() || {};
+const races          = SEASON_DATASET.races         || [];
+const drivers        = SEASON_DATASET.drivers       || [];
+const constructors   = SEASON_DATASET.constructors  || [];
+const pointsSystem   = SEASON_DATASET.pointsSystem  || [];
+const sprintPoints   = SEASON_DATASET.sprintPoints  || [];
+const sportsDbNames  = SEASON_DATASET.sportsDbNames || {};
+const SEASON_STATUS  = SEASON_DATASET.status        || {};
+// Nœud Firebase propre à la saison (2026 → f1_results_2026, inchangé)
+const RESULTS_NODE   = SeasonManager.firebaseNode();
+
+// Le round n'est pas forcément l'index du tableau (R4 Malaisie 2026 placé en
+// octobre) : toujours passer par cette fonction pour ouvrir une fiche.
+function raceIndexByRound(round) {
+    return races.findIndex(r => r.round === round);
+}
 const auth = firebase.auth();
 
 // ============================================================
@@ -27,8 +48,8 @@ async function fetchSportsDbImages(round) {
     const name = sportsDbNames[round];
     if (!name) return null;
     try {
-        // Try 2026 first, fallback to 2024 for images
-        for (const year of [2026, 2025, 2024]) {
+        // Saison active d'abord, puis les deux précédentes pour les images
+        for (const year of [ACTIVE_SEASON, ACTIVE_SEASON - 1, ACTIVE_SEASON - 2]) {
             const res = await fetch(`${SPORTSDB_BASE}/searchevents.php?e=${encodeURIComponent(name)}&s=${year}`);
             const json = await res.json();
             const events = json?.event || [];
@@ -116,8 +137,10 @@ function getSessionDateTime(race, entry) {
         ? { "Mercredi":-4, "Jeudi":-3, "Vendredi":-2, "Samedi":-1, "Dimanche":0 }
         : { "Mercredi":-3, "Jeudi":-2, "Vendredi":-1, "Samedi":0 };
 
+    // Horaire « À confirmer » : pas de date/heure exploitable
+    if (!entry.time) return null;
     const dayOffset = offsets[entry.day] ?? 0;
-    const [h, m] = (entry.time || "0:0").split(":").map(Number);
+    const [h, m] = entry.time.split(":").map(Number);
     const dt = new Date(raceDate);
     dt.setDate(dt.getDate() + dayOffset);
     dt.setHours(h, m, 0, 0);
@@ -143,7 +166,18 @@ function getNextSession() {
             }
         }
     }
-    return { date: closest, race: closestRace, session: closestEntry };
+    if (closest) return { date: closest, race: closestRace, session: closestEntry };
+
+    // Aucun horaire connu (saison future, horaires « À confirmer ») :
+    // on renvoie le prochain GP d'après sa date, sans compte à rebours.
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    for (const race of races) {
+        const rs = race.raceStatus || race.status || "upcoming";
+        if (rs === "completed" || rs === "cancelled") continue;
+        const d = parseFrenchDate(race.dates?.race);
+        if (d && d >= today) return { date: null, race, session: null, tbc: true };
+    }
+    return { date: null, race: null, session: null };
 }
 
 function updateCountdown() {
@@ -151,6 +185,10 @@ function updateCountdown() {
     if (!el) return;
 
     const next = getNextSession();
+    if (next.tbc) {
+        el.innerHTML = `<span class="countdown-tbc">📅 ${t("countdown.next_gp_tbc")} <strong>${next.race.flag} ${next.race.name}</strong> — ${next.race.dates.full} · <em>${t("common.times_tbc")}</em></span>`;
+        return;
+    }
     if (!next.date) {
         el.innerHTML = `🏁 <strong>${t("countdown.season_over")}</strong>`;
         return;
@@ -269,7 +307,7 @@ auth.onAuthStateChanged(user => {
 // ============================================================
 // 🔥 CHARGEMENT FIREBASE (remplace localStorage)
 // ============================================================
-db.ref('f1_results_2026').on('value', snapshot => {
+db.ref(RESULTS_NODE).on('value', snapshot => {
     const savedData = snapshot.val();
     if (savedData && Array.isArray(savedData)) {
         const completedFromFb = savedData.filter(r => r.raceStatus === "completed").map(r => `R${r.round}`).join(", ");
@@ -362,7 +400,7 @@ db.ref('f1_results_2026').on('value', snapshot => {
             fp2Results:        r.fp2Results        || null,
             fp3Results:        r.fp3Results        || null
         }));
-        db.ref('f1_results_2026').set(toSave);
+        db.ref(RESULTS_NODE).set(toSave);
     }
 
     // 🕐 Horaires ESPN (heure de Paris) : ré-appliqués APRÈS le merge Firebase
@@ -406,7 +444,7 @@ function saveToFirebase() {
         fp2Results:        r.fp2Results        || null,
         fp3Results:        r.fp3Results        || null
     }));
-    db.ref('f1_results_2026').set(toSave);
+    db.ref(RESULTS_NODE).set(toSave);
 }
 
 // --------------------------------------------------------
@@ -609,7 +647,20 @@ function renderAllRaces() {
     grid.innerHTML = html;
 }
 
+// Plateau pas encore officialisé (saison future) : message à la place du vide
+function noGridHTML() {
+    return `<div class="no-data-box"><div style="font-size:2rem">🗓️</div><p>${t("season.no_drivers")}</p></div>`;
+}
+
 function renderStandings() {
+    if (drivers.length === 0) {
+        const msg = `<tbody><tr><td>${noGridHTML()}</td></tr></tbody>`;
+        const dt = document.getElementById("drivers-standings");
+        const ct = document.getElementById("constructors-standings");
+        if (dt) dt.innerHTML = msg;
+        if (ct) ct.innerHTML = msg;
+        return;
+    }
     const driversMap      = {};
     const constructorsMap = {};
 
@@ -831,7 +882,7 @@ function animateStandings() {
 }
 
 function renderTimeline() {
-    var monthKeys = ["Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    var monthKeys = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     var months = {};
 
     races.forEach(function(race) {
@@ -849,7 +900,7 @@ function renderTimeline() {
     var html = "";
     monthKeys.forEach(function(m) {
         if (months[m]) {
-            html += '<div class="timeline-month"><div class="timeline-month-label">📆 ' + m + ' 2026</div>';
+            html += '<div class="timeline-month"><div class="timeline-month-label">📆 ' + m + ' ' + ACTIVE_SEASON + '</div>';
             months[m].forEach(function(race) {
                 var dateRace = (race.dates && race.dates.race) ? race.dates.race : "";
                 var rs = race.raceStatus || race.status || "upcoming";
@@ -857,7 +908,7 @@ function renderTimeline() {
                 var sprintBadge = race.sprint
                     ? '<span class="sprint-tag" style="background:' + (ss === 'completed' ? 'rgba(34,197,94,0.15)' : ss === 'cancelled' ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.15)') + '; color:' + (ss === 'completed' ? 'var(--green)' : ss === 'cancelled' ? '#ef4444' : 'var(--sprint-light)') + '; border-color:' + (ss === 'completed' ? 'rgba(34,197,94,0.3)' : ss === 'cancelled' ? 'rgba(239,68,68,0.3)' : 'rgba(124,58,237,0.3)') + '">⚡ Sprint ' + (ss === 'completed' ? '✓' : ss === 'cancelled' ? '✕' : ss === 'next' ? '▶' : '') + '</span>'
                     : "";
-                html += '<div class="timeline-race-item ' + getStatusClass(rs) + '" onclick="openModal(' + (race.round - 1) + ')">' +
+                html += '<div class="timeline-race-item ' + getStatusClass(rs) + '" onclick="openModal(' + raceIndexByRound(race.round) + ')">' +
                     '<div class="timeline-race-left"><span class="timeline-flag">' + race.flag + '</span>' +
                     '<div><div class="timeline-race-name">' + race.name + '</div>' +
                     '<div class="timeline-race-date">Round ' + race.round + ' — ' + dateRace + '</div></div></div>' +
@@ -1409,7 +1460,7 @@ function openDriverProfile(driverName) {
         const rPos = h.rPos ? (h.rPos === 1 ? '🥇' : h.rPos === 2 ? '🥈' : h.rPos === 3 ? '🥉' : h.rPos) : "—";
         const qPos = h.qPos ? `P${h.qPos}` : "—";
         return `
-            <tr onclick="closeProfileModal(); openModal(${h.round - 1});" style="cursor:pointer">
+            <tr onclick="closeProfileModal(); openModal(${raceIndexByRound(h.round)});" style="cursor:pointer">
                 <td class="profile-hist-round">R${h.round}</td>
                 <td>${h.flag} <span style="color:var(--muted)">${h.name}</span></td>
                 <td class="profile-hist-q">${qPos}</td>
@@ -1566,7 +1617,7 @@ function openTeamProfile(teamName) {
     const historyRows = history.length ? history.map(h => {
         const bestPos = h.bestPos ? (h.bestPos === 1 ? '🥇' : h.bestPos === 2 ? '🥈' : h.bestPos === 3 ? '🥉' : 'P' + h.bestPos) : "—";
         return `
-            <tr onclick="closeProfileModal(); openModal(${h.round - 1});" style="cursor:pointer">
+            <tr onclick="closeProfileModal(); openModal(${raceIndexByRound(h.round)});" style="cursor:pointer">
                 <td class="profile-hist-round">R${h.round}</td>
                 <td>${h.flag} <span style="color:var(--muted)">${h.name}</span></td>
                 <td class="profile-hist-r">${bestPos}</td>
@@ -2310,7 +2361,7 @@ function renderSprintView() {
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
         html += `
-            <div class="race-card sprint-card" onclick="openModal(${race.round - 1})">
+            <div class="race-card sprint-card" onclick="openModal(${raceIndexByRound(race.round)})">
                 <div class="race-card-header">
                     <span class="race-round sprint-round">R${race.round} ⚡</span>
                     <span class="badge ${getBadgeClass(ss)}">${getBadgeLabel(ss)}</span>
@@ -2361,7 +2412,7 @@ function openModal(index) {
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <span class="schedule-day" style="min-width:80px; font-size:0.78rem; color:var(--muted); font-weight:700;">${s.day}</span>
                     <span class="schedule-name" style="flex:1;">${s.name}</span>
-                    <input type="text" value="${s.time}" data-schedule-index="${i}" placeholder="HH:MM"
+                    <input type="text" value="${s.time || ""}" data-schedule-index="${i}" placeholder="HH:MM"
                         style="width:80px; padding:0.3rem 0.5rem; background:rgba(0,0,0,0.4);
                             border:1px solid var(--red); color:var(--red); border-radius:6px;
                             font-weight:800; font-size:0.9rem; text-align:center; outline:none;"
@@ -2374,7 +2425,7 @@ function openModal(index) {
         return `<div class="${itemClass}">
             <span class="schedule-day">${s.day}</span>
             <span class="schedule-name">${s.name}</span>
-            <span class="schedule-time">${s.time}</span>
+            <span class="schedule-time${s.time ? "" : " tbc"}">${s.time || t("common.tbc")}</span>
         </div>`;
     }).join("") : "";
 
@@ -2762,6 +2813,8 @@ function switchView(view) {
     target.classList.add("active");
     const activeTab = document.querySelector("[data-view='" + view + "']");
     if (activeTab) activeTab.classList.add("active");
+    // Onglet dans l'URL (#vue) : lien direct, et conservé au changement de saison
+    try { history.replaceState(null, "", "#" + view); } catch (e) {}
     // Re-déclencher animation classements à chaque visite de l'onglet
     if (view === "standings") setTimeout(animateStandings, 80);
     if (view === "stats") setTimeout(renderStats, 80);
@@ -3220,7 +3273,7 @@ function addAdminQualiRow(type) {
 // ============================================================
 // 🤖 IMPORT AUTOMATIQUE DEPUIS API F1 (Jolpica / Ergast)
 // ============================================================
-const API_BASE = "https://api.jolpi.ca/ergast/f1/2026";
+const API_BASE = `https://api.jolpi.ca/ergast/f1/${ACTIVE_SEASON}`;
 
 // ============================================================
 // 🎯 Résolution round local → round API (Jolpica)
@@ -3251,6 +3304,8 @@ const countryEnglish = {
     "Azerbaïdjan": "Azerbaijan",
     "Singapour": "Singapore",
     "Malaisie": "Malaysia",
+    "Portugal": "Portugal",
+    "Turquie": "Turkey",
     "Mexique": "Mexico",
     "Brésil": "Brazil",
     "Qatar": "Qatar",
@@ -3397,6 +3452,8 @@ const countryNameMap = {
     "Italie": "Italy",
     "Azerbaïdjan": "Azerbaijan",
     "Singapour": "Singapore",
+    "Portugal": "Portugal",
+    "Turquie": "Turkey",
     "Mexique": "Mexico",
     "Brésil": "Brazil",
     "Qatar": "Qatar",
@@ -3404,7 +3461,7 @@ const countryNameMap = {
 };
 
 // ── Fetch Essais Libres via OpenF1 API ──
-async function fetchPracticeResults(sessionName, countryName, year = 2026) {
+async function fetchPracticeResults(sessionName, countryName, year = ACTIVE_SEASON) {
     // Traduire le nom du pays FR → EN
     const englishCountry = countryNameMap[countryName] || countryName;
 
@@ -3503,20 +3560,23 @@ async function fetchPracticeResults(sessionName, countryName, year = 2026) {
 }
 
 // ============================================================
-// 🏎️ API ESPN — calendrier + résultats F1 2026
+// 🏎️ API ESPN — calendrier + résultats F1 (saison active)
 // ============================================================
 // ESPN fournit en UNE requête tout le calendrier + toutes les
 // sessions (FP1, Sprint Quali, Sprint, Qualifs, Course) avec les
 // noms de pilotes corrects. C'est la source principale d'import.
-const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=2026";
-const ESPN_STANDINGS  = "https://site.api.espn.com/apis/v2/sports/racing/f1/standings?season=2026";
+const ESPN_SCOREBOARD = `https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=${ACTIVE_SEASON}`;
+const ESPN_STANDINGS  = `https://site.api.espn.com/apis/v2/sports/racing/f1/standings?season=${ACTIVE_SEASON}`;
 let espnSeasonCache = null;
 
 async function fetchEspnSeason(force = false) {
     if (espnSeasonCache && !force) return espnSeasonCache;
     const res = await fetch(ESPN_SCOREBOARD, force ? { cache: "no-store" } : undefined);
+    if (!res.ok) throw new Error(`ESPN HTTP ${res.status}`);
     const json = await res.json();
-    espnSeasonCache = json?.events || [];
+    // ⚠️ Pour une saison pas encore publiée, ESPN renvoie la saison en cours :
+    // on ne garde que les événements de la saison active (jamais de mélange).
+    espnSeasonCache = (json?.events || []).filter(ev => String(ev.date || "").startsWith(String(ACTIVE_SEASON)));
     return espnSeasonCache;
 }
 
@@ -3531,7 +3591,7 @@ const espnCountryMap = {
     "Espagne": "spain", "Autriche": "austria", "Royaume-Uni": "britain",
     "Belgique": "belgium", "Hongrie": "hungary", "Pays-Bas": "netherlands",
     "Italie": "italy", "Azerbaïdjan": "azerbaijan", "Singapour": "singapore",
-    "Malaisie": "malaysia",
+    "Malaisie": "malaysia", "Portugal": "portugal", "Turquie": "turkey",
     "Mexique": "mexico", "Brésil": "brazil", "Qatar": "qatar",
     "Émirats Arabes Unis": "united arab emirates"
 };
@@ -3903,7 +3963,7 @@ async function autoImportResults() {
 
     // 🚫 Refus si la course est marquée annulée
     if (race.cancelled) {
-        alert(`🚫 "${race.name}" est annulée pour 2026 — import API désactivé.`);
+        alert(`🚫 "${race.name}" est annulée pour ${ACTIVE_SEASON} — import API désactivé.`);
         return;
     }
 
@@ -3928,7 +3988,7 @@ async function autoImportResults() {
                     btn.style.borderColor = "";
                 }, 4000);
             }
-            alert(`⚠️ Aucune course "${race.name}" trouvée sur le calendrier ESPN 2026.`);
+            alert(`⚠️ Aucune course "${race.name}" trouvée sur le calendrier ESPN ${ACTIVE_SEASON}.`);
             return;
         }
         console.log(`✅ Import ESPN: ${race.name} → ${ev.shortName}`);
@@ -4316,7 +4376,7 @@ async function panicResetAll() {
 
         // 2. Écraser Firebase
         console.log("[Panic] Writing reset to Firebase...");
-        await db.ref('f1_results_2026').set(races.map(r => ({
+        await db.ref(RESULTS_NODE).set(races.map(r => ({
             round:             r.round,
             raceStatus:        "upcoming",
             sprintStatus:      r.sprint ? "upcoming" : null,
@@ -4364,14 +4424,14 @@ async function panicResetAll() {
 
 function getPredictions() {
     try {
-        return JSON.parse(localStorage.getItem("f1-predictions-2026")) || {};
+        return JSON.parse(localStorage.getItem(SeasonManager.predictionsKey())) || {};
     } catch { return {}; }
 }
 
 function savePrediction(round, p1, p2, p3) {
     const preds = getPredictions();
     preds[round] = { p1, p2, p3, savedAt: Date.now() };
-    localStorage.setItem("f1-predictions-2026", JSON.stringify(preds));
+    localStorage.setItem(SeasonManager.predictionsKey(), JSON.stringify(preds));
 }
 
 function calcPredictionScore(pred, result) {
@@ -4393,6 +4453,12 @@ function renderPredictions() {
     const container = document.getElementById("predictions-content");
     const banner = document.getElementById("predictions-score-banner");
     if (!container) return;
+
+    if (drivers.length === 0) {
+        if (banner) banner.innerHTML = "";
+        container.innerHTML = noGridHTML();
+        return;
+    }
 
     const preds = getPredictions();
     const driverNames = drivers.map(d => d.driver).sort();
@@ -4565,9 +4631,45 @@ function savePredictionFromUI(round) {
 }
 
 // --------------------------------------------------------
+// 🗓️ SÉLECTEUR DE SAISON + bandeau « informations à confirmer »
+// --------------------------------------------------------
+function initSeasonSelector() {
+    const select = document.getElementById("season-select");
+    if (select) {
+        select.innerHTML = SeasonManager.available()
+            .map(y => `<option value="${y}"${y === ACTIVE_SEASON ? " selected" : ""}>${y}</option>`)
+            .join("");
+        select.addEventListener("change", () => SeasonManager.setSeason(select.value));
+    }
+    renderSeasonNotice();
+}
+
+// Distingue ce qui est confirmé de ce qui ne l'est pas encore (saison future)
+function renderSeasonNotice() {
+    const el = document.getElementById("season-notice");
+    if (!el) return;
+    const pending = [];
+    if (races.length === 0) pending.push(t("season.pending_calendar"));
+    if (SEASON_STATUS.sessionTimes && SEASON_STATUS.sessionTimes !== "confirmed") pending.push(t("season.pending_times"));
+    if (drivers.length === 0) pending.push(t("season.pending_drivers"));
+    if (pending.length === 0) { el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+    el.innerHTML = `ℹ️ <strong>${t("season.notice_title")}</strong> ${pending.join(" · ")}`;
+}
+
+// --------------------------------------------------------
 // DÉMARRAGE DU SITE
 // --------------------------------------------------------
 window.onload = function () {
+    initSeasonSelector();
+
+    // Lien direct vers un onglet (#standings, #stats…). L'admin reste réservé
+    // au bouton de connexion.
+    const initialView = decodeURIComponent((location.hash || "").slice(1));
+    if (initialView && initialView !== "admin" && document.getElementById("view-" + initialView)) {
+        switchView(initialView);
+    }
+
     document.querySelectorAll(".nav-tab").forEach(tab => {
         tab.addEventListener("click", () => switchView(tab.dataset.view));
     });
