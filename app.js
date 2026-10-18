@@ -116,7 +116,9 @@ function toggleTheme() {
     updateThemeIcon();
     // Mettre a jour le meta theme-color
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = next === "light" ? "#e8e8e8" : "#e10600";
+    if (meta) meta.content = next === "light" ? "#ffffff" : "#e10600";
+    // Les graphiques lisent les couleurs du thème au rendu : on les redessine
+    if (typeof renderStats === "function" && document.getElementById("view-stats")?.classList.contains("active")) renderStats();
 }
 function updateThemeIcon() {
     const btn = document.getElementById("theme-toggle");
@@ -2322,7 +2324,8 @@ function renderStats() {
                 datasets: [{
                     data: data.map(x => x[1]),
                     backgroundColor: distinctDriverColors(data.map(x => x[0])),
-                    borderColor: "#0a0a0a",
+                    // Séparateurs couleur de carte (blanc en thème clair)
+                    borderColor: getComputedStyle(document.documentElement).getPropertyValue("--card").trim() || "#0a0a0a",
                     borderWidth: 2,
                     hoverOffset: 8
                 }]
@@ -2426,7 +2429,7 @@ function openModal(index) {
                     <span class="schedule-day" style="min-width:80px; font-size:0.78rem; color:var(--muted); font-weight:700;">${s.day}</span>
                     <span class="schedule-name" style="flex:1;">${s.name}</span>
                     <input type="text" value="${s.time || ""}" data-schedule-index="${i}" placeholder="HH:MM"
-                        style="width:80px; padding:0.3rem 0.5rem; background:rgba(0,0,0,0.4);
+                        style="width:80px; padding:0.3rem 0.5rem; background:var(--card2);
                             border:1px solid var(--red); color:var(--red); border-radius:6px;
                             font-weight:800; font-size:0.9rem; text-align:center; outline:none;"
                         oninput="updateScheduleTime(${index}, ${i}, this.value)">
