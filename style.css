@@ -690,6 +690,27 @@ main {
 .race-card:hover .race-card-bg {
     opacity: 0.14;
 }
+/* Tracé du circuit en fond (SVG officiel F1 utilisé en masque :
+   la couleur suit le thème, rouge F1 au survol) */
+.race-card-track {
+    position: absolute;
+    top: 56px; right: 0.75rem; bottom: 0.75rem;
+    width: 58%;
+    background-color: var(--text);
+    -webkit-mask: var(--track-url) no-repeat center / contain;
+            mask: var(--track-url) no-repeat center / contain;
+    opacity: 0.09;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, background-color 0.3s;
+}
+.race-card:hover .race-card-track {
+    opacity: 0.2;
+    background-color: var(--red);
+}
+.sprint-card:hover .race-card-track {
+    background-color: var(--sprint-light);
+}
 .race-card-header, .race-card-body {
     position: relative;
     z-index: 1;
