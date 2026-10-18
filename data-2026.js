@@ -52,7 +52,7 @@ registerSeasonData(2026, {
     races: [
         {
             round: 1, name: "Grand Prix d'Australie", country: "Australie", flag: "🇦🇺",
-            circuit: "Albert Park Circuit", city: "Melbourne",
+            circuit: "Albert Park Circuit", city: "Melbourne", track: "melbourne",
             dates: { full: "6 – 8 Mars 2026", race: "8 Mars 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -66,7 +66,7 @@ registerSeasonData(2026, {
         },
         {
             round: 2, name: "Grand Prix de Chine", country: "Chine", flag: "🇨🇳",
-            circuit: "Shanghai International Circuit", city: "Shanghai",
+            circuit: "Shanghai International Circuit", city: "Shanghai", track: "shanghai",
             dates: { full: "13 – 15 Mars 2026", race: "15 Mars 2026" },
             sprint: true, status: "upcoming", isNew: false,
             result: null,
@@ -80,7 +80,7 @@ registerSeasonData(2026, {
         },
         {
             round: 3, name: "Grand Prix du Japon", country: "Japon", flag: "🇯🇵",
-            circuit: "Suzuka International Racing Course", city: "Suzuka",
+            circuit: "Suzuka International Racing Course", city: "Suzuka", track: "suzuka",
             dates: { full: "27 – 29 Mars 2026", race: "29 Mars 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -94,7 +94,7 @@ registerSeasonData(2026, {
         },
         {
             round: 5, name: "Grand Prix d'Arabie Saoudite", country: "Arabie Saoudite", flag: "🇸🇦",
-            circuit: "Jeddah Corniche Circuit", city: "Jeddah",
+            circuit: "Jeddah Corniche Circuit", city: "Jeddah", track: "jeddah",
             dates: { full: "17 – 19 Avril 2026", race: "19 Avril 2026" },
             sprint: false, status: "cancelled", isNew: false,
             cancelled: true,
@@ -109,7 +109,7 @@ registerSeasonData(2026, {
         },
         {
             round: 6, name: "Grand Prix de Miami", country: "États-Unis", flag: "🇺🇸",
-            circuit: "Miami International Autodrome", city: "Miami Gardens",
+            circuit: "Miami International Autodrome", city: "Miami Gardens", track: "miami",
             dates: { full: "1 – 3 Mai 2026", race: "3 Mai 2026" },
             sprint: true, status: "upcoming", isNew: false,
             result: null,
@@ -123,7 +123,7 @@ registerSeasonData(2026, {
         },
         {
             round: 7, name: "Grand Prix du Canada", country: "Canada", flag: "🇨🇦",
-            circuit: "Circuit Gilles-Villeneuve", city: "Montréal",
+            circuit: "Circuit Gilles-Villeneuve", city: "Montréal", track: "montreal",
             dates: { full: "22 – 24 Mai 2026", race: "24 Mai 2026" },
             sprint: true, status: "upcoming", isNew: false,
             result: null,
@@ -137,7 +137,7 @@ registerSeasonData(2026, {
         },
         {
             round: 8, name: "Grand Prix de Monaco", country: "Monaco", flag: "🇲🇨",
-            circuit: "Circuit de Monaco", city: "Monte-Carlo",
+            circuit: "Circuit de Monaco", city: "Monte-Carlo", track: "montecarlo",
             dates: { full: "5 – 7 Juin 2026", race: "7 Juin 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -151,7 +151,7 @@ registerSeasonData(2026, {
         },
         {
             round: 9, name: "Grand Prix Automobile de Barcelone-Catalogne", country: "Espagne", flag: "🇪🇸",
-            circuit: "Circuit de Barcelona-Catalunya", city: "Barcelone",
+            circuit: "Circuit de Barcelona-Catalunya", city: "Barcelone", track: "catalunya",
             dates: { full: "12 – 14 Juin 2026", race: "14 Juin 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -165,7 +165,7 @@ registerSeasonData(2026, {
         },
         {
             round: 10, name: "Grand Prix d'Autriche", country: "Autriche", flag: "🇦🇹",
-            circuit: "Red Bull Ring", city: "Spielberg",
+            circuit: "Red Bull Ring", city: "Spielberg", track: "spielberg",
             dates: { full: "26 – 28 Juin 2026", race: "28 Juin 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -179,7 +179,7 @@ registerSeasonData(2026, {
         },
         {
             round: 11, name: "Grand Prix de Grande-Bretagne", country: "Royaume-Uni", flag: "🇬🇧",
-            circuit: "Silverstone Circuit", city: "Silverstone",
+            circuit: "Silverstone Circuit", city: "Silverstone", track: "silverstone",
             dates: { full: "3 – 5 Juillet 2026", race: "5 Juillet 2026" },
             sprint: true, status: "upcoming", isNew: false,
             result: null,
@@ -193,7 +193,7 @@ registerSeasonData(2026, {
         },
         {
             round: 12, name: "Grand Prix de Belgique", country: "Belgique", flag: "🇧🇪",
-            circuit: "Circuit de Spa-Francorchamps", city: "Spa",
+            circuit: "Circuit de Spa-Francorchamps", city: "Spa", track: "spafrancorchamps",
             dates: { full: "17 – 19 Juillet 2026", race: "19 Juillet 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -207,7 +207,7 @@ registerSeasonData(2026, {
         },
         {
             round: 13, name: "Grand Prix de Hongrie", country: "Hongrie", flag: "🇭🇺",
-            circuit: "Hungaroring", city: "Budapest",
+            circuit: "Hungaroring", city: "Budapest", track: "hungaroring",
             dates: { full: "24 – 26 Juillet 2026", race: "26 Juillet 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -221,7 +221,7 @@ registerSeasonData(2026, {
         },
         {
             round: 14, name: "Grand Prix des Pays-Bas", country: "Pays-Bas", flag: "🇳🇱",
-            circuit: "Circuit Zandvoort", city: "Zandvoort",
+            circuit: "Circuit Zandvoort", city: "Zandvoort", track: "zandvoort",
             dates: { full: "21 – 23 Août 2026", race: "23 Août 2026" },
             sprint: true, status: "upcoming", isNew: false,
             result: null,
@@ -235,7 +235,7 @@ registerSeasonData(2026, {
         },
         {
             round: 15, name: "Grand Prix d'Italie", country: "Italie", flag: "🇮🇹",
-            circuit: "Autodromo Nazionale Monza", city: "Monza",
+            circuit: "Autodromo Nazionale Monza", city: "Monza", track: "monza",
             dates: { full: "4 – 6 Septembre 2026", race: "6 Septembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -249,7 +249,7 @@ registerSeasonData(2026, {
         },
         {
             round: 16, name: "Grand Prix d'Espagne", country: "Espagne", flag: "🇪🇸",
-            circuit: "Circuito del Jarama", city: "Madrid",
+            circuit: "Circuito del Jarama", city: "Madrid", track: "madring",
             dates: { full: "11 – 13 Septembre 2026", race: "13 Septembre 2026" },
             sprint: false, status: "upcoming", isNew: true,
             result: null,
@@ -263,7 +263,7 @@ registerSeasonData(2026, {
         },
         {
             round: 17, name: "Grand Prix d'Azerbaïdjan", country: "Azerbaïdjan", flag: "🇦🇿",
-            circuit: "Baku City Circuit", city: "Bakou",
+            circuit: "Baku City Circuit", city: "Bakou", track: "baku",
             dates: { full: "24 – 26 Septembre 2026", race: "26 Septembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -282,7 +282,7 @@ registerSeasonData(2026, {
             // hostCountry → pays réel du circuit (matching ESPN / continent).
             round: 4, name: "Grand Prix de Bahreïn en Malaisie", country: "Bahreïn", flag: "🇧🇭",
             hostCountry: "Malaisie",
-            circuit: "Sepang International Circuit", city: "Sepang (Malaisie) 🇲🇾",
+            circuit: "Sepang International Circuit", city: "Sepang (Malaisie) 🇲🇾", track: "kualalumpur",
             dates: { full: "2 – 4 Octobre 2026", race: "4 Octobre 2026" },
             sprint: false, status: "upcoming", isNew: true,
             cancelled: false,
@@ -297,7 +297,7 @@ registerSeasonData(2026, {
         },
         {
             round: 18, name: "Grand Prix de Singapour", country: "Singapour", flag: "🇸🇬",
-            circuit: "Marina Bay Street Circuit", city: "Singapour",
+            circuit: "Marina Bay Street Circuit", city: "Singapour", track: "singapore",
             dates: { full: "9 – 11 Octobre 2026", race: "11 Octobre 2026" },
             sprint: true, status: "upcoming", isNew: false,
             result: null,
@@ -311,7 +311,7 @@ registerSeasonData(2026, {
         },
         {
             round: 19, name: "Grand Prix des États-Unis", country: "États-Unis", flag: "🇺🇸",
-            circuit: "Circuit of the Americas", city: "Austin",
+            circuit: "Circuit of the Americas", city: "Austin", track: "austin",
             dates: { full: "23 – 25 Octobre 2026", race: "25 Octobre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -325,7 +325,7 @@ registerSeasonData(2026, {
         },
         {
             round: 20, name: "Grand Prix du Mexique", country: "Mexique", flag: "🇲🇽",
-            circuit: "Autodromo Hermanos Rodriguez", city: "Mexico",
+            circuit: "Autodromo Hermanos Rodriguez", city: "Mexico", track: "mexicocity",
             dates: { full: "30 Oct – 1 Nov 2026", race: "1 Novembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -339,7 +339,7 @@ registerSeasonData(2026, {
         },
         {
             round: 21, name: "Grand Prix du Brésil", country: "Brésil", flag: "🇧🇷",
-            circuit: "Autodromo José Carlos Pace", city: "São Paulo",
+            circuit: "Autodromo José Carlos Pace", city: "São Paulo", track: "interlagos",
             dates: { full: "6 – 8 Novembre 2026", race: "8 Novembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -353,7 +353,7 @@ registerSeasonData(2026, {
         },
         {
             round: 22, name: "Grand Prix de Las Vegas", country: "États-Unis", flag: "🇺🇸",
-            circuit: "Las Vegas Strip Circuit", city: "Las Vegas",
+            circuit: "Las Vegas Strip Circuit", city: "Las Vegas", track: "lasvegas",
             dates: { full: "19 – 21 Novembre 2026", race: "21 Novembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -367,7 +367,7 @@ registerSeasonData(2026, {
         },
         {
             round: 23, name: "Grand Prix du Qatar", country: "Qatar", flag: "🇶🇦",
-            circuit: "Lusail International Circuit", city: "Lusail",
+            circuit: "Lusail International Circuit", city: "Lusail", track: "lusail",
             dates: { full: "27 – 29 Novembre 2026", race: "29 Novembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
@@ -381,7 +381,7 @@ registerSeasonData(2026, {
         },
         {
             round: 24, name: "Grand Prix d'Abu Dhabi", country: "Émirats Arabes Unis", flag: "🇦🇪",
-            circuit: "Yas Marina Circuit", city: "Abu Dhabi",
+            circuit: "Yas Marina Circuit", city: "Abu Dhabi", track: "yasmarinacircuit",
             dates: { full: "4 – 6 Décembre 2026", race: "6 Décembre 2026" },
             sprint: false, status: "upcoming", isNew: false,
             result: null,
