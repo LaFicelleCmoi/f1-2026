@@ -33,6 +33,22 @@ const RESULTS_NODE   = SeasonManager.firebaseNode();
 function raceIndexByRound(round) {
     return races.findIndex(r => r.round === round);
 }
+
+// Tracé officiel du circuit (SVG F1, propre à chaque saison) — utilisé en
+// masque CSS pour prendre la couleur du thème. null si non renseigné.
+function trackOutlineUrl(race) {
+    if (!race || !race.track) return null;
+    return `https://media.formula1.com/image/upload/c_lfill,w_3392/v1740000001/common/f1/${ACTIVE_SEASON}/track/${ACTIVE_SEASON}track${race.track}blackoutline.svg`;
+}
+
+// Fond de carte : tracé du circuit, sinon photo TheSportsDB
+function raceCardBgHTML(race) {
+    const track = trackOutlineUrl(race);
+    if (track) return `<div class="race-card-track" style="--track-url:url('${track}')" aria-hidden="true"></div>`;
+    const img = sportsDbCache[race.round];
+    const photo = img?.thumb || img?.poster || null;
+    return photo ? `<div class="race-card-bg" style="background-image:url('${photo}')"></div>` : "";
+}
 const auth = firebase.auth();
 
 // ============================================================
@@ -603,13 +619,9 @@ function renderAllRaces() {
 
         const dateFull = (race.dates && race.dates.full) ? race.dates.full : "";
 
-        // TheSportsDB image for card background
-        const cardImages = sportsDbCache[race.round];
-        const cardBgImg = cardImages?.thumb || cardImages?.poster || null;
-
         html += `
-            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" id="race-card-${index}" onclick="openModal(${index})"${cardBgImg ? ` data-bg="${cardBgImg}"` : ''}>
-                ${cardBgImg ? `<div class="race-card-bg" style="background-image:url('${cardBgImg}')"></div>` : ''}
+            <div class="race-card ${statusClass}${race.isNew ? ' race-card-new' : ''}${rs === 'next' ? ' race-card-next' : ''}" id="race-card-${index}" onclick="openModal(${index})">
+                ${raceCardBgHTML(race)}
                 <div class="race-card-header">
                     <span class="race-round">R${race.round}</span>
                     <div class="race-badges">${badgesHTML}</div>
@@ -2362,6 +2374,7 @@ function renderSprintView() {
 
         html += `
             <div class="race-card sprint-card" onclick="openModal(${raceIndexByRound(race.round)})">
+                ${raceCardBgHTML(race)}
                 <div class="race-card-header">
                     <span class="race-round sprint-round">R${race.round} ⚡</span>
                     <span class="badge ${getBadgeClass(ss)}">${getBadgeLabel(ss)}</span>
