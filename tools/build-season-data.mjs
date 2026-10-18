@@ -79,6 +79,9 @@ const CIRCUITS = {
 // Ville affichée quand le « location » OpenF1 est un nom de pays
 const CITIES = { "Sakhir": "Sakhir" };
 
+// "Spa-Francorchamps" → "spafrancorchamps", "Yas Marina Circuit" → "yasmarinacircuit"
+const trackSlug = (shortName) => shortName.normalize("NFD").toLowerCase().replace(/[^a-z]/g, "");
+
 // Session OpenF1 → libellé/type utilisés par l'app
 const SESSIONS = {
     "Practice 1": ["Essais Libres 1", "fp"], "Practice 2": ["Essais Libres 2", "fp"],
@@ -158,6 +161,8 @@ const races = meetings.map((m, i) => {
         flag: country[1],
         circuit,
         city: CITIES[m.circuit_short_name] || m.location,
+        // Tracé officiel F1 (fond des cartes) : …/{année}track{track}blackoutline.svg
+        track: trackSlug(m.circuit_short_name),
         dates: {
             full: fullRange(start, end),
             race: `${raceDay.getUTCDate()} ${MONTHS[raceDay.getUTCMonth()]} ${raceDay.getUTCFullYear()}`
@@ -200,9 +205,9 @@ const raceBlock = (r) => {
     const head = Object.entries(rest).map(([k, v]) => `${k}: ${lit(v)}`);
     return `        {
             ${head.slice(0, 4).join(", ")},
-            ${head.slice(4, 6).join(", ")},
+            ${head.slice(4, 7).join(", ")},
             dates: ${lit(dates)},
-            ${head.slice(6).join(", ")},
+            ${head.slice(7).join(", ")},
             schedule: [
 ${schedule.map(e => "                " + lit(e)).join(",\n")}
             ]
