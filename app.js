@@ -713,10 +713,13 @@ function renderStandings() {
         <thead><tr><th>#</th><th colspan="2">${t("standings.driver")}</th><th>${t("standings.team")}</th><th>${t("standings.points")}</th></tr></thead>
         <tbody>
             ${sortedDrivers.map((d, i) => {
+                const maxPts = sortedDrivers[0]?.points || 0;
                 const color = teamColors[d.team] || "#666";
                 const pct = maxDriverPts > 0 ? (d.points / maxDriverPts * 100) : 0;
-                const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
-                const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                // Pas de médaille tant qu'aucun point n'est marqué (début de saison)
+                const medal = i < 3 && maxPts > 0;
+                const posClass = medal ? `standing-top standing-p${i+1}` : '';
+                const medalIcon = !medal ? '' : i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
                 const safeName = d.driver.replace(/'/g, "\\'");
                 const safeTeam = d.team.replace(/'/g, "\\'");
                 return `
@@ -739,10 +742,13 @@ function renderStandings() {
         <thead><tr><th>#</th><th colspan="2">${t("standings.team")}</th><th>${t("standings.points")}</th></tr></thead>
         <tbody>
             ${sortedConstructors.map((c, i) => {
+                const maxPts = sortedConstructors[0]?.points || 0;
                 const color = teamColors[c.team] || "#666";
                 const pct = maxConstrPts > 0 ? (c.points / maxConstrPts * 100) : 0;
-                const posClass = i < 3 ? `standing-top standing-p${i+1}` : '';
-                const medalIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+                // Pas de médaille tant qu'aucun point n'est marqué (début de saison)
+                const medal = i < 3 && maxPts > 0;
+                const posClass = medal ? `standing-top standing-p${i+1}` : '';
+                const medalIcon = !medal ? '' : i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
                 const safeTeam = c.team.replace(/'/g, "\\'");
                 return `
                 <tr class="standing-row clickable ${posClass}" style="--row-delay:${i * 45}ms" onclick="openTeamProfile('${safeTeam}')">
@@ -4668,6 +4674,10 @@ function renderSeasonNotice() {
     if (races.length === 0) pending.push(t("season.pending_calendar"));
     if (SEASON_STATUS.sessionTimes && SEASON_STATUS.sessionTimes !== "confirmed") pending.push(t("season.pending_times"));
     if (drivers.length === 0) pending.push(t("season.pending_drivers"));
+    // Plateau partiellement officialisé : « 17/22 pilotes confirmés »
+    else if (SEASON_STATUS.drivers === "partial") {
+        pending.push(t("season.pending_seats", { confirmed: drivers.length, total: constructors.length * 2 }));
+    }
     if (pending.length === 0) { el.hidden = true; el.innerHTML = ""; return; }
     el.hidden = false;
     el.innerHTML = `ℹ️ <strong>${t("season.notice_title")}</strong> ${pending.join(" · ")}`;
