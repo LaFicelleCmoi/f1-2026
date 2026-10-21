@@ -11,7 +11,7 @@ registerSeasonData(2027, {
         calendar: "confirmed",
         sessionTimes: "unconfirmed",
         drivers: "partial",
-        driversAsOf: "2026-10-20",
+        driversAsOf: "2026-10-21",
         points: "unconfirmed"
     },
 
@@ -23,6 +23,8 @@ registerSeasonData(2027, {
     drivers: [
         {driver: "Lando Norris", team: "McLaren", flag: "🇬🇧"},
         {driver: "Oscar Piastri", team: "McLaren", flag: "🇦🇺"},
+        {driver: "George Russell", team: "Mercedes", flag: "🇬🇧"},
+        {driver: "Andrea Kimi Antonelli", team: "Mercedes", flag: "🇮🇹"},
         {driver: "Max Verstappen", team: "Red Bull Racing", flag: "🇳🇱"},
         {driver: "Isack Hadjar", team: "Red Bull Racing", flag: "🇫🇷"},
         {driver: "Charles Leclerc", team: "Ferrari", flag: "🇲🇨"},
