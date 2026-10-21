@@ -181,7 +181,7 @@ const sportsDbNames = Object.fromEntries(meetings.map((m, i) => [i + 1, m.meetin
 // Conserve pilotes / écuries / barème déjà saisis à la main si le fichier existe
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outFile = join(root, `data-${year}.js`);
-let manual = { drivers: [], constructors: [], pointsSystem: null, sprintPoints: null, statusDrivers: "unknown", statusPoints: "unconfirmed" };
+let manual = { drivers: [], constructors: [], pointsSystem: null, sprintPoints: null, statusDrivers: "unknown", statusPoints: "unconfirmed", driversAsOf: null };
 if (existsSync(outFile)) {
     let captured = null;
     const fn = new Function("registerSeasonData", readFileSync(outFile, "utf8"));
@@ -193,7 +193,8 @@ if (existsSync(outFile)) {
             pointsSystem: captured.pointsSystem,
             sprintPoints: captured.sprintPoints,
             statusDrivers: captured.status?.drivers || "unknown",
-            statusPoints: captured.status?.points || "unconfirmed"
+            statusPoints: captured.status?.points || "unconfirmed",
+            driversAsOf: captured.status?.driversAsOf || null
         };
     }
 }
@@ -226,7 +227,8 @@ registerSeasonData(${year}, {
     status: {
         calendar: "confirmed",
         sessionTimes: "${withTimes ? "confirmed" : "unconfirmed"}",
-        drivers: "${manual.statusDrivers}",
+        drivers: "${manual.statusDrivers}",${manual.driversAsOf ? `
+        driversAsOf: "${manual.driversAsOf}",` : ""}
         points: "${manual.statusPoints}"
     },
 
