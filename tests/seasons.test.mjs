@@ -108,13 +108,23 @@ for (const year of [2026, 2027]) {
     });
 }
 
-test("2027 : aucun résultat ni plateau inventé", () => {
+test("2027 : aucun résultat inventé, plateau = confirmés uniquement", () => {
     const { SEASON_DATA } = load();
     const d = SEASON_DATA[2027];
     assert.equal(d.races.length, 24);
     assert.ok(d.races.every(r => r.result === null && r.status === "upcoming"));
-    assert.equal(d.drivers.length, 0, "plateau 2027 non officialisé : doit rester vide");
-    assert.equal(d.constructors.length, 0);
+    // Plateau partiel : chaque pilote dans une écurie engagée, 2 max par écurie
+    const teams = new Set(d.constructors.map(c => c.team));
+    const perTeam = {};
+    for (const p of d.drivers) {
+        assert.ok(teams.has(p.team), `${p.driver} : écurie ${p.team} non engagée`);
+        perTeam[p.team] = (perTeam[p.team] || 0) + 1;
+        assert.ok(perTeam[p.team] <= 2, `plus de 2 pilotes chez ${p.team}`);
+    }
+    assert.equal(new Set(d.drivers.map(p => p.driver)).size, d.drivers.length, "pilote en double");
+    if (d.drivers.length < d.constructors.length * 2) {
+        assert.equal(d.status.drivers, "partial", "plateau incomplet : status.drivers doit valoir partial");
+    }
     assert.equal(d.status.sessionTimes, "unconfirmed");
     assert.ok(d.races.every(r => r.schedule.every(s => s.time === null)));
 });
