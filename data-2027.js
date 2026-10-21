@@ -10,7 +10,8 @@ registerSeasonData(2027, {
     status: {
         calendar: "confirmed",
         sessionTimes: "unconfirmed",
-        drivers: "unknown",
+        drivers: "partial",
+        driversAsOf: "2026-10-20",
         points: "unconfirmed"
     },
 
@@ -19,8 +20,38 @@ registerSeasonData(2027, {
     pointsSystem: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
     sprintPoints: [8, 7, 6, 5, 4, 3, 2, 1],
 
-    drivers: [],
-    constructors: [],
+    drivers: [
+        {driver: "Lando Norris", team: "McLaren", flag: "🇬🇧"},
+        {driver: "Oscar Piastri", team: "McLaren", flag: "🇦🇺"},
+        {driver: "Max Verstappen", team: "Red Bull Racing", flag: "🇳🇱"},
+        {driver: "Isack Hadjar", team: "Red Bull Racing", flag: "🇫🇷"},
+        {driver: "Charles Leclerc", team: "Ferrari", flag: "🇲🇨"},
+        {driver: "Lewis Hamilton", team: "Ferrari", flag: "🇬🇧"},
+        {driver: "Carlos Sainz", team: "Williams", flag: "🇪🇸"},
+        {driver: "Alex Albon", team: "Williams", flag: "🇹🇭"},
+        {driver: "Fernando Alonso", team: "Aston Martin", flag: "🇪🇸"},
+        {driver: "Lance Stroll", team: "Aston Martin", flag: "🇨🇦"},
+        {driver: "Rafael Camara", team: "Haas", flag: "🇧🇷"},
+        {driver: "Nico Hülkenberg", team: "Audi", flag: "🇩🇪"},
+        {driver: "Gabriel Bortoleto", team: "Audi", flag: "🇧🇷"},
+        {driver: "Pierre Gasly", team: "Alpine", flag: "🇫🇷"},
+        {driver: "Franco Colapinto", team: "Alpine", flag: "🇦🇷"},
+        {driver: "Sergio Pérez", team: "Cadillac", flag: "🇲🇽"},
+        {driver: "Valtteri Bottas", team: "Cadillac", flag: "🇫🇮"}
+    ],
+    constructors: [
+        {team: "McLaren", flag: "🇬🇧"},
+        {team: "Mercedes", flag: "🇩🇪"},
+        {team: "Red Bull Racing", flag: "🇦🇹"},
+        {team: "Ferrari", flag: "🇮🇹"},
+        {team: "Williams", flag: "🇬🇧"},
+        {team: "Racing Bulls", flag: "🇮🇹"},
+        {team: "Aston Martin", flag: "🇬🇧"},
+        {team: "Haas", flag: "🇺🇸"},
+        {team: "Audi", flag: "🇩🇪"},
+        {team: "Alpine", flag: "🇫🇷"},
+        {team: "Cadillac", flag: "🇺🇸"}
+    ],
 
     races: [
         {
