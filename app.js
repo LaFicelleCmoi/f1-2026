@@ -433,6 +433,7 @@ db.ref(RESULTS_NODE).on('value', snapshot => {
     renderPredictions();
     updateStats();
     updateCountdown();
+    if (typeof renderChampion === "function") renderChampion();
     // Stats graphiques : ne s'exécute que si la vue est active (Chart.js a besoin d'un canvas visible)
     if (document.getElementById("view-stats")?.classList.contains("active")) renderStats();
     if (isAdmin) renderAdminRaceList();
@@ -707,6 +708,7 @@ function renderStandings() {
     const medalColors         = ["#ffd700", "#c0c0c0", "#cd7f32"];
 
     const maxDriverPts = sortedDrivers[0]?.points || 1;
+    const championName = typeof getChampion === "function" ? getChampion()?.driver : null;
     const maxConstrPts = sortedConstructors[0]?.points || 1;
 
     document.getElementById("drivers-standings").innerHTML = `
@@ -726,7 +728,7 @@ function renderStandings() {
                 <tr class="standing-row clickable ${posClass}" style="--row-delay:${i * 45}ms" onclick="openDriverProfile('${safeName}')">
                     <td class="standing-pos">${medalIcon || (i + 1)}</td>
                     <td class="standing-color-cell"><span class="standing-color-bar" style="background:${color};box-shadow:0 0 8px ${color}55"></span></td>
-                    <td class="standing-driver">${d.flag} ${d.driver}</td>
+                    <td class="standing-driver">${d.flag} ${d.driver}${d.driver === championName ? ` <span class="champion-tag" title="${t("champ.banner")}">👑 ${t("champ.row_tag")}</span>` : ""}</td>
                     <td class="standing-team" style="color:${color}" onclick="event.stopPropagation(); openTeamProfile('${safeTeam}')">${d.team}</td>
                     <td class="standing-points-cell">
                         <div class="standing-points-bar-wrap">
