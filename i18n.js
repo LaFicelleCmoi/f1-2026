@@ -417,6 +417,27 @@ const translations = {
         "legal.s13_p1": "Pour toute question juridique, demande de retrait ou question générale concernant le Site, veuillez contacter :",
         "legal.s13_p2": "<strong>E-mail :</strong> <a href=\"mailto:fifaseize9@gmail.com?subject=F1%202026%20Race%20Hub%20-%20Legal%20Inquiry\">fifaseize9@gmail.com</a>",
         "legal.s13_p3": "Veuillez utiliser l'objet « F1 2026 Race Hub — Legal Inquiry » pour un traitement plus rapide.",
+
+        // 🏆 Champion du monde
+        "champ.kicker": "Champion du monde de Formule 1",
+        "champ.banner": "Champion du monde {season}",
+        "champ.banner_cta": "Revivre le sacre",
+        "champ.dialog_label": "Célébration du champion du monde {season}",
+        "champ.close": "Fermer",
+        "champ.again": "🎆 Encore !",
+        "champ.to_standings": "Voir le classement",
+        "champ.stat_points": "Points",
+        "champ.stat_wins": "Victoires",
+        "champ.stat_podiums": "Podiums",
+        "champ.stat_poles": "Poles",
+        "champ.stat_gap": "Pts d'avance",
+        "champ.clinched": "Titre assuré au {race}, à {left} course(s) de la fin",
+        "champ.clinched_final": "Titre décroché lors de la dernière course : {race}",
+        "champ.youngest": "Plus jeune champion du monde de l'histoire — {age}",
+        "champ.age": "{y} ans et {d} jours",
+        "champ.italian": "Premier Italien titré depuis Alberto Ascari en 1953",
+        "champ.wins_road": "La route du titre — {n} victoires",
+        "champ.row_tag": "Champion",
     },
     en: {
         // Header
@@ -832,6 +853,27 @@ const translations = {
         "legal.s13_p1": "For any legal inquiry, takedown request, or general question regarding the Site, please contact:",
         "legal.s13_p2": "<strong>Email:</strong> <a href=\"mailto:fifaseize9@gmail.com?subject=F1%202026%20Race%20Hub%20-%20Legal%20Inquiry\">fifaseize9@gmail.com</a>",
         "legal.s13_p3": "Please use the subject line \"F1 2026 Race Hub — Legal Inquiry\" for faster processing.",
+
+        // 🏆 World champion
+        "champ.kicker": "Formula 1 World Champion",
+        "champ.banner": "{season} World Champion",
+        "champ.banner_cta": "Relive the moment",
+        "champ.dialog_label": "{season} world champion celebration",
+        "champ.close": "Close",
+        "champ.again": "🎆 Again!",
+        "champ.to_standings": "View standings",
+        "champ.stat_points": "Points",
+        "champ.stat_wins": "Wins",
+        "champ.stat_podiums": "Podiums",
+        "champ.stat_poles": "Poles",
+        "champ.stat_gap": "Pts ahead",
+        "champ.clinched": "Title sealed at {race} with {left} race(s) to go",
+        "champ.clinched_final": "Title sealed at the final race: {race}",
+        "champ.youngest": "Youngest world champion in history — {age}",
+        "champ.age": "{y} years and {d} days",
+        "champ.italian": "First Italian champion since Alberto Ascari in 1953",
+        "champ.wins_road": "Road to the title — {n} wins",
+        "champ.row_tag": "Champion",
     }
 };
 
@@ -902,6 +944,7 @@ function setLang(lang) {
     if (typeof updateCountdown === "function") updateCountdown();
     if (typeof renderAdminRaceList === "function") renderAdminRaceList();
     if (typeof renderSeasonNotice === "function") renderSeasonNotice();
+    if (typeof renderChampion === "function") renderChampion();
 }
 
 function toggleLang() {
