@@ -68,6 +68,32 @@ node tools/build-season-data.mjs 2027 --with-times
 - Nouvelle saison : `node tools/build-season-data.mjs 2028`, ajouter `data-2028.js` dans `index.html`, `sw.js` et `.github/workflows/build-apk.yml`, puis `2028: { enabled: true }` dans `seasons.js`.
 - Basculer tout le monde sur une saison : changer `defaultSeason`, ou activer `autoSwitch` avec une date.
 
+## Synchro ESPN automatique
+
+Les résultats sont importés dans Firebase **automatiquement, dès qu'ESPN publie
+une session** (essais libres, qualifs, sprint, course), même si personne n'a le
+site ouvert :
+
+| Fichier | Rôle |
+|---------|------|
+| `espn-sync.js` | Cœur de la synchro, partagé par le site (bouton admin) et le serveur |
+| `tools/espn-sync.mjs` | Script serveur : lit Firebase, interroge ESPN, n'écrit que si quelque chose a changé |
+| `.github/workflows/espn-sync.yml` | Lance le script toutes les 5 minutes (GitHub Actions) |
+
+**Mise en route (une seule fois)** : dans GitHub → *Settings → Secrets and variables → Actions*,
+créer `F1_ADMIN_EMAIL` et `F1_ADMIN_PASSWORD` (le compte admin Firebase du site).
+Sans ces secrets, le job tourne en lecture seule.
+
+```bash
+# Tester en local sans rien écrire
+node tools/espn-sync.mjs --dry-run
+# Resynchroniser toute la saison
+node tools/espn-sync.mjs --full
+```
+
+Par défaut, le script ne traite que les week-ends récents (J-4 à J+3) et les courses passées
+pas encore terminées : une exécution prend environ 2 secondes.
+
 ### Tests
 
 ```bash
