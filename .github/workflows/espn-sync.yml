@@ -1,0 +1,46 @@
+name: 🤖 Synchro ESPN → Firebase
+
+# Importe automatiquement dans Firebase chaque session F1 dès qu'ESPN la
+# publie (essais, qualifs, sprint, course), sans qu'un admin ouvre le site.
+# Script : tools/espn-sync.mjs (cœur partagé avec le site : espn-sync.js).
+#
+# Secrets requis (Settings → Secrets and variables → Actions) :
+#   F1_ADMIN_EMAIL, F1_ADMIN_PASSWORD  — le compte admin Firebase du site.
+# Sans eux, le job tourne en lecture seule et n'écrit rien.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # toutes les 5 min (GitHub peut décaler de quelques minutes)
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Resynchroniser toute la saison (sinon : week-ends récents)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Jamais deux synchros en même temps
+concurrency:
+  group: espn-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Synchro ESPN → Firebase
+        env:
+          F1_ADMIN_EMAIL: ${{ secrets.F1_ADMIN_EMAIL }}
+          F1_ADMIN_PASSWORD: ${{ secrets.F1_ADMIN_PASSWORD }}
+        run: node tools/espn-sync.mjs ${{ inputs.full && '--full' || '' }}
