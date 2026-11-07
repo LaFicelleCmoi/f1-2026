@@ -25,6 +25,7 @@ const PRECACHE = [
     `./data-2026.js?v=${ASSET_V}`,
     `./data-2027.js?v=${ASSET_V}`,
     `./i18n.js?v=${ASSET_V}`,
+    `./espn-sync.js?v=${ASSET_V}`,
     `./app.js?v=${ASSET_V}`,
     `./champion.js?v=${ASSET_V}`,
     `./anti-inspect.js?v=${ASSET_V}`,
