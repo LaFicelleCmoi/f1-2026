@@ -15,6 +15,13 @@ const ok = (name, cond, extra = "") => { results.push([cond ? "PASS" : "FAIL", n
 async function newPage(opts = {}) {
     const ctx = await browser.newContext({ viewport: opts.viewport || { width: 1280, height: 900 }, serviceWorkers: "block" });
     const page = await ctx.newPage();
+    // La célébration plein écran du champion (champion.js) intercepte les
+    // clics : on la masque, elle n'est pas l'objet de ces tests.
+    await page.addInitScript(() => document.addEventListener("DOMContentLoaded", () => {
+        const st = document.createElement("style");
+        st.textContent = "#champ-overlay{display:none!important}";
+        document.head.appendChild(st);
+    }));
     page.errors = [];
     page.on("pageerror", e => page.errors.push(e.message));
     page.on("console", m => { if (m.type() === "error" && !/CORS|Failed to load resource|ERR_FAILED/.test(m.text())) page.errors.push("console: " + m.text()); });
