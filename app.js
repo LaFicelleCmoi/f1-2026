@@ -449,21 +449,7 @@ db.ref(RESULTS_NODE).on('value', snapshot => {
 function saveToFirebase() {
     const stack = new Error().stack?.split("\n")[2]?.trim() || "?";
     console.log(`[Firebase] saveToFirebase() called from ${stack}`);
-    const toSave = races.map(r => ({
-        round:             r.round,
-        raceStatus:        r.raceStatus        || "upcoming",
-        sprintStatus:      r.sprintStatus      || (r.sprint ? "upcoming" : null),
-        status:            r.raceStatus        || "upcoming",
-        result:            r.result            || null,
-        sprintResult:      r.sprintResult      || null,
-        schedule:          r.schedule          || null,
-        qualiResults:      r.qualiResults      || null,
-        sprintQualiResults: r.sprintQualiResults || null,
-        fp1Results:        r.fp1Results        || null,
-        fp2Results:        r.fp2Results        || null,
-        fp3Results:        r.fp3Results        || null
-    }));
-    db.ref(RESULTS_NODE).set(toSave);
+    db.ref(RESULTS_NODE).set(EspnSync.serialize(races));
 }
 
 // --------------------------------------------------------
@@ -3589,7 +3575,7 @@ async function fetchPracticeResults(sessionName, countryName, year = ACTIVE_SEAS
 // ESPN fournit en UNE requête tout le calendrier + toutes les
 // sessions (FP1, Sprint Quali, Sprint, Qualifs, Course) avec les
 // noms de pilotes corrects. C'est la source principale d'import.
-const ESPN_SCOREBOARD = `https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=${ACTIVE_SEASON}`;
+const ESPN_SCOREBOARD = EspnSync.scoreboardUrl(ACTIVE_SEASON);
 const ESPN_STANDINGS  = `https://site.api.espn.com/apis/v2/sports/racing/f1/standings?season=${ACTIVE_SEASON}`;
 let espnSeasonCache = null;
 
@@ -3597,172 +3583,26 @@ async function fetchEspnSeason(force = false) {
     if (espnSeasonCache && !force) return espnSeasonCache;
     const res = await fetch(ESPN_SCOREBOARD, force ? { cache: "no-store" } : undefined);
     if (!res.ok) throw new Error(`ESPN HTTP ${res.status}`);
-    const json = await res.json();
-    // ⚠️ Pour une saison pas encore publiée, ESPN renvoie la saison en cours :
-    // on ne garde que les événements de la saison active (jamais de mélange).
-    espnSeasonCache = (json?.events || []).filter(ev => String(ev.date || "").startsWith(String(ACTIVE_SEASON)));
+    // Événements de la saison active uniquement (voir espn-sync.js)
+    espnSeasonCache = EspnSync.seasonEvents(await res.json(), ACTIVE_SEASON);
     return espnSeasonCache;
 }
 
-// Pays local (FR) → pays du circuit ESPN (circuit.address.country).
-// ⚠️ On matche sur le PAYS DU CIRCUIT, pas sur le nom de l'événement :
-// les noms ESPN contiennent des sponsors ("Qatar Airways Australian GP")
-// qui provoquaient de faux positifs (le GP du Qatar récupérait l'Australie).
-const espnCountryMap = {
-    "Australie": "australia", "Chine": "china", "Japon": "japan",
-    "Bahreïn": "bahrain", "Arabie Saoudite": "saudi arabia",
-    "États-Unis": "usa", "Canada": "canada", "Monaco": "monaco",
-    "Espagne": "spain", "Autriche": "austria", "Royaume-Uni": "britain",
-    "Belgique": "belgium", "Hongrie": "hungary", "Pays-Bas": "netherlands",
-    "Italie": "italy", "Azerbaïdjan": "azerbaijan", "Singapour": "singapore",
-    "Malaisie": "malaysia", "Portugal": "portugal", "Turquie": "turkey",
-    "Mexique": "mexico", "Brésil": "brazil", "Qatar": "qatar",
-    "Émirats Arabes Unis": "united arab emirates"
-};
-// Indices pour départager les pays à plusieurs GP (USA ×3, Espagne ×2)
-const espnCityKw = {
-    "Miami Gardens": ["miami"], "Austin": ["united states", "austin"],
-    "Las Vegas": ["vegas"], "Barcelone": ["barcelona", "catalu"],
-    "Madrid": ["spanish", "madrid"]
-};
-
-// Trouve l'événement ESPN correspondant à une course locale.
-// Le pays du circuit DOIT correspondre (score minimum 10) — cela élimine
-// toute collision liée aux noms de sponsors.
-function findEspnEventForRace(race, events) {
-    // hostCountry : pays réel du circuit (GP de Bahreïn couru en Malaisie)
-    const wantCountry = espnCountryMap[race.hostCountry || race.country];
-    if (!wantCountry) return null;
-    const localCity = (race.city || "").toLowerCase();
-
-    let best = null, bestScore = 0;
-    for (const ev of events) {
-        const addr      = ev.circuit?.address || {};
-        const evCountry = (addr.country || "").toLowerCase();
-        const evCity    = (addr.city || "").toLowerCase();
-        const name      = (ev.shortName || ev.name || "").toLowerCase();
-
-        // 1) Le pays du circuit doit matcher — condition obligatoire
-        if (evCountry !== wantCountry) continue;
-        let score = 10;
-
-        // 2) Départage pour les pays à plusieurs GP
-        for (const kw of (espnCityKw[race.city] || [])) {
-            if (name.includes(kw) || evCity.includes(kw)) score += 6;
-        }
-        if (localCity && evCity && (evCity.includes(localCity) || localCity.includes(evCity))) score += 6;
-
-        if (score > bestScore) { bestScore = score; best = ev; }
-    }
-    return bestScore >= 10 ? best : null;
-}
-
-// Résout un nom complet ESPN ("Kimi Antonelli") vers la liste locale
-function resolveDriverByName(fullName) {
-    if (!fullName) return { driver: "", team: "", flag: "" };
-    const clean = fullName.trim();
-    let m = drivers.find(d => d.driver === clean);
-    if (m) return m;
-    const parts = clean.split(/\s+/);
-    const last = parts[parts.length - 1];
-    m = drivers.find(d => d.driver.toLowerCase().includes(last.toLowerCase()));
-    if (m) return m;
-    m = drivers.find(d => parts.some(p => p.length > 2 && d.driver.toLowerCase().includes(p.toLowerCase())));
-    if (m) return m;
-    return { driver: clean, team: "", flag: "" };
-}
-
-// Extrait une session ESPN en liste ordonnée {pos, driver, team, points}
-// kind : "race" | "sprint" | "quali" | "sprintQuali" | "fp"
-function extractEspnSession(competition, kind) {
-    if (!competition || !Array.isArray(competition.competitors)) return [];
-    const sorted = competition.competitors
-        .slice()
-        .sort((a, b) => (a.order || 99) - (b.order || 99));
-    return sorted.map(c => {
-        const name = c.athlete?.displayName || c.athlete?.fullName || "";
-        const resolved = resolveDriverByName(name);
-        const pos = parseInt(c.order) || 0;
-        const entry = { pos, driver: resolved.driver, team: resolved.team };
-        if (kind === "race")   entry.points = pointsSystem[pos - 1] || 0;
-        if (kind === "sprint") entry.points = sprintPoints[pos - 1] || 0;
-        // espnId conservé temporairement pour l'enrichissement statut (DNF/DSQ)
-        if (c.id) entry._espnId = String(c.id);
-        return entry;
-    }).filter(e => e.driver);
-}
-
-// Enrichit des lignes de résultat avec le statut DNF/DSQ + tour d'abandon
-// via l'API core ESPN (1 requête statut par pilote). Modifie les lignes en place.
-async function enrichRowsWithStatus(rows, eventId, competitionId) {
-    if (!rows || rows.length === 0 || !eventId || !competitionId) return rows;
-    const base = `${ESPN_CORE}/events/${eventId}/competitions/${competitionId}/competitors`;
-    await Promise.all(rows.map(async (row) => {
-        if (!row._espnId) return;
-        try {
-            const res = await fetch(`${base}/${row._espnId}/status?lang=en`);
-            if (!res.ok) return;
-            const s = await res.json();
-            const name = s?.type?.name || "";
-            if (name === "STATUS_RETIRED") {
-                row.status = "dnf";
-                const lap = parseInt(s?.period);
-                if (!isNaN(lap) && lap > 0) row.retiredLap = lap;
-            } else if (name === "STATUS_DISQUALIFIED") {
-                row.status = "dsq";
-                row.points = 0; // un DSQ ne marque aucun point
-            }
-        } catch (e) { /* statut indispo : on laisse la ligne telle quelle */ }
-    }));
-    // Nettoyer le champ temporaire
-    rows.forEach(r => { delete r._espnId; });
-    return rows;
-}
-
-// Enrichit des lignes d'essais libres avec le meilleur tour, l'écart et le
-// nombre de tours via l'API core ESPN (1 requête stats par pilote, comme
-// enrichRowsWithStatus). Modifie les lignes en place.
-async function enrichRowsWithTimes(rows, eventId, competitionId) {
-    if (!rows || rows.length === 0 || !eventId || !competitionId) return rows;
-    const base = `${ESPN_CORE}/events/${eventId}/competitions/${competitionId}/competitors`;
-    await Promise.all(rows.map(async (row) => {
-        if (!row._espnId) return;
-        try {
-            const res = await fetch(`${base}/${row._espnId}/statistics?lang=en`);
-            if (!res.ok) return;
-            const st = await res.json();
-            const stats = {};
-            (st?.splits?.categories || []).forEach(cat =>
-                (cat.stats || []).forEach(s => { stats[s.name] = s.displayValue; })
-            );
-            // totalTime = meilleur tour du pilote sur la session
-            if (stats.totalTime && stats.totalTime !== "0.000") row.time = stats.totalTime;
-            // behindTime = écart au leader (vide / 0 pour le P1)
-            if (stats.behindTime && row.pos > 1) row.gap = stats.behindTime;
-            const laps = parseInt(stats.lapsCompleted);
-            if (!isNaN(laps) && laps > 0) row.laps = laps;
-        } catch (e) { /* temps indispo : on laisse la ligne telle quelle */ }
-    }));
-    rows.forEach(r => { delete r._espnId; });
-    return rows;
-}
-
-// Récupère toutes les sessions d'un événement ESPN
-function getEspnSession(ev, abbr) {
-    return (ev.competitions || []).find(c => (c.type?.abbreviation || "") === abbr) || null;
-}
-
-// Vrai si l'événement a une course terminée (avec un vainqueur)
-function espnRaceHasResults(ev) {
-    const race = getEspnSession(ev, "Race");
-    if (!race) return false;
-    return (race.competitors || []).some(c => c.winner === true);
-}
+// Logique ESPN partagée avec le serveur (espn-sync.js) : ces relais
+// branchent le cœur sur les données de la saison active.
+const espnCtx = () => ({ drivers, pointsSystem, sprintPoints });
+const findEspnEventForRace = (race, events) => EspnSync.findEventForRace(race, events);
+const resolveDriverByName  = (fullName) => EspnSync.resolveDriver(fullName, drivers);
+const extractEspnSession   = (competition, kind) => EspnSync.extractSession(competition, kind, espnCtx());
+const enrichRowsWithStatus = (rows, eventId, compId) => EspnSync.enrichStatus(rows, eventId, compId, fetch);
+const enrichRowsWithTimes  = (rows, eventId, compId) => EspnSync.enrichTimes(rows, eventId, compId, fetch);
+const getEspnSession       = (ev, abbr) => EspnSync.getSession(ev, abbr);
+const espnRaceHasResults   = (ev) => EspnSync.raceHasResults(ev);
 
 // ============================================================
 // 🗺️ Infos circuit ESPN (longueur, virages, record du tour, plan)
 // ============================================================
-const ESPN_CORE = "https://sports.core.api.espn.com/v2/sports/racing/leagues/f1";
+const ESPN_CORE = EspnSync.CORE;
 const circuitInfoCache = {};
 
 // Récupère les infos détaillées d'un circuit pour une course locale.
@@ -4136,7 +3976,7 @@ async function syncAllFromEspn(auto = false) {
     if (!isAdmin) { if (!auto) alert("⛔ Réservé admin."); return; }
     // En mode auto (déclenché au chargement pour l'admin) : aucune boîte de
     // dialogue, aucun alert bloquant — tout passe par la console.
-    if (!auto && !confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va remplir automatiquement tous les résultats des courses terminées (course, qualifs, sprint) et sauvegarder dans Firebase.\n\nLes courses annulées (Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
+    if (!auto && !confirm("⚡ Synchroniser TOUTE la saison depuis ESPN ?\n\nCeci va importer toutes les sessions terminées (essais, qualifs, sprint, course) et sauvegarder dans Firebase.\n\nLes courses annulées (Arabie Saoudite) seront ignorées.\n\nContinuer ?")) return;
     if (auto) console.log("[Auto-sync ESPN] Démarrage (admin connecté)…");
 
     const btn = auto ? null : document.getElementById("btn-sync-all-espn");
@@ -4155,99 +3995,13 @@ async function syncAllFromEspn(auto = false) {
         const events = await fetchEspnSeason(auto);
         const beforeSnap = auto ? snapResults() : null;
 
-        // Liste des courses à synchroniser
-        const toSync = races.filter(r => !r.cancelled && (() => {
-            const ev = findEspnEventForRace(r, events);
-            return ev && espnRaceHasResults(ev);
-        })());
-        skipped = races.length - toSync.length;
-
-        // 🧹 AUTO-NETTOYAGE CHIRURGICAL : une course qui possède des RÉSULTATS
-        // DE COURSE alors qu'ESPN n'a aucun vainqueur = données erronées
-        // (ex. le GP du Qatar qui avait hérité des résultats d'Australie à
-        // cause d'une collision de nom de sponsor).
-        // ⚠️ On n'efface QUE les résultats de course. Les qualifs / essais /
-        // sprint d'un week-end en cours sont légitimes et sont conservés, et
-        // on ne touche jamais à une course marquée "live".
-        let cleaned = 0;
-        races.forEach(race => {
-            if (race.cancelled) return;
-            if (toSync.includes(race)) return;
-            const rs = race.raceStatus || race.status || "upcoming";
-            if (rs === "live") return;                       // week-end en cours : on ne touche à rien
-            if (!(race.result?.fullResults?.length > 0)) return; // pas de faux résultats de course
-            console.warn(`[Sync ESPN] Nettoyage de "${race.name}" : ESPN ne donne aucun vainqueur pour cette course.`);
-            race.result     = null;
-            race.raceStatus = "upcoming";
-            race.status     = "upcoming";
-            cleaned++;
+        // Import de toutes les sessions terminées (EL, qualifs, sprint,
+        // course) + nettoyage des résultats erronés — cœur partagé espn-sync.js
+        const res = await EspnSync.syncRaces(races, events, espnCtx(), {
+            onProgress: (done, total) => { if (btn) btn.textContent = `⏳ ${done}/${total}...`; }
         });
-
-        let done = 0;
-        for (const race of toSync) {
-            done++;
-            if (btn) btn.textContent = `⏳ ${done}/${toSync.length}...`;
-            const ev = findEspnEventForRace(race, events);
-
-            // Course (+ statut DNF/DSQ)
-            const raceSess = getEspnSession(ev, "Race");
-            const raceData = raceSess ? extractEspnSession(raceSess, "race") : [];
-            if (raceData.length > 0) {
-                await enrichRowsWithStatus(raceData, ev.id, raceSess.id);
-                race.result = {
-                    podium:      raceData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
-                    fullResults: raceData
-                };
-                race.raceStatus = "completed";
-                race.status     = "completed";
-            }
-            // Qualif course
-            const qualiSess = getEspnSession(ev, "Qual");
-            const qualiData = qualiSess ? extractEspnSession(qualiSess, "quali") : [];
-            if (qualiData.length > 0) race.qualiResults = qualiData;
-
-            // Sprint
-            if (race.sprint) {
-                const srSess = getEspnSession(ev, "SR");
-                const srData = srSess ? extractEspnSession(srSess, "sprint") : [];
-                if (srData.length > 0) {
-                    await enrichRowsWithStatus(srData, ev.id, srSess.id);
-                    race.sprintResult = {
-                        podium:      srData.slice(0, 3).map(r => ({ pos: r.pos, driver: r.driver, team: r.team })),
-                        fullResults: srData
-                    };
-                    race.sprintStatus = "completed";
-                }
-                const ssSess = getEspnSession(ev, "SS");
-                const ssData = ssSess ? extractEspnSession(ssSess, "sprintQuali") : [];
-                if (ssData.length > 0) race.sprintQualiResults = ssData;
-            }
-            // FP1 (tous les week-ends) + FP2/FP3 (week-ends standards uniquement)
-            const fp1Sess = getEspnSession(ev, "FP1");
-            const fp1Data = fp1Sess ? extractEspnSession(fp1Sess, "fp") : [];
-            if (fp1Data.length > 0) {
-                await enrichRowsWithTimes(fp1Data, ev.id, fp1Sess.id);
-                race.fp1Results = fp1Data;
-            }
-
-            if (!race.sprint) {
-                const fp2Sess = getEspnSession(ev, "FP2");
-                const fp2Data = fp2Sess ? extractEspnSession(fp2Sess, "fp") : [];
-                if (fp2Data.length > 0) {
-                    await enrichRowsWithTimes(fp2Data, ev.id, fp2Sess.id);
-                    race.fp2Results = fp2Data;
-                }
-
-                const fp3Sess = getEspnSession(ev, "FP3");
-                const fp3Data = fp3Sess ? extractEspnSession(fp3Sess, "fp") : [];
-                if (fp3Data.length > 0) {
-                    await enrichRowsWithTimes(fp3Data, ev.id, fp3Sess.id);
-                    race.fp3Results = fp3Data;
-                }
-            }
-
-            synced++;
-        }
+        synced = res.synced; skipped = res.skipped;
+        const cleaned = res.cleaned;
 
         // En auto : n'écrire/re-render que si un résultat a bougé (évite le
         // spam d'écritures Firebase toutes les X minutes). En manuel : toujours.
