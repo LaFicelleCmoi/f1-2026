@@ -653,6 +653,17 @@ function noGridHTML() {
     return `<div class="no-data-box"><div style="font-size:2rem">🗓️</div><p>${t("season.no_drivers")}</p></div>`;
 }
 
+// Pilote hors plateau officiel (remplaçant) vu dans les résultats :
+// écurie = la dernière avec laquelle il a couru (fournie par ESPN).
+function substituteDriver(name) {
+    let team = "";
+    races.forEach(r => [r.result?.fullResults, r.sprintResult?.fullResults, r.qualiResults].forEach(rows => {
+        const row = (rows || []).find(x => x.driver === name);
+        if (row?.team) team = row.team;
+    }));
+    return { driver: name, team, flag: (typeof extraDriverFlags !== "undefined" && extraDriverFlags[name]) || "🏁" };
+}
+
 function renderStandings() {
     if (drivers.length === 0) {
         const msg = `<tbody><tr><td>${noGridHTML()}</td></tr></tbody>`;
@@ -675,6 +686,10 @@ function renderStandings() {
         // Points course : uniquement si course terminée
         if (rs === "completed" && race.result && race.result.fullResults) {
             race.result.fullResults.forEach(entry => {
+                // Remplaçant (hors plateau officiel) : ajouté au classement
+                if (!driversMap[entry.driver] && entry.driver) {
+                    driversMap[entry.driver] = { ...substituteDriver(entry.driver), points: 0 };
+                }
                 if (driversMap[entry.driver])      driversMap[entry.driver].points      += entry.points || 0;
                 if (constructorsMap[entry.team])   constructorsMap[entry.team].points   += entry.points || 0;
             });
@@ -683,6 +698,9 @@ function renderStandings() {
         // Points sprint : indépendant du statut course
         if (ss === "completed" && race.sprintResult && race.sprintResult.fullResults) {
             race.sprintResult.fullResults.forEach(entry => {
+                if (!driversMap[entry.driver] && entry.driver) {
+                    driversMap[entry.driver] = { ...substituteDriver(entry.driver), points: 0 };
+                }
                 if (driversMap[entry.driver])      driversMap[entry.driver].points      += entry.points || 0;
                 if (constructorsMap[entry.team])   constructorsMap[entry.team].points   += entry.points || 0;
             });
@@ -1425,8 +1443,8 @@ function getTeammates(teamName) {
 }
 
 function openDriverProfile(driverName) {
-    const driverObj = drivers.find(d => d.driver === driverName);
-    if (!driverObj) return;
+    const driverObj = drivers.find(d => d.driver === driverName) || substituteDriver(driverName);
+    if (!driverObj.team) return;
     const stats = computeDriverFullStats(driverName);
     const rank  = getDriverRank(driverName);
     const color = teamColors[driverObj.team] || "#666";
@@ -3590,7 +3608,7 @@ async function fetchEspnSeason(force = false) {
 
 // Logique ESPN partagée avec le serveur (espn-sync.js) : ces relais
 // branchent le cœur sur les données de la saison active.
-const espnCtx = () => ({ drivers, pointsSystem, sprintPoints });
+const espnCtx = () => ({ drivers, pointsSystem, sprintPoints, teamAliases });
 const findEspnEventForRace = (race, events) => EspnSync.findEventForRace(race, events);
 const resolveDriverByName  = (fullName) => EspnSync.resolveDriver(fullName, drivers);
 const extractEspnSession   = (competition, kind) => EspnSync.extractSession(competition, kind, espnCtx());
