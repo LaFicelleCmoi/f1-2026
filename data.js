@@ -84,6 +84,14 @@ const driverApiIds = {
     "Valtteri Bottas":         "bottas"
 };
 
+// Drapeaux des pilotes hors plateau officiel (remplaçants, essais libres).
+// Leur écurie est lue chez ESPN pour chaque week-end (espn-sync.js).
+const extraDriverFlags = {
+    "Yuki Tsunoda": "🇯🇵",
+    "Ryo Hirakawa": "🇯🇵",
+    "Rafael Câmara": "🇧🇷"
+};
+
 const countryContinent = {
     "Australie": "Asie-Océanie", "Chine": "Asie-Océanie", "Japon": "Asie-Océanie",
     "Singapour": "Asie-Océanie", "Malaisie": "Asie-Océanie", "Turquie": "Europe", "Bahreïn": "Moyen-Orient", "Arabie Saoudite": "Moyen-Orient",
