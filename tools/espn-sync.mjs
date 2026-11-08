@@ -41,8 +41,8 @@ const dataFiles = readdirSync(root).filter(f => /^data-\d{4}\.js$/.test(f)).sort
 for (const f of ["seasons.js", "data.js", ...dataFiles, "espn-sync.js"]) {
     vm.runInContext(readFileSync(join(root, f), "utf8"), ctx, { filename: f });
 }
-const { SEASON_CONFIG, SEASON_DATA, EspnSync } = vm.runInContext(
-    "({ SEASON_CONFIG, SEASON_DATA, EspnSync })", ctx);
+const { SEASON_CONFIG, SEASON_DATA, EspnSync, teamAliases } = vm.runInContext(
+    "({ SEASON_CONFIG, SEASON_DATA, EspnSync, teamAliases })", ctx);
 
 // Config Firebase publique : lue dans app.js (source unique)
 const appJs = readFileSync(join(root, "app.js"), "utf8");
@@ -126,7 +126,7 @@ for (const year of Object.keys(SEASON_CONFIG.seasons).map(Number)) {
             return d >= now - WINDOW_BEFORE_MS || race.raceStatus !== "completed";
         };
 
-        const ctxSeason = { drivers: data.drivers, pointsSystem: data.pointsSystem, sprintPoints: data.sprintPoints };
+        const ctxSeason = { drivers: data.drivers, pointsSystem: data.pointsSystem, sprintPoints: data.sprintPoints, teamAliases };
         const res = await EspnSync.syncRaces(races, events, ctxSeason, { only, fetch });
         const after = EspnSync.serialize(races);
         const changes = diffRounds(before, after);
