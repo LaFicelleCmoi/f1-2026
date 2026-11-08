@@ -109,6 +109,39 @@ test("résultats sans vainqueur côté ESPN : nettoyés ; course annulée : inta
     assert.equal(cancelled.raceStatus, "cancelled");
 });
 
+test("écurie réelle du week-end lue chez ESPN (remplacements, remplaçants)", async () => {
+    // Cas réel 2026 R14-R16 : Lawson (Racing Bulls dans la liste) pilote la Red Bull
+    const drivers = [...ctx.drivers, { driver: "Liam Lawson", team: "Racing Bulls", flag: "" }];
+    const vehicles = { "100": "Red Bull", "101": "Racing Bulls" };
+    const teamFetch = async (url) => {
+        const m = /competitors\/(\d+)\?lang/.exec(url);
+        if (m) return { ok: true, json: async () => ({ vehicle: { manufacturer: vehicles[m[1]] } }) };
+        return fakeFetch()(url);
+    };
+    const race = brazilRace();
+    const ev = brazilEvent([{ id: "R", type: { abbreviation: "Race" }, status: final,
+        competitors: competitors(["Liam Lawson", "Yuki Tsunoda"], true) }]);
+    await EspnSync.syncRaces([race], [ev], { ...ctx, drivers, teamAliases: { "Red Bull": "Red Bull Racing" } }, { fetch: teamFetch });
+    assert.equal(race.result.fullResults[0].team, "Red Bull Racing", "Lawson compté chez Red Bull ce week-end");
+    assert.equal(race.result.fullResults[1].driver, "Yuki Tsunoda", "remplaçant gardé sous son nom ESPN");
+    assert.equal(race.result.fullResults[1].team, "Racing Bulls", "écurie du remplaçant fournie par ESPN");
+});
+
+test("écurie ESPN indisponible : on garde l'écurie déjà connue", async () => {
+    const race = brazilRace();
+    race.result = { podium: [], fullResults: [{ pos: 1, driver: "Rafael Câmara", team: "Haas" }] };
+    const ev = brazilEvent([{ id: "R", type: { abbreviation: "Race" }, status: final,
+        competitors: competitors(["Rafael Câmara"], true) }]);
+    await EspnSync.syncRaces([race], [ev], ctx, { fetch: fakeFetch({ fail: true }) });
+    assert.equal(race.result.fullResults[0].team, "Haas");
+});
+
+test("noms comparés sans accents (« Câmara » ESPN = « Camara » local)", () => {
+    const drivers = [{ driver: "Rafael Camara", team: "Haas", flag: "" }];
+    assert.equal(EspnSync.resolveDriver("Rafael Câmara", drivers).driver, "Rafael Camara");
+    assert.equal(EspnSync.resolveDriver("Rafael Câmara", drivers).team, "Haas");
+});
+
 test("filtre incrémental `only` respecté", async () => {
     const race = brazilRace();
     const ev = brazilEvent([{ id: "C1", type: { abbreviation: "FP1" }, status: final, competitors: competitors(["Lando Norris"]) }]);
