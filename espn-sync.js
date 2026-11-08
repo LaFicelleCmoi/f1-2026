@@ -65,18 +65,22 @@ const EspnSync = (() => {
         return bestScore >= 10 ? best : null;
     }
 
+    // Minuscules sans accents : « Câmara » (ESPN) = « Camara » (données)
+    const fold = (str) => String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
     // Nom ESPN ("Kimi Antonelli") → pilote de la saison
     function resolveDriver(fullName, drivers) {
         if (!fullName) return { driver: "", team: "", flag: "" };
         const clean = fullName.trim();
-        let m = drivers.find(d => d.driver === clean);
+        let m = drivers.find(d => d.driver === clean) || drivers.find(d => fold(d.driver) === fold(clean));
         if (m) return m;
-        const parts = clean.split(/\s+/);
+        const parts = fold(clean).split(/\s+/);
         const last = parts[parts.length - 1];
-        m = drivers.find(d => d.driver.toLowerCase().includes(last.toLowerCase()));
+        m = drivers.find(d => fold(d.driver).includes(last));
         if (m) return m;
-        m = drivers.find(d => parts.some(p => p.length > 2 && d.driver.toLowerCase().includes(p.toLowerCase())));
+        m = drivers.find(d => parts.some(p => p.length > 2 && fold(d.driver).includes(p)));
         if (m) return m;
+        // Pilote hors liste (remplaçant) : l'écurie viendra d'ESPN (applyTeams)
         return { driver: clean, team: "", flag: "" };
     }
 
@@ -163,6 +167,38 @@ const EspnSync = (() => {
         return rows;
     }
 
+    // Écurie réellement pilotée ce week-end, d'après ESPN (vehicle.manufacturer).
+    // Indispensable pour les remplacements (ex. 2026 : Lawson chez Red Bull et
+    // Tsunoda chez Racing Bulls du R14 au R16) : la liste fixe des pilotes
+    // attribuait sinon les points à la mauvaise écurie. Une requête par pilote
+    // et par week-end (cache), échec silencieux → on garde l'écurie connue.
+    async function applyTeams(rows, ev, competitionId, ctx, fetchFn, previous) {
+        if (!rows?.length) return rows;
+        ev._teams = ev._teams || {};
+        const base = `${CORE}/events/${ev.id}/competitions/${competitionId}/competitors`;
+        await Promise.all(rows.map(async (row) => {
+            const id = row._espnId;
+            if (!id) return;
+            if (!(id in ev._teams)) {
+                ev._teams[id] = (async () => {
+                    try {
+                        const res = await fetchFn(`${base}/${id}?lang=en`);
+                        if (!res.ok) return null;
+                        const m = (await res.json())?.vehicle?.manufacturer;
+                        return m ? ((ctx.teamAliases || {})[m] || m) : null;
+                    } catch (e) { return null; }
+                })();
+            }
+            const team = await ev._teams[id];
+            if (team) row.team = team;
+            else {
+                const old = Array.isArray(previous) && previous.find(p => p.driver === row.driver);
+                if (old?.team) row.team = old.team;
+            }
+        }));
+        return rows;
+    }
+
     const getSession = (ev, abbr) =>
         (ev.competitions || []).find(c => (c.type?.abbreviation || "") === abbr) || null;
 
@@ -189,6 +225,7 @@ const EspnSync = (() => {
         if (raceSess && raceHasResults(ev)) {
             const rows = extractSession(raceSess, "race", ctx);
             if (rows.length) {
+                await applyTeams(rows, ev, raceSess.id, ctx, fetchFn, race.result?.fullResults);
                 await enrichStatus(rows, ev.id, raceSess.id, fetchFn);
                 keepKnown(rows, race.result?.fullResults, ["status", "retiredLap"]);
                 race.result = { podium: podiumOf(rows), fullResults: rows };
@@ -201,13 +238,19 @@ const EspnSync = (() => {
         const q = sess("Qual");
         if (q) {
             const rows = extractSession(q, "quali", ctx);
-            if (rows.length) { rows.forEach(r => delete r._espnId); race.qualiResults = rows; imported++; }
+            if (rows.length) {
+                await applyTeams(rows, ev, q.id, ctx, fetchFn, race.qualiResults);
+                rows.forEach(r => delete r._espnId);
+                race.qualiResults = rows;
+                imported++;
+            }
         }
         // Sprint + qualifs sprint
         const sr = sess("SR");
         if (sr) {
             const rows = extractSession(sr, "sprint", ctx);
             if (rows.length) {
+                await applyTeams(rows, ev, sr.id, ctx, fetchFn, race.sprintResult?.fullResults);
                 await enrichStatus(rows, ev.id, sr.id, fetchFn);
                 keepKnown(rows, race.sprintResult?.fullResults, ["status", "retiredLap"]);
                 race.sprintResult = { podium: podiumOf(rows), fullResults: rows };
@@ -218,7 +261,12 @@ const EspnSync = (() => {
         const ss = sess("SS");
         if (ss) {
             const rows = extractSession(ss, "sprintQuali", ctx);
-            if (rows.length) { rows.forEach(r => delete r._espnId); race.sprintQualiResults = rows; imported++; }
+            if (rows.length) {
+                await applyTeams(rows, ev, ss.id, ctx, fetchFn, race.sprintQualiResults);
+                rows.forEach(r => delete r._espnId);
+                race.sprintQualiResults = rows;
+                imported++;
+            }
         }
         // Essais libres (les week-ends sprint n'ont que l'EL1)
         for (const [abbr, key] of [["FP1", "fp1Results"], ["FP2", "fp2Results"], ["FP3", "fp3Results"]]) {
@@ -226,6 +274,7 @@ const EspnSync = (() => {
             if (!fp) continue;
             const rows = extractSession(fp, "fp", ctx);
             if (!rows.length) continue;
+            await applyTeams(rows, ev, fp.id, ctx, fetchFn, race[key]);
             await enrichTimes(rows, ev.id, fp.id, fetchFn);
             keepKnown(rows, race[key], ["time", "gap", "laps"]);
             race[key] = rows;
@@ -234,7 +283,8 @@ const EspnSync = (() => {
         return imported;
     }
 
-    // Synchronise toute une saison. `ctx` = { drivers, pointsSystem, sprintPoints }.
+    // Synchronise toute une saison.
+    // `ctx` = { drivers, pointsSystem, sprintPoints, teamAliases }.
     // `opts.only(race)` limite les courses traitées (mode incrémental serveur),
     // `opts.onProgress(done, total)` pour l'interface admin.
     async function syncRaces(races, events, ctx, opts = {}) {
@@ -291,7 +341,7 @@ const EspnSync = (() => {
 
     return {
         CORE, countryMap, cityKw, scoreboardUrl, seasonEvents, findEventForRace,
-        resolveDriver, extractSession, enrichStatus, enrichTimes, getSession,
+        resolveDriver, extractSession, enrichStatus, enrichTimes, applyTeams, getSession,
         isSessionFinal, raceHasResults, syncRace, syncRaces, serialize
     };
 })();
